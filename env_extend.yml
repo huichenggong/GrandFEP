@@ -3,9 +3,12 @@ channels:
   - conda-forge
 dependencies:
   - python=3.12
+  - ambertools
   - pip
   - numpy
   - scipy
+  - matplotlib
+  - pandas
   - openmm
   - openmmtools
   - pymbar-core
@@ -14,3 +17,4 @@ dependencies:
   - mpi4py
   - parmed
   - cudatoolkit=11.8
+  - pytest-mpi
