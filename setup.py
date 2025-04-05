@@ -26,11 +26,11 @@ setup(
     install_requires=["pymbar>=3,<5",
                       "numpy",
                       "pandas",
-                      "matplotlib",
                       "scipy>=1.7.0",
                       "openmm", "openmmtools",
                       "parmed",
-                      "mpi4py"
+                      "mpi4py",
+                      "mdtraj", "mdanalysis",
                       ],
     python_requires='>=3.11',
       entry_points={
