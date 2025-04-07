@@ -1,11 +1,11 @@
 from copy import deepcopy
 import logging
-import copy
 
 import numpy as np
 
 from openmm import unit, app, openmm
 from openmmtools.integrators import BAOABIntegrator
+from pandas.core.indexers import is_list_like_indexer
 
 from .. import utils
 
@@ -17,6 +17,7 @@ class BaseGrandCanonicalMonteCarloSampler:
     def __init__(self, system, topology, temperature,
                  collision_rate, timestep,
                  log,
+                 platform=openmm.Platform.getPlatform('CUDA'),
                  water_resname="HOH", water_O_name="O"):
         """
 
@@ -83,7 +84,9 @@ class BaseGrandCanonicalMonteCarloSampler:
         integrator = BAOABIntegrator(temperature, collision_rate, timestep)
         self.compound_integrator.addIntegrator(integrator) # for NCMC run
 
-        self.sim = app.Simulation(self.topology, self.system, self.compound_integrator)
+        self.sim = app.Simulation(self.topology, self.system, self.compound_integrator, platform)
+
+        self.switching_water = None
 
     def _find_all_water(self, resname, water_O_name):
         """
@@ -231,7 +234,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         self.custom_nonbonded_force.addPerParticleParameter("is_switching")
         # Add global parameters
         self.custom_nonbonded_force.addGlobalParameter('softcore_alpha', 0.5)
-        self.custom_nonbonded_force.addGlobalParameter('lambda_gc_vdw', 0.0) # lambda for vdw part of TI insertion/deletion
+        self.custom_nonbonded_force.addGlobalParameter('lambda_gc_vdw', 1.0) # lambda for vdw part of TI insertion/deletion
         # Transfer properties from the original force
         self.custom_nonbonded_force.setNonbondedMethod(openmm.CustomNonbondedForce.CutoffPeriodic)
         self.custom_nonbonded_force.setUseSwitchingFunction(self.nonbonded_force.getUseSwitchingFunction())
@@ -243,7 +246,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         # remove vdw from NonbondedForce, and add particles to CustomNonbondedForce
         for at_index in range(self.nonbonded_force.getNumParticles()):
             charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
-            self.custom_nonbonded_force.addParticle([sigma, epsilon, 1.0, 1.0]) # add
+            self.custom_nonbonded_force.addParticle([sigma, epsilon, 1.0, 0.0]) # add
             self.nonbonded_force.setParticleParameters(at_index, charge, sigma, 0.0 * epsilon) # remove
 
         # Exceptions will not be changed in NonbondedForce, but will the corresponding pairs need to be excluded in CustomNonbondedForce
@@ -253,7 +256,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.custom_nonbonded_force.addExclusion(i, j)
 
         self.system.addForce(self.custom_nonbonded_force)
-        self.nonbonded_force.addGlobalParameter('lambda_gc_coulomb', 0.0) # lambda for coulomb part of TI insertion/deletion
+        self.nonbonded_force.addGlobalParameter('lambda_gc_coulomb', 1.0) # lambda for coulomb part of TI insertion/deletion
 
     def _customise_force_charmm(self, system):
         """
@@ -319,8 +322,8 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.custom_nonbonded_force.setParticleParameters(atom_idx, [*typ, 1, 1])
         # Add global parameters
         self.custom_nonbonded_force.addGlobalParameter('softcore_alpha', 0.5)
-        self.custom_nonbonded_force.addGlobalParameter('lambda_gc_vdw', 0.0) # lambda for vdw part of TI insertion/deletion
-        self.nonbonded_force.addGlobalParameter('lambda_gc_coulomb', 0.0)  # lambda for coulomb part of TI insertion/deletion
+        self.custom_nonbonded_force.addGlobalParameter('lambda_gc_vdw', 1.0) # lambda for vdw part of TI insertion/deletion
+        self.nonbonded_force.addGlobalParameter('lambda_gc_coulomb', 1.0)  # lambda for coulomb part of TI insertion/deletion
 
     def _customise_force_hybrid(self, system):
         """
@@ -378,19 +381,60 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.custom_nonbonded_force.setParticleParameters(atom_idx, [*typ, 1, 1])
         # Add global parameters
         self.custom_nonbonded_force.addGlobalParameter('softcore_alpha', 0.5)
-        self.custom_nonbonded_force.addGlobalParameter('lambda_gc_vdw', 0.0)  # lambda for vdw part of TI insertion/deletion
-        self.nonbonded_force.addGlobalParameter('lambda_gc_coulomb', 0.0)  # lambda for coulomb part of TI insertion/deletion
+        self.custom_nonbonded_force.addGlobalParameter('lambda_gc_vdw', 1.0)  # lambda for vdw part of TI insertion/deletion
+        self.nonbonded_force.addGlobalParameter('lambda_gc_coulomb', 1.0)  # lambda for coulomb part of TI insertion/deletion
+
 
     def set_ghost_list(self, ghost_list, check_system=False):
         """
         Set all the water to real and set all the water in given ghost_list to ghost.
         :param ghost_list:
-            Water residue index that should be set to ghost.
-        :param from_system: bool
-            If True, during the resetting of old ghost water to real, the system will be checked to verify the ghost list.
+            Residue index of water that should be set to ghost.
+        :param check_system: bool
+            If True, check all the water particles in self.custom_nonbonded_force and self.nonbonded_force to make sure
+            the ghost_list is correctly set.
         :return:
         """
-        pass
+        if self.switching_water in ghost_list:
+            self.set_water_switch(self.switching_water, False, check_system=check_system)
+
+        is_real_index, is_switching_index = self.get_particle_parameter_index_cust_nb_force()
+
+        # set self.custom_nonbonded_force for vdw
+        for res_index in self.ghost_list:
+            if res_index not in self.water_res_2_atom:
+                raise ValueError(f"The residue {res_index} is water.")
+            for at_index in self.water_res_2_atom[res_index]:
+                parameters = list(self.custom_nonbonded_force.getParticleParameters(at_index))
+                parameters[is_real_index] = 1.0
+                self.custom_nonbonded_force.setParticleParameters(at_index, parameters)
+
+        for res_index in ghost_list:
+            if res_index not in self.water_res_2_atom:
+                raise ValueError(f"The residue {res_index} is not water.")
+            for at_index in self.water_res_2_atom[res_index]:
+                parameters = list(self.custom_nonbonded_force.getParticleParameters(at_index))
+                parameters[is_real_index] = 0.0
+                self.custom_nonbonded_force.setParticleParameters(at_index, parameters)
+
+        # set self.nonbonded_force for coulomb
+        for res_index in self.ghost_list:
+            for at_index, wat_param in zip(self.water_res_2_atom[res_index], self.wat_params):
+                wat_chg = wat_param['charge']
+                charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
+                self.nonbonded_force.setParticleParameters(at_index, wat_chg, sigma, epsilon)
+        for res_index in ghost_list:
+            for at_index in self.water_res_2_atom[res_index]:
+                charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
+                self.nonbonded_force.setParticleParameters(at_index, 0.0, sigma, epsilon)
+
+        # update context
+        self.nonbonded_force.updateParametersInContext(self.sim.context)
+        self.custom_nonbonded_force.updateParametersInContext(self.sim.context)
+        self.ghost_list = ghost_list
+
+        if check_system:
+            self.check_ghost_list()
 
     def get_ghost_list(self, check_system=False):
         """
@@ -398,8 +442,131 @@ class BaseGrandCanonicalMonteCarloSampler:
         :param from_system: bool
             If True, the ghost list will be generated from the system.
         :return: list
+            A copy of the ghost list.
         """
-        pass
+        if check_system:
+            self.check_ghost_list()
+        return deepcopy(self.ghost_list)
+
+    def check_ghost_list(self):
+        """
+        Loop over water particles in self.custom_nonbonded_force and self.nonbonded_force to make sure the ghost_list is correct.
+        All ghost water should have is_real = 0.0, is_switching = 0.0 in custom_nonbonded_force,
+        0.0 charge in nonbonded_force, no ParticleParameterOffsets or chargeScale=0.0 in ParticleParameterOffsets.
+        All real water should have is_real = 1.0, custom_nonbonded_force, and proper charge in nonbonded_force
+        Raise ValueError if any of the above is not satisfied.
+        :return: None
+        """
+        is_real_index, is_switching_index = self.get_particle_parameter_index_cust_nb_force()
+        # check vdW in self.custom_nonbonded_force
+        for res, at_index_list in self.water_res_2_atom.items():
+            if res in self.ghost_list:
+                # ghost water should have is_real = 0.0, is_switching = 0.0
+                for at_index in at_index_list:
+                    parameters = self.custom_nonbonded_force.getParticleParameters(at_index)
+                    if parameters[is_real_index] > 1e-8:
+                        raise ValueError(
+                            f"The water {res} (real) atom {at_index} has is_real = {parameters[is_real_index]}.")
+                    if parameters[is_switching_index] > 1e-8:
+                        raise ValueError(
+                            f"The water {res} (real) atom {at_index} has is_switching = {parameters[is_switching_index]}.")
+            else:
+                # real water should have is_real = 1.0
+                for at_index in at_index_list:
+                    parameters = self.custom_nonbonded_force.getParticleParameters(at_index)
+                    if parameters[is_real_index] < 0.99999999:
+                        raise ValueError(
+                            f"The water {res} at {at_index} has is_real = {parameters[is_real_index]}."
+                        )
+
+        # check coulomb in self.nonbonded_force
+        particle_parameter_offset_dict = self.get_particle_parameter_offset_dict()
+        for res, at_index_list in self.water_res_2_atom.items():
+            if res in self.ghost_list:
+                # ghost water should have charge = 0.0, and (no ParticleParameterOffsets, or chargeScale=0.0)
+                for at_index in at_index_list:
+                    charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
+                    if abs(charge.value_in_unit(unit.elementary_charge)) > 1e-8:
+                        raise ValueError(
+                            f"The water {res} at {at_index} has charge = {charge}."
+                        )
+                    if at_index in particle_parameter_offset_dict:
+                        param_offset_index, param_name, _at_index, charge_scale, sigma_scale, epsilon_scale = particle_parameter_offset_dict[at_index]
+                        if param_name != "lambda_gc_coulomb":
+                            raise ValueError(f"Water {res} (ghost) at {at_index} has a nonbonded force parameter offset {param_name}. ")
+                        if charge_scale > 1e-8:
+                            raise ValueError(f"Water {res} (ghost) at {at_index} has non-zero ParticleParameterOffset {particle_parameter_offset_dict[at_index]} .")
+            else:
+                # real water should have proper charge
+                for at_index, wat_param in zip(self.water_res_2_atom[res], self.wat_params):
+                    wat_chg = wat_param['charge']
+                    charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
+                    if not np.allclose(charge.value_in_unit(unit.elementary_charge), wat_chg.value_in_unit(unit.elementary_charge)):
+                        raise ValueError(
+                            f"The water {res} at {at_index} has charge = {charge}, should be {wat_chg.value_in_unit(unit.elementary_charge)}."
+                        )
+                    if at_index in particle_parameter_offset_dict:
+                        param_offset_index, param_name, _at_index, charge_scale, sigma_scale, epsilon_scale = particle_parameter_offset_dict[at_index]
+                        if param_name != "lambda_gc_coulomb":
+                            raise ValueError(f"Water {res} (real) at {at_index} has a nonbonded force parameter offset {param_name}. ")
+
+    def check_switching(self):
+        """
+        Loop over all particles in self.custom_nonbonded_force and self.nonbonded_force to make sure the one water given
+        by self.switching_water is the only one that is switching.
+        :return:
+        """
+        is_real_index, is_switching_index = self.get_particle_parameter_index_cust_nb_force()
+        # check vdW in self.custom_nonbonded_force
+        for res, at_index_list in self.water_res_2_atom.items():
+            if res != self.switching_water:
+                # check is_switching should be 0.0
+                for at_index in at_index_list:
+                    parameters = self.custom_nonbonded_force.getParticleParameters(at_index)
+                    if parameters[is_switching_index] > 1e-8:
+                        self.logger.warning(
+                            f"The water {res} at {at_index} has is_switching = {parameters[is_switching_index]}."
+                        )
+            else:
+                # check is_switching should be 1.0, is_real should be 1.0
+                for at_index in at_index_list:
+                    parameters = self.custom_nonbonded_force.getParticleParameters(at_index)
+                    if parameters[is_switching_index] < 0.99999999:
+                        raise ValueError(
+                            f"The water {res} at {at_index} has is_switching = {parameters[is_switching_index]}."
+                        )
+                    if parameters[is_real_index] < 0.99999999:
+                        raise ValueError(
+                            f"The water {res} at {at_index} has is_real = {parameters[is_real_index]}."
+                        )
+
+        # check coulomb in self.nonbonded_force
+        particle_parameter_offset_dict = self.get_particle_parameter_offset_dict()
+
+        for res, at_index_list in self.water_res_2_atom.items():
+            if res != self.switching_water:
+                # either no ParticleParameterOffsets or chargeScale=0.0
+                for at_index in at_index_list:
+                    if at_index in particle_parameter_offset_dict:
+                        param_offset_index, param_name, _at_index, charge_scale, sigma_scale, epsilon_scale = particle_parameter_offset_dict[at_index]
+                        if param_name != "lambda_gc_coulomb":
+                            raise ValueError(f"Water {res} (no switching) at {at_index} has a nonbonded force parameter offset {param_name}. ")
+                        if charge_scale > 1e-8:
+                            raise ValueError(f"Water {res} (no switching) at {at_index} has non-zero ParticleParameterOffset {particle_parameter_offset_dict[at_index]} .")
+            else:
+                # check ParticleParameterOffsets for the water to chargeScale=-chg, sigmaScale=0.0, epsilonScale=0.0
+                for at_index, wat_param in zip(self.water_res_2_atom[res], self.wat_params):
+                    wat_chg = wat_param['charge']
+                    if at_index in particle_parameter_offset_dict:
+                        param_offset_index, param_name, _at_index, charge_scale, sigma_scale, epsilon_scale = particle_parameter_offset_dict[at_index]
+                        if param_name != "lambda_gc_coulomb":
+                            raise ValueError(f"Water {res} (is switching) at {at_index} has a nonbonded force parameter offset {param_name}. ")
+                        if charge_scale > abs(-wat_chg.value_in_unit(unit.elementary_charge)):
+                            raise ValueError(f"Water {res} (is switching) at {at_index} has wrong ParticleParameterOffset for chargeScale {particle_parameter_offset_dict[at_index]} .")
+                        if sigma_scale > 1e-8 or epsilon_scale > 1e-8:
+                            raise ValueError(f"Water {res} (is switching) at {at_index} has non-zero ParticleParameterOffset for vdw {particle_parameter_offset_dict[at_index]} .")
+                    else:
+                        raise ValueError(f"Water {res} (is switching) at {at_index} does not have a ParticleParameterOffset.")
 
     def set_water_switch(self, res_index, on, check_system=True):
         """
@@ -418,20 +585,13 @@ class BaseGrandCanonicalMonteCarloSampler:
             water, and there is no is_switching water, when turning off the water. If the check fails, system will be
             corrected, and a warning will be raised.
         """
-        # update custom_nonbonded_force for vdw
-        # make sure we have the correct index for is_real and is_switching in perParticleParameters
-        is_real_index = -1
-        is_switching_index = -1
-        for i in range(self.custom_nonbonded_force.getNumPerParticleParameters()):
-            name = self.custom_nonbonded_force.getPerParticleParameterName(i)
-            if name == "is_real":
-                is_real_index = i
-            elif name == "is_switching":
-                is_switching_index = i
-        if is_real_index == -1 or is_switching_index == -1:
-            raise ValueError("The self.custom_nonbonded_force does not have is_real and is_switching parameters. Please check the system.")
 
+        is_real_index, is_switching_index = self.get_particle_parameter_index_cust_nb_force()
+
+        # update custom_nonbonded_force for vdw
         if on:
+            if res_index in self.ghost_list:
+                self.ghost_list.remove(res_index) # switching water should not be in ghost water
             for at_index in self.water_res_2_atom[res_index]:
                 parameters = list(self.custom_nonbonded_force.getParticleParameters(at_index))
                 parameters[is_real_index] = 1.0
@@ -444,16 +604,18 @@ class BaseGrandCanonicalMonteCarloSampler:
                 self.custom_nonbonded_force.setParticleParameters(at_index, parameters)
 
         # update nonbonded_force for coulomb
+        if on: # this water should have proper charge
+            for at_index, wat_param in zip(self.water_res_2_atom[res_index], self.wat_params):
+                wat_chg = wat_param['charge']
+                charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
+                self.nonbonded_force.setParticleParameters(at_index, wat_chg, sigma, epsilon)
+
         # Set the ParticleParameterOffsets for the water in nonbonded_force
-        particle_parameter_offset_dict = {}
-        for param_offset_index in range(self.nonbonded_force.getNumParticleParameterOffsets()):
-            offset = self.nonbonded_force.getParticleParameterOffset(param_offset_index)
-            at_index = offset[1]
-            particle_parameter_offset_dict[at_index] = [param_offset_index, *offset]
+        particle_parameter_offset_dict = self.get_particle_parameter_offset_dict()
         if on:
             # set the ParticleParameterOffsets for the water to chargeScale=-chg, sigmaScale=0.0, epsilonScale=0.0
-            for at_index, wat_params in zip(self.water_res_2_atom[res_index], self.wat_params):
-                wat_chg = wat_params['charge']
+            for at_index, wat_param in zip(self.water_res_2_atom[res_index], self.wat_params):
+                wat_chg = wat_param['charge']
                 if at_index in particle_parameter_offset_dict:
                     param_offset_index, param_name, _at_index, charge_scale, sigma_scale, epsilon_scale = particle_parameter_offset_dict[at_index]
                     if param_name != "lambda_gc_coulomb":
@@ -471,36 +633,59 @@ class BaseGrandCanonicalMonteCarloSampler:
                     self.nonbonded_force.setParticleParameterOffset(param_offset_index, param_name, _at_index, 0.0, 0.0, 0.0)
 
 
-
-
-
+        self.nonbonded_force.updateParametersInContext(self.sim.context)
+        self.custom_nonbonded_force.updateParametersInContext(self.sim.context)
+        if on:
+            self.switching_water = res_index
+        else:
+            self.switching_water = -1
         if check_system:
-            # loop through all the water in the system
-            for res, at_index_list in self.water_res_2_atom.items():
-                if res != res_index:
-                    # check is_switching should be 0.0
-                    for at_index in at_index_list:
-                        parameters = self.custom_nonbonded_force.getParticleParameters(at_index)
-                        if parameters[is_switching_index] > abs(0.0):
-                            self.logger.warning(
-                                f"The water {res} at {at_index} has is_switching = {parameters[is_switching_index]}."
-                                f"You should not switch 2 water simultaneously."
-                            )
-                else:
-                    # check is_switching should be 1.0, is_real should be 1.0
-                    for at_index in at_index_list:
-                        parameters = self.custom_nonbonded_force.getParticleParameters(at_index)
-                        if parameters[is_switching_index] < abs(1.0):
-                            raise ValueError(
-                                f"The water {res} at {at_index} has is_switching = {parameters[is_switching_index]}."
-                                f"set_water_switch FAILED."
-                            )
-                        if parameters[is_real_index] < abs(1.0):
-                            raise ValueError(
-                                f"The water {res} at {at_index} has is_real = {parameters[is_real_index]}."
-                                f"set_water_switch FAILED."
-                            )
+            if on:
+                self.check_switching()
+            else:
+                self.check_switching()
 
+    def _remove_water_charge(self, res_index):
+        """
+        Remove the charge of the water in the system. The charge will be set to 0.0 in self.nonbonded_force. This
+        function is only for debugging purpose.
+        :param res_index: int
+            The residue index of the water.
+        :return: None
+        """
+        for at_index in self.water_res_2_atom[res_index]:
+            charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
+            self.nonbonded_force.setParticleParameters(at_index, 0.0 * charge, sigma, epsilon)
+        self.nonbonded_force.updateParametersInContext(self.sim.context)
 
+    def get_particle_parameter_index_cust_nb_force(self):
+        """
+        Get the index of is_real and is_switching in perParticleParameters of custom_nonbonded_force.
+        :return: is_real_index, is_switching_index
+        """
+        # make sure we have the correct index for is_real and is_switching in perParticleParameters
+        is_real_index = -1
+        is_switching_index = -1
+        for i in range(self.custom_nonbonded_force.getNumPerParticleParameters()):
+            name = self.custom_nonbonded_force.getPerParticleParameterName(i)
+            if name == "is_real":
+                is_real_index = i
+            elif name == "is_switching":
+                is_switching_index = i
+        if is_real_index == -1 or is_switching_index == -1:
+            raise ValueError("The self.custom_nonbonded_force does not have is_real and is_switching parameters. Please check the system.")
+        return is_real_index, is_switching_index
 
-
+    def get_particle_parameter_offset_dict(self):
+        """
+        Get the ParticleParameterOffsets in nonbonded_force.
+        :return: dict
+            A dictionary of ParticleParameterOffsets in nonbonded_force. The key is the atom index, and the value is
+            [param_offset_index, global_parameter_name, at_index, chargeScale, sigmaScale, epsilonScale].
+        """
+        particle_parameter_offset_dict = {}  # {at_index: [param_offset_index, global_parameter_name, at_index, chargeScale, sigmaScale, epsilonScale]}
+        for param_offset_index in range(self.nonbonded_force.getNumParticleParameterOffsets()):
+            offset = self.nonbonded_force.getParticleParameterOffset(param_offset_index)
+            at_index = offset[1]
+            particle_parameter_offset_dict[at_index] = [param_offset_index, *offset]
+        return particle_parameter_offset_dict
