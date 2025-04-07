@@ -3,18 +3,20 @@ channels:
   - conda-forge
 dependencies:
   - python=3.12
-  - ambertools
   - pip
   - numpy
   - scipy
-  - matplotlib
   - pandas
   - openmm
   - openmmtools
   - pymbar-core
-  - mdanalysis
   - openmpi=4.1.5
   - mpi4py
   - parmed
   - cudatoolkit=11.8
+  # additional packages
+  - mdtraj
+  - mdanalysis
+  - ambertools
+  - matplotlib
   - pytest-mpi

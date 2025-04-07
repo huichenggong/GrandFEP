@@ -4,7 +4,8 @@
 ```bash
 mamba env create -f env.yml # edit cuda and MPI according to cluster
 # or
-mamba create -n grandfep 
+mamba create -n grandfep python=3.12 numpy scipy pandas openmm openmmtools pymbar-core openmpi=4.1.5 mpi4py parmed cudatoolkit=11.8
+# also remember to check the cuda with your driver, and MPI on your cluster
 ```
 
 ### 1.2 Later on the cluster
