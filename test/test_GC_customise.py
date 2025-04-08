@@ -154,6 +154,7 @@ class MyTestCase(unittest.TestCase):
             global_name, at_index, chargeS, sigmaS, epsilonS = baseGC.nonbonded_force.getParticleParameterOffset(i)
             print(global_name, at_index, chargeS, sigmaS, epsilonS)
         ######
+        # conclusion: ParticleParameterOffset cannot be updated by calling updateParametersInContext
 
         baseGC.sim.context.setParameter("lambda_gc_coulomb", 0.0)
         baseGC.sim.context.setParameter("lambda_gc_vdw", 0.0)
