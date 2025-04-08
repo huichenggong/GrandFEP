@@ -9,10 +9,12 @@ GrandFEP documentation
 Welcome to the documentation for GrandFEP.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+    :maxdepth: 2
+    :caption: Contents:
 
-   modules
+    intro
+    modules
+    commandline
 
 Indices and tables
 ==================
