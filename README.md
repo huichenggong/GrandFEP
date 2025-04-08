@@ -10,7 +10,7 @@ mamba create -n grandfep_env python=3.12 numpy scipy pandas openmm openmmtools p
 
 ### 1.2 Later on the cluster
 ```bash
-source /home/NAME/SOFTWARE/miniforge3/bin/activate grandfep
+source /home/NAME/SOFTWARE/miniforge3/bin/activate grandfep_env
 module add openmpi4/gcc/4.1.5 # only as an example
 which mpirun                  # check if the correct mpirun is used
 ```
