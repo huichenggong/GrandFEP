@@ -9,8 +9,13 @@ from .relative import HybridTopologyFactory
 def load_sys(sys_file):
     """
     Load serialized system file
-    :param sys_file: X.xml.gz or X.xml
+
+    :param sys_file: (str or pathlib.Path)
+
+        X.xml.gz or X.xml. Serialized system file.
+
     :return: openmm.System
+
     """
     # if sys_file is xml.gz
     if str(sys_file).endswith(".gz"):
@@ -23,10 +28,19 @@ def load_sys(sys_file):
 
 def load_top(top_file):
     """
-    Load topology file. It can be psf(Charmm) or parm7/prmtop(Amber).
-    return: openmm.Topology
-    remember to run topology.setPeriodicBoxVectors if you provide a charmm psf file. If you don't set
-    the box for topology, later trajectory will not have box information.
+    Load topology file. It can be psf(Charmm) or parm7/prmtop(Amber). remember to run topology.setPeriodicBoxVectors.
+    if you provide a charmm psf file. If you don't set the box for topology, later trajectory will not have box information.
+
+    :param top_file: (str or pathlib.Path)
+
+        psf or parm7/prmtop file
+
+    :return: (topology, psf/prmtop)
+
+        openmm.Topology: The OpenMM topology object.
+
+        Union[openmm.app.PSFFile, openmm.app.AmberPrmtopFile]: The original OpenMM topology file object.
+
     """
     top_file = str(top_file)
     if top_file.endswith(".psf"):

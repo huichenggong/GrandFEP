@@ -148,11 +148,8 @@ class MyTestCase(unittest.TestCase):
 
 
         ###### For debugging purpose
-        # set charge to 0.0 for 4th water
-        for at_index in [14, 15, 16]:
-            charge, sigma, epsilon = baseGC.nonbonded_force.getParticleParameters(at_index)
-            baseGC.nonbonded_force.setParticleParameters(at_index, charge*0.0, sigma, epsilon)
-        baseGC.nonbonded_force.updateParametersInContext(baseGC.sim.context)
+        # set charge to 0.0 for water with res_index 4
+        baseGC._remove_water_charge(4)
         for i in range(3):
             global_name, at_index, chargeS, sigmaS, epsilonS = baseGC.nonbonded_force.getParticleParameterOffset(i)
             print(global_name, at_index, chargeS, sigmaS, epsilonS)

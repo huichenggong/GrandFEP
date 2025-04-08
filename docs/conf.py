@@ -19,8 +19,11 @@ author = 'Chenggong Hui'
 
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx_autodoc_typehints',
 ]
+# Napoleon settings
+
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']

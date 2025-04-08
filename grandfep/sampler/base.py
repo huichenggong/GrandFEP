@@ -5,7 +5,6 @@ import numpy as np
 
 from openmm import unit, app, openmm
 from openmmtools.integrators import BAOABIntegrator
-from pandas.core.indexers import is_list_like_indexer
 
 from .. import utils
 
@@ -18,12 +17,12 @@ class BaseGrandCanonicalMonteCarloSampler:
     controlled by is_real=0.0/1.0, and switching/non-switching is controlled by is_switching=0.0/1.0.
 
     vdW interaction is handled by self.custom_nonbonded_force (openmm.openmm.CustomNonbondedForce), and each particle has
-    is_real and is_switching as per particle parameters. Together with a global parameter `lambda_gc_vdw`, the interaction
+    is_real and is_switching as per particle parameters. Together with a global parameter **lambda_gc_vdw**, the interaction
     can be switched on/off for certain water smoothly and efficiently.
 
     Coulomb interaction is handled by self.nonbonded_force (openmm.openmm.NonbondedForce), real water has a charge, and ghost water has 0.0 charge.
     The switching water also has a ParticleParameterOffset. This ParticleParameterOffset together with the global parameter
-    `lambda_gc_coulomb`, controls the coulomb interaction for the switching water.
+    **lambda_gc_coulomb**, controls the coulomb interaction for the switching water.
     """
     def __init__(self, system, topology, temperature,
                  collision_rate, timestep,
@@ -363,8 +362,8 @@ class BaseGrandCanonicalMonteCarloSampler:
 
     def _customise_force_hybrid(self, system):
         """
-        If the system is Hybrid, this function will add perParticleParameters lambda_gc to the CustomNonbondedForce for
-        vdw.
+        If the system is Hybrid, this function will add perParticleParameters **is_real** and **is_switching**
+        to the self.custom_nonbonded_force (openmm.openmm.CustomNonbondedForce) for vdw.
         :param system: openmm.System
             The system to be converted.
         :return: None
@@ -426,10 +425,14 @@ class BaseGrandCanonicalMonteCarloSampler:
         Set all the water to real and set all the water in given ghost_list to ghost.
 
         :param ghost_list: (list)
+
             Residue index of water that should be set to ghost.
+
         :param check_system: (bool)
+
             If True, check all the water particles in self.custom_nonbonded_force and self.nonbonded_force to make sure
             the ghost_list is correctly set.
+
         :return: None
         """
         if self.switching_water in ghost_list:
@@ -478,11 +481,14 @@ class BaseGrandCanonicalMonteCarloSampler:
         Get the ghost list. If from_system is True, system will be checked to verify the ghost list.
 
         :param check_system: (bool)
+
             If True, all the water particles in self.custom_nonbonded_force and self.nonbonded_force will be checked
             to make sure the ghost_list is correct.
 
-        :return:
+        :return: (list)
+
             A copy of the self.ghost_list. self.ghost_list is a list of water residue index that are ghost.
+
         """
         if check_system:
             self.check_ghost_list()
@@ -492,10 +498,10 @@ class BaseGrandCanonicalMonteCarloSampler:
         """
         Loop over all water particles in the system to make sure the ghost_list is correct.
 
-        All ghost water should have is_real = 0.0, is_switching = 0.0 in self.custom_nonbonded_force,
-        0.0 charge in self.nonbonded_force, no ParticleParameterOffsets or chargeScale=0.0 in ParticleParameterOffsets.
+        All ghost water should have (1): is_real = 0.0, is_switching = 0.0 in self.custom_nonbonded_force,
+        (2): 0.0 charge in self.nonbonded_force, (3): no ParticleParameterOffsets or chargeScale=0.0 in ParticleParameterOffsets.
 
-        All real water should have is_real = 1.0, in self.custom_nonbonded_force, and proper charge in nonbonded_force
+        All real water should have (1): is_real = 1.0, in self.custom_nonbonded_force, (2): proper charge in nonbonded_force
 
         Raise ValueError if any of the above is not satisfied.
 
@@ -622,20 +628,29 @@ class BaseGrandCanonicalMonteCarloSampler:
     def set_water_switch(self, res_index, on, check_system=True):
         """
         Set PerParticleParameter for the specified water. The PerParticleParameter is_switching and is_real in
-        custom_nonbonded_force will be changed so that vdw interaction on this water can be controlled by the
-        lambda_gc_vdw. The ParticleParameterOffsets in nonbonded_force will be updated so that coulomb interaction on
-        this water can be controlled by lambda_gc_coulomb.
+        custom_nonbonded_force will be changed so that vdw interaction on this water can be controlled by the global
+        parameter **lambda_gc_vdw**. The ParticleParameterOffsets in nonbonded_force will be updated so that coulomb interaction on
+        this water can be controlled by the global parameter **lambda_gc_coulomb**.
 
         :param res_index: (int)
+
             The residue index of the water.
+
         :param on: (bool)
-            If True, the certain water will be set to is_switching = 1.0, is_real=0, which means the water will be controlled by
-            lambda_gc_vdw and lambda_gc_coulomb.
+
+            If True, the certain water will be set to is_switching = 1.0, is_real=1.0, so that the vdW of this water can
+            be controlled by **lambda_gc_vdw**. This water will also be given a ParticleParameterOffset so that the Coulomb
+            can be controlled by **lambda_gc_coulomb**. This water will also be removed from the self.ghost_list.
+
             If False, the certain water will be set to is_switching = 0.0.
+
         :param check_system: (bool)
-            Default True. If True, the system will be checked to make sure there is only one "is_switching" water, when turning on the
-            water, and there is no is_switching water, when turning off the water. If the check fails, system will be
-            corrected, and a warning will be raised.
+
+            Default True.
+
+            If True, the system will be checked to make sure there is only one "is_switching" water, when turning on the
+            water, and there is no is_switching water, when turning off the water. If the check fails, raise ValueError.
+
         :return: None
         """
 
@@ -693,17 +708,17 @@ class BaseGrandCanonicalMonteCarloSampler:
         else:
             self.switching_water = -1
         if check_system:
-            if on:
-                self.check_switching()
-            else:
-                self.check_switching()
+            self.check_switching()
 
     def _remove_water_charge(self, res_index):
         """
         Remove the charge of the water in the system. The charge will be set to 0.0 in self.nonbonded_force. This
         function is only for debugging purpose.
-        :param res_index: int
+
+        :param res_index: (int)
+
             The residue index of the water.
+
         :return: None
         """
         for at_index in self.water_res_2_atom[res_index]:
@@ -716,7 +731,9 @@ class BaseGrandCanonicalMonteCarloSampler:
         Get the index of is_real and is_switching in perParticleParameters of self.custom_nonbonded_force.
 
         :return: (int, int)
+
             is_real_index, is_switching_index
+
         """
         # make sure we have the correct index for is_real and is_switching in perParticleParameters
         is_real_index = -1
@@ -736,8 +753,10 @@ class BaseGrandCanonicalMonteCarloSampler:
         Get the ParticleParameterOffsets in nonbonded_force.
 
         :return: (dict)
+
             A dictionary of ParticleParameterOffsets in nonbonded_force. The key is the atom index, and the value is
             [param_offset_index, global_parameter_name, at_index, chargeScale, sigmaScale, epsilonScale].
+
         """
         particle_parameter_offset_dict = {}  # {at_index: [param_offset_index, global_parameter_name, at_index, chargeScale, sigmaScale, epsilonScale]}
         for param_offset_index in range(self.nonbonded_force.getNumParticleParameterOffsets()):
