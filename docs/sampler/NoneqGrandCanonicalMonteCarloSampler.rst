@@ -1,4 +1,7 @@
 NoneqGrandCanonicalMonteCarloSampler
 ====================================
 
-Haven't been implemented yet.
+.. autoclass:: grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler
+    :members:
+    :undoc-members:
+    :show-inheritance:
