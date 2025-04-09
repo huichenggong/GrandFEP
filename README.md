@@ -16,3 +16,8 @@ which mpirun                  # check if the correct mpirun is used
 
 # Full Documentation
 [huichenggong.github.io/GrandFEP](https://huichenggong.github.io/GrandFEP/)
+
+## 2. Contact
+Chenggong Hui  
+<chenggong.hui@mpinat.mpg.de>  
+<huicgx@126.com>  
