@@ -35,17 +35,28 @@
             
   <section id="introduction">
 <h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h1>
-<p>GrandFEP : GCMC/FEP - Alchemical free energy calculations in GC</p>
+<p>GrandFEP : GCMC/FEP - Alchemical free energy calculations in Grand Canonical ensemble</p>
 <section id="background">
-<h2>Background<a class="headerlink" href="#background" title="Link to this heading">¶</a></h2>
+<h2>1. Background<a class="headerlink" href="#background" title="Link to this heading">¶</a></h2>
 <p>This Python module is designed to perform grand canonical Monte Carlo (GCMC) and free energy
 calculations using OpenMM</p>
 </section>
 <section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
-<p>The mamba/conda environment can be prepared using the following command:</p>
+<h2>2. Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<section id="download-the-repository">
+<h3>2.1. Download the repository<a class="headerlink" href="#download-the-repository" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/huichenggong/GrandFEP.git
+<span class="nb">cd</span><span class="w"> </span>GrandFEP
+</pre></div>
+</div>
+</section>
+<section id="prepare-the-environment">
+<h3>2.2. Prepare the environment<a class="headerlink" href="#prepare-the-environment" title="Link to this heading">¶</a></h3>
+<p>In the repository directory, you can find the env.yml file. You can use it to create a conda environment</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mamba<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>env.yml
 <span class="c1"># edit cuda and MPI version according to your cluster</span>
+mamba<span class="w"> </span>activate<span class="w"> </span>grandfep_env
+pip<span class="w"> </span>install<span class="w"> </span>.
 </pre></div>
 </div>
 <p>Or:</p>
@@ -54,21 +65,23 @@ calculations using OpenMM</p>
 </div>
 <p>Be aware that the CUDA version should be compatible with your GPU drivers, and the OpenMPI version
 should be compatible with your cluster.</p>
-<p>Later on the cluster,</p>
+</section>
+<section id="later-on-the-cluster">
+<h3>2.3. Later on the cluster<a class="headerlink" href="#later-on-the-cluster" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>/home/NAME/SOFTWARE/miniforge3/bin/activate<span class="w"> </span>grandfep_env
 </pre></div>
 </div>
 <p>The GrandFEP module is released under the MIT licence. I hope my publication will come soon.</p>
 </section>
-<section id="author-s">
-<h2>Author(s)<a class="headerlink" href="#author-s" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p>Chenggong Hui <cite>&lt;chenggong.hui&#64;mpinat.mpg.de&gt;</cite> ORCID:0000-0003-2875-4739</p></li>
-</ul>
 </section>
-<section id="contact">
-<h2>Contact<a class="headerlink" href="#contact" title="Link to this heading">¶</a></h2>
-<p>If you have any problems or questions regarding this module, please contact Chenggong</p>
+<section id="author-s-and-contact">
+<h2>3. Author(s) and Contact<a class="headerlink" href="#author-s-and-contact" title="Link to this heading">¶</a></h2>
+<p><strong>Chenggong Hui</strong></p>
+<ul class="simple">
+<li><p><strong>Email:</strong> <a class="reference external" href="mailto:chenggong&#46;hui&#37;&#52;&#48;mpinat&#46;mpg&#46;de">chenggong<span>&#46;</span>hui<span>&#64;</span>mpinat<span>&#46;</span>mpg<span>&#46;</span>de</a></p></li>
+<li><p><strong>ORCID:</strong> <a class="reference external" href="https://orcid.org/0000-0003-2875-4739">0000-0003-2875-4739</a></p></li>
+</ul>
+<p>For any questions or issues regarding this module, please contact Chenggong Hui.</p>
 </section>
 </section>
 
@@ -101,10 +114,9 @@ should be compatible with your cluster.</p>
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#background">Background</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#author-s">Author(s)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#contact">Contact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#background">1. Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">2. Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#author-s-and-contact">3. Author(s) and Contact</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">GrandFEP API</a></li>
