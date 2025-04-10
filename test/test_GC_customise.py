@@ -194,6 +194,7 @@ class MyTestCase(unittest.TestCase):
             h_factory.omm_hybrid_topology,
             h_factory.hybrid_positions, platform)
 
+
         print("## Force should be the same before and after adding hybrid")
         inpcrd_4wat, prmtop_4wat, sys_4wat = load_amber_sys(
             base / "CH4_C2H6" /"lig0"/ "06_solv.inpcrd",
@@ -207,6 +208,7 @@ class MyTestCase(unittest.TestCase):
         error_msg = "".join([f"{at}\n    {f1}\n    {f2}\n"  for at, f1, f2 in mis_match_list])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
+
         print("## Force should be the same after customization")
         baseGC = sampler.BaseGrandCanonicalMonteCarloSampler(
             h_factory.hybrid_system,
@@ -218,6 +220,11 @@ class MyTestCase(unittest.TestCase):
             platform=platform,
         )
         self.assertEqual(baseGC.system_type, "Hybrid")
+        is_r, is_s = baseGC.get_particle_parameter_index_cust_nb_force()
+        self.assertListEqual([is_r, is_s], [6,7])
+        self.assertListEqual([], baseGC.get_ghost_list())
+        baseGC.check_ghost_list()
+        baseGC.check_switching()
         baseGC.simulation.context.setPositions(h_factory.hybrid_positions)
         self.assertDictEqual(baseGC.water_res_2_atom, {1:[5,6,7], 2:[8,9,10], 3:[11,12,13], 4:[14,15,16]})
         # all lambdas are 0.0
@@ -234,42 +241,26 @@ class MyTestCase(unittest.TestCase):
         error_msg = "".join([f"{at}\n    {f1}\n    {f2}\n"  for at, f1, f2 in mis_match_list])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
+        all_close_flag, mis_match_list = match_force(force_4wat[1:], force[1:]) # There is dummy atom connected to atom 0 in state A
+        error_msg = "".join([f"{at}\n    {f1}\n    {f2}\n"  for at, f1, f2 in mis_match_list])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
         print("## Set lambda=0.0 for the switching water. Force should be the same as -1 water system")
         inpcrd_3wat, prmtop_3wat, sys_3wat = load_amber_sys(
             base / "CH4_C2H6" /"lig0"/ "MOL_3wat.inpcrd",
             base / "CH4_C2H6" /"lig0"/ "MOL_3wat.prmtop", nonbonded_settings)
-
-        #### Debugging
-        for f in sys_3wat.getForces():
-            if f.getName() == "NonbondedForce":
-                nonbonded = f
-                break
-        # all epsilon to 0.0
-        for atom in prmtop_3wat.topology.atoms():
-            at_ind = atom.index
-            charge, sigma, epsilon = list(nonbonded.getParticleParameters(at_ind))
-            print(charge, sigma, epsilon)
-            nonbonded.setParticleParameters(at_ind, charge, sigma, 0.0*epsilon)
-
-
         energy_3wat, force_3wat = calc_energy_force(sys_3wat, prmtop_3wat.topology, inpcrd_3wat.positions, platform)
-
-
-        #### Debugging
-        baseGC._turn_off_vdw()
-        ####
-
 
         baseGC.simulation.context.setParameter("lambda_gc_coulomb", 0.0)
         baseGC.simulation.context.setParameter("lambda_gc_vdw", 0.0)
+        self.assertListEqual([], baseGC.get_ghost_list())
+        baseGC.check_ghost_list()
+        baseGC.check_switching()
+
         state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
         pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
-        # baseGC.check_switching()
 
-
-
-
-        # The forces should be the same for 0:14 atoms
+        # The forces should be the same
         self.assertEqual(len(force_3wat), 14)
         self.assertEqual(len(force), 24)
         all_close_flag, mis_match_list = match_force(force_3wat, force)

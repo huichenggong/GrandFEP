@@ -422,7 +422,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         self.custom_nonbonded_force.addPerParticleParameter("is_switching")
         for atom_idx in range(self.custom_nonbonded_force.getNumParticles()):
             typ = self.custom_nonbonded_force.getParticleParameters(atom_idx)
-            self.custom_nonbonded_force.setParticleParameters(atom_idx, [*typ, 1, 1])
+            self.custom_nonbonded_force.setParticleParameters(atom_idx, [*typ, 1, 0])
         # Add global parameters
         self.custom_nonbonded_force.addGlobalParameter('softcore_alpha', 0.5)
         self.custom_nonbonded_force.addGlobalParameter('lambda_gc_vdw', 0.0) # lambda for vdw part of TI insertion/deletion
@@ -471,32 +471,68 @@ class BaseGrandCanonicalMonteCarloSampler:
 
         energy_expression = (
             "U_sterics;"
-            "U_sterics = lambda_vdw * 4*epsilon*x*(x-1.0);"
+            "U_sterics = 4*epsilon*x*(x-1.0);"
             "x = (sigma/reff_sterics)^6;"
-            "epsilon = (1-lambda_sterics)*epsilonA + lambda_sterics*epsilonB;"
+            
+            # 6. Calculate damped distance (effective r)
             "reff_sterics = sigma*((softcore_alpha*lambda_alpha + (r/sigma)^6))^(1/6);"
-            "sigma = (1-lambda_sterics)*sigmaA + lambda_sterics*sigmaB;"
-            "lambda_alpha = new_interaction*(1-lambda_sterics_insert) + old_interaction*lambda_sterics_delete + (1 - lambda_vdw);"
-            "lambda_vdw = is_real1 * is_real2 * lambda_switch;"
+            
+            # 5. Calculate the effective epsilon and sigma
+            "epsilon = ((1-lambda_sterics)*epsilonA + lambda_sterics*epsilonB) * scale_gc;"
+            "sigma   = ((1-lambda_sterics)*sigmaA   + lambda_sterics*sigmaB  );"
+            
+            # 4. Soft-core on/off
+            # new, old, swit, lambda_alpha
+            #   0,   0,    0,                      0, SC off
+            #   0,   1,    0,  lambda_sterics_delete, SC on
+            #   1,   0,    0,1-lambda_sterics_insert, SC on
+            #   1,   1,                                     won't happen, handled by exclusion
+            #   0,   0,    1,        1-lambda_gc_vdw, SC on
+            #   0,   1,    1, ???
+            #   1,   0,    1, ???
+            "lambda_alpha = new_interaction*(1-lambda_sterics_insert) + old_interaction*lambda_sterics_delete + switch_interaction*(1-lambda_gc_vdw);"
+            
+            # 3. Effective lambda. What is the overall progress of lambda evolving (0 -> 1)?
+            # interaction, c, o, n,  lambda_sterics
+            # core-core  , 1, 0, 0,  lambda_sterics_core
+            #  old-old   , 0, 1, 0,  lambda_sterics_delete
+            #  new-new   , 0, 0, 1,  lambda_sterics_insert
+            #  old-new   , 0, 1, 1,  Exclusion
+            #                 both_are_core                          one_is_new                              one_is_old
             "lambda_sterics = core_interaction*lambda_sterics_core + new_interaction*lambda_sterics_insert + old_interaction*lambda_sterics_delete;"
+            
+            # 2.3 Checking GC interactions. (real/ghost, switching/non-switching)
+            # is_r1, is_r2, is_s1, is_s2, switch_inte,  lambda_pair,      scale_gc, comment
+            #     1,     1,     0,     0,           0,            1,             1,   real-real
+            #     1,     0,     0,     0,           0,            1,             0,   real-ghost
+            #     0,     0,     0,     0,           0,            1,             0,  ghost-ghost
+            #     1,     1,     1,     0,           1,lambda_gc_vdw, lambda_gc_vdw, switch-real
+            "scale_gc = is_real1 * is_real2 * lambda_pair;"
+            "lambda_pair = (1 - switch_interaction) + lambda_gc_vdw * switch_interaction;"
+            "switch_interaction = max(is_switching1, is_switching2);"
+            
+            # 2.2 Checking core interactions. Is this a pair with 2 core atoms?
             "core_interaction = delta(unique_old1+unique_old2+unique_new1+unique_new2);"
+            
+            # 2.1 Checking unique interactions. Is this a pair of interaction that involves a unique atom?
+            # There is exclusion between new-old, new_interaction and old_interaction will not be 1.0 simultaneously
             "new_interaction = max(unique_new1, unique_new2);"
             "old_interaction = max(unique_old1, unique_old2);"
-            "lambda_switch = (1 - switch_indicator) + lambda_gc_vdw * switch_indicator;"
-            "switch_indicator = max(is_switching1, is_switching2);" # whether the two particles are switching in GC
+            
+            # 1. Applying combination rule. 
             "epsilonA = sqrt(epsilonA1*epsilonA2);"
             "epsilonB = sqrt(epsilonB1*epsilonB2);"
             "sigmaA = 0.5*(sigmaA1 + sigmaA2);"
             "sigmaB = 0.5*(sigmaB1 + sigmaB2);"
         )
         # Add per particle parameters
+        self.custom_nonbonded_force.setEnergyFunction(energy_expression)
         self.custom_nonbonded_force.addPerParticleParameter("is_real")
         self.custom_nonbonded_force.addPerParticleParameter("is_switching")
         for atom_idx in range(self.custom_nonbonded_force.getNumParticles()):
-            typ = self.custom_nonbonded_force.getParticleParameters(atom_idx)
-            self.custom_nonbonded_force.setParticleParameters(atom_idx, [*typ, 1, 1])
+            params = self.custom_nonbonded_force.getParticleParameters(atom_idx)
+            self.custom_nonbonded_force.setParticleParameters(atom_idx, [*params, 1, 0]) # add is_real=1, is_switching=0
         # Add global parameters
-        self.custom_nonbonded_force.addGlobalParameter('softcore_alpha', 0.5)
         self.custom_nonbonded_force.addGlobalParameter('lambda_gc_vdw', 0.0)  # lambda for vdw part of TI insertion/deletion
         self.nonbonded_force.addGlobalParameter('lambda_gc_coulomb', 0.0)  # lambda for coulomb part of TI insertion/deletion
 
@@ -528,7 +564,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.custom_nonbonded_force.setParticleParameters(at_ind, [sigmaA, 0.0*epsilonA, sigmaB, 0.0*epsilonB, unique_old, unique_new, is_real*0.0, is_switching])
         self.custom_nonbonded_force.updateParametersInContext(self.simulation.context)
 
-    def set_ghost_list(self, ghost_list, check_system=False):
+    def set_ghost_list(self, ghost_list, check_system=True):
         """
         Set all the water to real and set all the water in given ghost_list to ghost.
 
@@ -610,7 +646,11 @@ class BaseGrandCanonicalMonteCarloSampler:
         All ghost water should have (1): is_real = 0.0, is_switching = 0.0 in self.custom_nonbonded_force,
         (2): 0.0 charge in self.nonbonded_force
 
-        All real water should have (1): is_real = 1.0, in self.custom_nonbonded_force, (2): proper charge in nonbonded_force
+        All real water should have (1): is_real = 1.0, in self.custom_nonbonded_force,
+        (2): proper charge in nonbonded_force (if not switching water)
+
+        The switching water should (1): is_real = 1.0, in self.custom_nonbonded_force,
+        (2): 0.0 charge in nonbonded_force,
 
         Raise ValueError if any of the above is not satisfied.
 
@@ -652,13 +692,22 @@ class BaseGrandCanonicalMonteCarloSampler:
                             f"The water {res} at {at_index} has charge = {charge}."
                         )
             else:
-                # real water should have proper charge
-                for at_index, wat_chg in zip(self.water_res_2_atom[res], self.wat_params['charge']):
-                    charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
-                    if not np.allclose(charge.value_in_unit(unit.elementary_charge), wat_chg.value_in_unit(unit.elementary_charge)):
-                        raise ValueError(
-                            f"The water {res} at {at_index} has charge = {charge}, should be {wat_chg.value_in_unit(unit.elementary_charge)}."
-                        )
+                if res == self.switching_water:
+                    # switching water should have charge = 0.0
+                    for at_index in at_index_list:
+                        charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
+                        if abs(charge.value_in_unit(unit.elementary_charge)) > 1e-8:
+                            raise ValueError(
+                                f"The water {res} (switching) at {at_index} has charge = {charge}. It should be 0.0."
+                            )
+                else:
+                    # real water should have proper charge
+                    for at_index, wat_chg in zip(self.water_res_2_atom[res], self.wat_params['charge']):
+                        charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
+                        if not np.allclose(charge.value_in_unit(unit.elementary_charge), wat_chg.value_in_unit(unit.elementary_charge)):
+                            raise ValueError(
+                                f"The water {res} at {at_index} has charge = {charge}, should be {wat_chg.value_in_unit(unit.elementary_charge)}."
+                            )
 
     def check_switching(self):
         """
