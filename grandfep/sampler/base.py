@@ -359,6 +359,9 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.nonbonded_force.addParticleParameterOffset("lambda_gc_coulomb", at_index, charge, 0.0, 0.0)
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
 
+        # add Derivative
+        # self.custom_nonbonded_force.addEnergyParameterDerivative('lambda_gc_vdw')
+
     def _customise_force_charmm(self, system):
         """
         In Charmm, NonbondedForce handles electrostatics, and CustomNonbondedForce handles vdW. This function will add
@@ -440,6 +443,9 @@ class BaseGrandCanonicalMonteCarloSampler:
             charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
             self.nonbonded_force.addParticleParameterOffset("lambda_gc_coulomb", at_index, charge, 0.0, 0.0)
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
+
+        # add Derivative
+        # self.custom_nonbonded_force.addEnergyParameterDerivative('lambda_gc_vdw')
 
     def _customise_force_hybrid(self, system):
         """
@@ -548,6 +554,9 @@ class BaseGrandCanonicalMonteCarloSampler:
             charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
             self.nonbonded_force.addParticleParameterOffset("lambda_gc_coulomb", at_index, charge, 0.0, 0.0)
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
+
+        # add Derivative
+        # self.custom_nonbonded_force.addEnergyParameterDerivative('lambda_gc_vdw')
 
     def _turn_off_vdw(self):
         """

@@ -58,6 +58,18 @@ class HybridTopologyFactory:
     omm_hybrid_topology : openmm.app.Topology
         The OpenMM topology object corresponding to the hybrid system
 
+
+    Here are the forces in the hybrid system:
+    - CustomBondForce -- handles bonds involving `core_atoms` (these are interpolated)
+    - HarmonicBondForce -- handles bonds involving `environment_atoms`, `unique_old_atoms` and `unique_new_atoms` (these are never scaled)
+    - CustomAngleForce -- handles angles involving `core_atoms` (these are interpolated)
+    - HarmonicAngleForce -- handles angles involving `environment_atoms`, `unique_old_atoms` and `unique_new_atoms` (these are never scaled)
+    - CustomTorsionForce -- handles torsions involving `core_atoms` (these are interpolated)
+    - PeriodicTorsionForce -- handles torsions involving `environment_atoms`, `unique_old_atoms` and `unique_new_atoms` (these are never scaled)
+    - NonbondedForce -- handles all electrostatic interactions, environment-environment steric interactions
+    - CustomNonbondedForce -- handle all non environment-environment sterics
+    - CustomBondForce_exceptions -- handles all electrostatics and sterics exceptions involving unique old/new atoms when interpolate_14s is True, otherwise the electrostatics/sterics exception is in the NonbondedForce
+    where `interactions` refers to any pair of atoms that is not 1-2, 1-3, 1-4
     .. warning :: This API is experimental and subject to change.
 
     Notes
@@ -1627,10 +1639,11 @@ class HybridTopologyFactory:
 
                 # Interpolate between old and new charge with
                 # lambda_electrostatics core make sure to keep sterics off
-                self._hybrid_system_forces['standard_nonbonded_force'].addParticleParameterOffset(
-                    'lambda_electrostatics_core', particle_index,
-                    (charge_new - charge_old), 0, 0
-                )
+                if not np.isclose(charge_old.value_in_unit(unit.elementary_charge), charge_new.value_in_unit(unit.elementary_charge)):
+                    self._hybrid_system_forces['standard_nonbonded_force'].addParticleParameterOffset(
+                        'lambda_electrostatics_core', particle_index,
+                        (charge_new - charge_old), 0, 0
+                    )
 
             # Otherwise, the particle is in the environment
             else:
