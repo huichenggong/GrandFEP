@@ -13,6 +13,11 @@ nonbonded_Amber = {"nonbondedMethod": app.PME,
                    "nonbondedCutoff": 1.0 * unit.nanometer,
                    "constraints": app.HBonds,
                    }
+nonbonded_Charmm = {"nonbondedMethod": app.PME,
+                    "nonbondedCutoff": 1.2 * unit.nanometer,
+                    "switchDistance" : 1.0 * unit.nanometer,
+                    "constraints"    : app.HBonds
+                    }
 
 def calc_energy_force(system, topology, positions, platform=openmm.Platform.getPlatform('Reference')):
     """
@@ -419,6 +424,106 @@ class MyTestCase(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force[index_hyb], force_3wat[1:])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
+    def test_Charmm_psf(self):
+        print()
+        print("# Test Charmm system which is create from psf.createSystem")
+        base = Path(__file__).resolve().parent
+
+        nonbonded_settings = nonbonded_Charmm
+        platform = platform_ref
+
+        print("## Energy and force should be the same before and after customization")
+        psf = app.CharmmPsfFile(str(base / "KcsA_5VKE_SF/step1_pdbreader_12WAT.psf"))
+        system = utils.load_sys(base / "KcsA_5VKE_SF/system_12WAT.xml.gz")
+        topology = psf.topology
+        pdb = app.PDBFile(str(base / "KcsA_5VKE_SF/step1_pdbreader_12WAT.pdb"))
+        topology.setPeriodicBoxVectors(
+            np.array([[10, 0, 0],
+                      [0, 10, 0],
+                      [0, 0, 10]]) * unit.nanometer)
+        energy_12wat, force_12wat = calc_energy_force(system, topology, pdb.positions, platform)
+        baseGC = sampler.BaseGrandCanonicalMonteCarloSampler(
+            system,
+            topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_base_Charmm_psf.log",
+            platform=platform,
+        )  # Reference is necessary for exact force comparison
+
+        self.assertEqual(baseGC.system_type, "Charmm")
+        baseGC.simulation.context.setPositions(pdb.positions)
+        self.assertDictEqual(baseGC.water_res_2_atom, {resi:[448+resi*3, 449+resi*3, 450+resi*3] for resi in range(42, 54)})
+
+        # Can we get the same force before and after? baseGC has 4 water molecules
+        baseGC.simulation.context.setParameter("lambda_gc_coulomb", 1.0)
+        baseGC.simulation.context.setParameter("lambda_gc_vdw", 1.0)
+        state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
+        pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
+
+        # The energy should be the same
+        self.assertTrue(
+            np.allclose(
+                energy_12wat.value_in_unit(unit.kilojoule_per_mole),
+                energy.value_in_unit(unit.kilojoule_per_mole)
+            ), f"Energy mismatch: {energy_12wat} vs {energy}")
+        # The forces should be the same for all atoms
+        self.assertEqual(len(force_12wat), 610)
+        self.assertEqual(len(force), 610)
+        all_close_flag, mis_match_list, error_msg = match_force(force_12wat, force)
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        print("## Remove 4 water, swithching water to 0 and 3 more water to ghost")
+        baseGC.simulation.context.setParameter("lambda_gc_coulomb", 0.0)
+        baseGC.simulation.context.setParameter("lambda_gc_vdw", 0.0)
+        baseGC.set_ghost_list([50, 51, 52])
+        state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
+        pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
+
+        psf = app.CharmmPsfFile(str(base / "KcsA_5VKE_SF/step1_pdbreader_8WAT.psf"))
+        system = utils.load_sys(base / "KcsA_5VKE_SF/system_8WAT.xml.gz")
+        topology = psf.topology
+        pdb = app.PDBFile(str(base / "KcsA_5VKE_SF/step1_pdbreader_8WAT.pdb"))
+        topology.setPeriodicBoxVectors(
+            np.array([[10, 0, 0],
+                      [0, 10, 0],
+                      [0, 0, 10]]) * unit.nanometer)
+        energy_8wat, force_8wat = calc_energy_force(system, topology, pdb.positions, platform)
+        # The forces should be the same for all atoms
+        self.assertEqual(len(force_8wat), 598)
+        self.assertEqual(len(force), 610)
+        all_close_flag, mis_match_list, error_msg = match_force(force_8wat, force)
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+    def test_Charmm_ff(self):
+        print()
+        print("# Test Charmm system which is create from ForceField.createSystem. ")
+        base = Path(__file__).resolve().parent
+        nonbonded_settings = nonbonded_Charmm
+        platform = platform_ref
+
+        ff = app.ForceField('charmm36.xml', 'charmm36/water.xml')
+        psf = app.CharmmPsfFile(str(base / "KcsA_5VKE_SF/step1_pdbreader_12WAT.psf"))
+        pdb = app.PDBFile(str(base / "KcsA_5VKE_SF/step1_pdbreader_12WAT.pdb"))
+        topology = psf.topology
+        topology.setPeriodicBoxVectors(
+            np.array([[10, 0, 0],
+                      [0, 10, 0],
+                      [0, 0, 10]]) * unit.nanometer)
+
+        system = ff.createSystem(topology, **nonbonded_settings)
+
+        print("## Expect ValueError when converting system which is created from ForceField.createSystem")
+        with self.assertRaises(ValueError):
+            baseGC = sampler.BaseGrandCanonicalMonteCarloSampler(
+                system,
+                topology,
+                300 * unit.kelvin,
+                1.0 / unit.picosecond,
+                2.0 * unit.femtosecond,
+                "test_base_Charmm_ff.log",
+                platform=platform)
 
 
 if __name__ == '__main__':
