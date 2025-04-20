@@ -36,7 +36,13 @@ html_theme = 'alabaster'
 html_static_path = ['_static']
 
 html_theme_options = {
-    'page_width': '80%',
+    'page_width'       : '90%',
+    'body_max_width'   : 'auto',
+    'fixed_sidebar'    : True,
+    'github_user'      : 'huichenggong',
+    'github_repo'      : 'GrandFEP',
+    'github_banner'    : True
+
 }
 
 autodoc_member_order = 'groupwise'

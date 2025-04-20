@@ -13,6 +13,7 @@ Welcome to the documentation for GrandFEP.
     :caption: Contents:
 
     intro
+    tutorial/tutorial
     modules
     commandline
 
