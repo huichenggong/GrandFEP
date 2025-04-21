@@ -29,11 +29,11 @@ class BaseGrandCanonicalMonteCarloSampler:
     with a ghost or real water, enabling NEQ perturbation moves.
 
     vdW interactions are handled via `self.custom_nonbonded_force` (`openmm.CustomNonbondedForce`), where
-    per-particle parameters `is_real` and `is_switching` interact with the global parameter `lambda_gc_vdw`.
+    per-particle parameters `is_real` and `is_switching` interact with the global parameter ``lambda_gc_vdw``.
 
     Electrostatic interactions are handled by `self.nonbonded_force` (`openmm.NonbondedForce`). Ghost waters
     are given zero charge, and switching waters use `ParticleParameterOffset` with a global parameter
-    `lambda_gc_coulomb`.
+    ``lambda_gc_coulomb``.
 
     Parameters
     ----------
@@ -110,11 +110,11 @@ class BaseGrandCanonicalMonteCarloSampler:
 
     custom_nonbonded_force : openmm.CustomNonbondedForce
         This force handles vdW. It has PerParticleParameter is_real and is_switching to control real/ghost and
-        switching/non-switching. It also has a global parameter **lambda_gc_vdw** to control the switching water.
+        switching/non-switching. It also has a global parameter ``lambda_gc_vdw`` to control the switching water.
 
     nonbonded_force : openmm.NonbondedForce
         This force handles Coulomb. The switching water has ParticleParameterOffset with global parameter
-        **lambda_gc_coulomb** to control the switching water.
+        ``lambda_gc_coulomb`` to control the switching water.
 
     wat_params : dict
         A dictionary to track the nonbonded parameter of water. The keys are "charge", "sigma", "epsilon",
@@ -424,8 +424,8 @@ class BaseGrandCanonicalMonteCarloSampler:
     def _customise_force_charmm(self, system):
         """
         In Charmm, NonbondedForce handles electrostatics, and CustomNonbondedForce handles vdW. For vdW, this function will add
-        perParticle parameters 'is_real', 'is_switching', global parameter 'lambda_gc_vdw' to the CustomNonbondedForce.
-        For Coulomb, this function will add ParticleParameterOffset to the switching water and 'lambda_gc_coulomb'
+        perParticle parameters 'is_real', 'is_switching', global parameter ``lambda_gc_vdw`` to the CustomNonbondedForce.
+        For Coulomb, this function will add ParticleParameterOffset to the switching water and ``lambda_gc_coulomb``
         to the NonbondedForce.
 
         The CustomNonbondedForce should have the following energy expression:

@@ -17,6 +17,8 @@ dependencies:
   # additional packages
   - mdtraj
   - mdanalysis
+  - ipykernel
+  - ipywidgets
   - ambertools
   - matplotlib
   - pytest-mpi
