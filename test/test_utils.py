@@ -21,6 +21,20 @@ class MyTestCase(unittest.TestCase):
         ref_atoms = utils.find_reference_atom_indices(topology, ref_atoms_list)
         self.assertListEqual(ref_atoms, [21, 164, 307, 450])
 
+    def test_random_rotation_matrix(self):
+        res_new = []
+        res_old = []
+        vec_init = np.array([0, 0, 1])
+        for i in range(1_000):
+
+            rot_matrix = utils.random_rotation_matrix()
+            res_new.append(np.dot(rot_matrix, vec_init))
+
+            rot_matrix = utils.random_rotation_matrix_protoms()
+            res_old.append(np.dot(rot_matrix, vec_init))
+        np.save(self.base_path / "rotation_matrix_new.npy", res_new)
+        np.save(self.base_path / "rotation_matrix_old.npy", res_old)
+
 
 
 if __name__ == '__main__':

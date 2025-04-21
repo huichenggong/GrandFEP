@@ -175,3 +175,4 @@ cython_debug/
 
 /IGNORE_LOG.md
 
+/test/rotation_matrix_*.npy
