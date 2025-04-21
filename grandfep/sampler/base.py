@@ -206,10 +206,11 @@ class BaseGrandCanonicalMonteCarloSampler:
         self.compound_integrator = openmm.CompoundIntegrator()
         integrator = BAOABIntegrator(temperature, collision_rate, timestep)
         self.compound_integrator.addIntegrator(integrator) # for EQ run
-        integrator = BAOABIntegrator(temperature, collision_rate, timestep)
-        self.compound_integrator.addIntegrator(integrator) # for NCMC run
+        self.ncmc_integrator = BAOABIntegrator(temperature, collision_rate, timestep)
+        self.compound_integrator.addIntegrator(self.ncmc_integrator) # for NCMC run
 
         self.simulation = app.Simulation(self.topology, self.system, self.compound_integrator, platform)
+        self.compound_integrator.setCurrentIntegrator(0)
 
 
 
@@ -345,7 +346,7 @@ class BaseGrandCanonicalMonteCarloSampler:
 
     def _customise_force_amber(self, system):
         """
-        In Amber,  NonbondedForce handles both electrostatics and vdW. This function will remove vdW from NonbondedForce
+        In Amber, NonbondedForce handles both electrostatics and vdW. This function will remove vdW from NonbondedForce
         and create a CustomNonbondedForce to handle vdW, so that the interaction can be switched off for certain water.
 
         :param system: openmm.System
@@ -366,9 +367,12 @@ class BaseGrandCanonicalMonteCarloSampler:
 
         energy_expression = ("U;"
                              "U = lambda_vdw * 4 * epsilon * x * (x - 1.0);"
-                             "x = (sigma / reff)^6;"
-                             "reff = sigma * ((softcore_alpha * (1-lambda_vdw) + (r/sigma)^6))^(1/6);"
+                             "x = (1 / reff)^6;"
+                             "reff = ((softcore_alpha * (1-lambda_vdw) + (r/sigma)^6))^(1/6);"
                              "lambda_vdw = is_real1 * is_real2 * lambda_switch;"
+                             # is_s1, is_s2, is_r1, is_r2, switch_i, lambda_switch, soft-core
+                             #   0.0,   0.0,   1.0,   1.0,      0.0,           1.0,       off
+                             #   1.0,   0.0,   1.0,   1.0,      1.0, lambda_gc_vdw,        on
                              "lambda_switch = (1 - switch_indicator) + lambda_gc_vdw * switch_indicator;"
                              "switch_indicator = max(is_switching1, is_switching2);"
                              "epsilon = sqrt(epsilon1*epsilon2);"
@@ -419,7 +423,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
 
         # add Derivative
-        # self.custom_nonbonded_force.addEnergyParameterDerivative('lambda_gc_vdw')
+        self.custom_nonbonded_force.addEnergyParameterDerivative('lambda_gc_vdw')
 
     def _customise_force_charmm(self, system):
         """
@@ -508,7 +512,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
 
         # add Derivative
-        # self.custom_nonbonded_force.addEnergyParameterDerivative('lambda_gc_vdw')
+        self.custom_nonbonded_force.addEnergyParameterDerivative('lambda_gc_vdw')
 
     def _customise_force_hybrid(self, system):
         """
@@ -541,10 +545,10 @@ class BaseGrandCanonicalMonteCarloSampler:
         energy_expression = (
             "U_sterics;"
             "U_sterics = 4*epsilon*x*(x-1.0);"
-            "x = (sigma/reff_sterics)^6;"
+            "x = (1/reff_sterics)^6;"
             
-            # 6. Calculate damped distance (effective r)
-            "reff_sterics = sigma*((softcore_alpha*lambda_alpha + (r/sigma)^6))^(1/6);"
+            # 6. Calculate damped distance (reff/sigma)
+            "reff_sterics = ((softcore_alpha*lambda_alpha + (r/sigma)^6))^(1/6);"
             
             # 5. Calculate the effective epsilon and sigma
             "epsilon = ((1-lambda_sterics)*epsilonA + lambda_sterics*epsilonB) * scale_gc;"
@@ -619,7 +623,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
 
         # add Derivative
-        # self.custom_nonbonded_force.addEnergyParameterDerivative('lambda_gc_vdw')
+        self.custom_nonbonded_force.addEnergyParameterDerivative('lambda_gc_vdw')
 
     def _turn_off_vdw(self):
         """
