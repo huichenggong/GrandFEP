@@ -157,9 +157,7 @@ def random_rotation_matrix() -> np.ndarray:
         import matplotlib.pyplot as plt
         from grandfep import utils
         def gen_random_vec():
-            axis = np.random.rand(3) * 2 - 1
-            while np.linalg.norm(axis) >= 1:
-                axis = np.random.rand(3) * 2 - 1
+            axis = np.random.normal(0, 1, 3)
             axis /= np.linalg.norm(axis)
             return axis
         res_new = []
