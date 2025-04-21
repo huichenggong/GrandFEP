@@ -110,7 +110,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
                  ):
         """
         """
-        # safty check
+        # safety check
         for val in [position, chemical_potential, standard_volume, sphere_radius]:
             if not isinstance(val, unit.Quantity):
                 raise ValueError("position, chemical_potential and standard_volume must be provided as unit.Quantity.")
@@ -144,18 +144,25 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         self.simulation.context.setPositions(position)
 
         # set Adam value
+        self.sphere_radius = sphere_radius
         state = self.simulation.context.getState(getPositions=True)
-        box_vectors = state.getPeriodicBoxVectors(asNumpy=True)
+        self.box_vectors = state.getPeriodicBoxVectors(asNumpy=True)
         for i in range(3):
             for j in range(3):
                 if i == j:
                     continue
-                if not np.isclose(box_vectors[i, j]._value, 0.0):
+                if not np.isclose(self.box_vectors[i, j]._value, 0.0):
                     raise ValueError("Only cuboidal box is supported.")
-        volume_box = (box_vectors[0, 0] * box_vectors[1, 1] * box_vectors[2, 2] )
+        volume_box = (self.box_vectors[0, 0] * self.box_vectors[1, 1] * self.box_vectors[2, 2] )
         self.Adam_box = self.chemical_potential/  self.kBT + math.log(volume_box / self.standard_volume)
-        volume_GCMC = (4 * np.pi * sphere_radius ** 3) / 3
+        volume_GCMC = (4 * np.pi * self.sphere_radius ** 3) / 3
         self.Adam_GCMC = self.chemical_potential / self.kBT + math.log(volume_GCMC / self.standard_volume)
+        self.logger.info(f"The box is {self.box_vectors[0, 0]} x {self.box_vectors[1, 1]} x {self.box_vectors[2, 2]} .")
+        self.logger.info(f"The Adam value of the box is {self.Adam_box}.")
+        self.logger.info(f"The Adam value of the GCMC sphere is {self.Adam_GCMC}.")
+
+        if self.sphere_radius > min(self.box_vectors[0, 0], self.box_vectors[1, 1], self.box_vectors[2, 2]) / 2:
+            raise ValueError(f"The sphere radius {self.sphere_radius} is larger than half of the box size.")
 
         self.reference_atoms = reference_atoms
         self.logger.info(f"GCMC sphere is based on reference atom IDs: {self.reference_atoms}")
@@ -211,6 +218,47 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         :return:
         """
         pass
+
+    def insert_random_water_box(self, state: openmm.State, res_index: int):
+        """
+        Shift the coordinate+orientation of a water molecule to a random place in the box, or in the GCMC sphere.
+
+        Parameters
+        ----------
+        state : openmm.State
+            The current state of the simulation context. The positions will be read from this state.
+        res_index : int
+            The residue index of the water molecule to be shifted.
+
+        Returns
+        -------
+        positions : unit.Quantity
+            The new positions with the ghost water molecule shifted.
+        """
+
+        # Inside this function, all the positions are in nanometers.
+        # Select a random position in the box
+        x = np.random.uniform(0, self.box_vectors[0, 0].value_in_unit(unit.nanometer))
+        y = np.random.uniform(0, self.box_vectors[1, 1].value_in_unit(unit.nanometer))
+        z = np.random.uniform(0, self.box_vectors[2, 2].value_in_unit(unit.nanometer))
+        insertion_point = np.array([x, y, z])
+
+        # Generate a random rotation matrix
+        rot_matrix = utils.random_rotation_matrix()
+
+        # Rotate and translate atoms except the 1st
+        positions = state.getPositions(asNumpy=True).value_in_unit(unit.nanometer)
+        o_index = self.water_res_2_atom[res_index][0]
+        for atom_index in self.water_res_2_atom[res_index][1:]:
+            relative_pos = positions[atom_index] - positions[o_index]
+            new_relative = np.dot(rot_matrix, relative_pos)
+            positions[atom_index] = insertion_point + new_relative
+
+        # Translate the 1st atom
+        positions[o_index] = insertion_point
+
+        return positions * unit.nanometer
+
 
     def gcmc_move(self, box: bool = 0):
         pass

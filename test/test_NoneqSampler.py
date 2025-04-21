@@ -39,8 +39,39 @@ class MyTestCase(unittest.TestCase):
             reference_atoms = [0],
         )
 
-    def test_something(self):
-        self.assertEqual(True, True)  # add assertion here
+    def test_insert_random_water_box(self):
+        print()
+        print("# insert_random_water_box, position should be shifted, bond_length and angle should be kept the same")
+        state = self.ngcmc.simulation.context.getState(getPositions=True)
+        positions_old = state.getPositions(asNumpy=True)
+        positions_new = self.ngcmc.insert_random_water_box(state, 1)
+
+        o_index, h1_index, h2_index = self.ngcmc.water_res_2_atom[1]
+        self.assertListEqual([o_index, h1_index, h2_index], [5,6,7])
+        # O sites inside the box
+        pos_o = positions_new[o_index]
+        self.assertFalse(np.any(pos_o == positions_old[o_index])) # xyz should all be different
+        box_v = state.getPeriodicBoxVectors(asNumpy=True)
+        for i in range(3):
+            self.assertTrue(0*unit.nanometer < pos_o[i])
+            self.assertTrue(pos_o[i] < box_v[i][i])
+
+        # O-H bond length should be kept the same
+        for at_index in [h1_index, h2_index]:
+            bond_vec_old = positions_old[at_index] - positions_old[o_index]
+            bond_vec_new = positions_new[at_index] - positions_new[o_index]
+            bond_length_old = np.linalg.norm(bond_vec_old)
+            bond_length_new = np.linalg.norm(bond_vec_new)
+            self.assertAlmostEqual(bond_length_old, bond_length_new)
+
+        angle_list = []
+        for pos in [positions_old, positions_new]:
+            vec1 = pos[h1_index] - pos[o_index]
+            vec2 = pos[h2_index] - pos[o_index]
+            angle = np.arccos(np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2)))
+            angle_list.append(angle)
+        self.assertAlmostEqual(angle_list[0], angle_list[1])
+
 
 
 if __name__ == '__main__':
