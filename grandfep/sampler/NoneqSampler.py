@@ -219,9 +219,10 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         """
         pass
 
-    def insert_random_water_box(self, state: openmm.State, res_index: int):
+    def random_place_water(self, state: openmm.State, res_index: int, sphere_center: unit.Quantity=None) -> unit.Quantity:
         """
-        Shift the coordinate+orientation of a water molecule to a random place in the box, or in the GCMC sphere.
+        Shift the coordinate+orientation of a water molecule to a random place. If the center is None, a random position
+        in the box will be selected. If the center is not None, a randomed position in the GCMC sphere will be selected.
 
         Parameters
         ----------
@@ -229,19 +230,32 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             The current state of the simulation context. The positions will be read from this state.
         res_index : int
             The residue index of the water molecule to be shifted.
+        sphere_center : unit.Quantity
+            The center of the GCMC sphere. If None, a random position in the box will be selected.
 
         Returns
         -------
         positions : unit.Quantity
-            The new positions with the ghost water molecule shifted.
+            The new positions with the water molecule shifted.
         """
 
         # Inside this function, all the positions are in nanometers.
-        # Select a random position in the box
-        x = np.random.uniform(0, self.box_vectors[0, 0].value_in_unit(unit.nanometer))
-        y = np.random.uniform(0, self.box_vectors[1, 1].value_in_unit(unit.nanometer))
-        z = np.random.uniform(0, self.box_vectors[2, 2].value_in_unit(unit.nanometer))
-        insertion_point = np.array([x, y, z])
+
+        if sphere_center is None:
+            # Select a random position in the box
+            x = np.random.uniform(0, self.box_vectors[0, 0].value_in_unit(unit.nanometer))
+            y = np.random.uniform(0, self.box_vectors[1, 1].value_in_unit(unit.nanometer))
+            z = np.random.uniform(0, self.box_vectors[2, 2].value_in_unit(unit.nanometer))
+            insertion_point = np.array([x, y, z])
+        else:
+            # random radius
+            r = np.random.rand(1) ** (1/3)
+            r *= self.sphere_radius.value_in_unit(unit.nanometer)
+            # random direction
+            v = np.random.normal(0, 1, 3)
+            v /= np.linalg.norm(v)
+            #
+            insertion_point = sphere_center.value_in_unit(unit.nanometer) + r * v
 
         # Generate a random rotation matrix
         rot_matrix = utils.random_rotation_matrix()

@@ -39,15 +39,17 @@ class MyTestCase(unittest.TestCase):
             reference_atoms = [0],
         )
 
-    def test_insert_random_water_box(self):
+    def test_random_place_water(self):
         print()
         print("# insert_random_water_box, position should be shifted, bond_length and angle should be kept the same")
         state = self.ngcmc.simulation.context.getState(getPositions=True)
-        positions_old = state.getPositions(asNumpy=True)
-        positions_new = self.ngcmc.insert_random_water_box(state, 1)
 
         o_index, h1_index, h2_index = self.ngcmc.water_res_2_atom[1]
         self.assertListEqual([o_index, h1_index, h2_index], [5,6,7])
+
+        positions_old = state.getPositions(asNumpy=True)
+
+        positions_new = self.ngcmc.random_place_water(state, 1)
         # O sites inside the box
         pos_o = positions_new[o_index]
         self.assertFalse(np.any(pos_o == positions_old[o_index])) # xyz should all be different
@@ -56,13 +58,27 @@ class MyTestCase(unittest.TestCase):
             self.assertTrue(0*unit.nanometer < pos_o[i])
             self.assertTrue(pos_o[i] < box_v[i][i])
 
-        # O-H bond length should be kept the same
+        self.check_water_bond_angle(positions_old, positions_new, o_index, h1_index, h2_index)
+
+        center = np.array([1.5, 1.5, 1.5]) * unit.nanometers
+        positions_new = self.ngcmc.random_place_water(state, 1, sphere_center = center)
+        # O sites inside the sphere
+        pos_o = positions_new[o_index].value_in_unit(unit.nanometer)
+        r = np.linalg.norm(pos_o - center.value_in_unit(unit.nanometer))
+        self.assertTrue(r <= self.ngcmc.sphere_radius.value_in_unit(unit.nanometer))
+
+    def check_water_bond_angle(self, positions_old, positions_new, o_index, h1_index, h2_index):
+        """
+        O-H bond length should be kept the same
+        H-O-H angle should be kept the same
+        """
         for at_index in [h1_index, h2_index]:
             bond_vec_old = positions_old[at_index] - positions_old[o_index]
             bond_vec_new = positions_new[at_index] - positions_new[o_index]
             bond_length_old = np.linalg.norm(bond_vec_old)
             bond_length_new = np.linalg.norm(bond_vec_new)
             self.assertAlmostEqual(bond_length_old, bond_length_new)
+            # print("bond length", bond_length_old, bond_length_new)
 
         angle_list = []
         for pos in [positions_old, positions_new]:
@@ -71,6 +87,7 @@ class MyTestCase(unittest.TestCase):
             angle = np.arccos(np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2)))
             angle_list.append(angle)
         self.assertAlmostEqual(angle_list[0], angle_list[1])
+        # print("angle", angle_list[0], angle_list[1])
 
 
 
