@@ -7,8 +7,8 @@
 
     <title>utils &#8212; GrandFEP  documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
-    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=19d41f5c" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=3f530b75" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=fd3c8104" />
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
@@ -24,9 +24,69 @@
   
 
   </head><body>
-  
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">GrandFEP</a></h1>
 
-    <div class="document">
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=huichenggong&repo=GrandFEP&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/tutorial.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">GrandFEP API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sampler.html">sampler</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">utils</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="commandline.html">GrandFEP CLI</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">GrandFEP API</a><ul>
+      <li>Previous: <a href="sampler/NoneqGrandCanonicalMonteCarloSampler.html" title="previous chapter">NoneqGrandCanonicalMonteCarloSampler</a></li>
+      <li>Next: <a href="commandline.html" title="next chapter">GrandFEP CLI</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
       <div class="documentwrapper">
         <div class="bodywrapper">
           
@@ -35,6 +95,63 @@
             
   <section id="module-grandfep.utils">
 <span id="utils"></span><h1>utils<a class="headerlink" href="#module-grandfep.utils" title="Link to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.find_reference_atom_indices">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">find_reference_atom_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_atoms_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.find_reference_atom_indices" title="Link to this definition">¶</a></dt>
+<dd><p>Find atom indices in the topology that match the given reference atom definitions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>topology</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Topology</span></code></span>) – OpenMM topology object</p></li>
+<li><p><strong>ref_atoms_list</strong> (<em>list</em>) – <p>A list of dictionaries specifying reference atoms.
+Each dictionary can contain any combination of the following keys:</p>
+<ul>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">chain_index</span></code>: int</dt><dd><p>Index of the chain in the topology.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">res_name</span></code>: str</dt><dd><p>Residue name (e.g., “HOH”).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">res_id</span></code>: str</dt><dd><p>In openmm topology, res_id is string.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">res_index</span></code>: int</dt><dd><p>0-based index of the residue in the topology.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">atom_name</span></code>: str</dt><dd><p>Atom name (e.g., “O”, “H1”).</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of integer atom indices matching the provided atom specifications.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">top</span> <span class="o">=</span> <span class="s2">&quot;test/KcsA_5VKE_SF/step1_pdbreader_12WAT.psf&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">topology</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">load_top</span><span class="p">(</span><span class="n">top</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ref_atoms_list</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;res_id&quot;</span><span class="p">:</span><span class="s2">&quot;71&quot;</span><span class="p">,</span> <span class="s2">&quot;res_name&quot;</span><span class="p">:</span><span class="s2">&quot;GLU&quot;</span><span class="p">,</span> <span class="s2">&quot;atom_name&quot;</span><span class="p">:</span><span class="s2">&quot;O&quot;</span><span class="p">}]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">utils</span><span class="o">.</span><span class="n">find_reference_atom_indices</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">ref_atoms_list</span><span class="p">)</span>
+<span class="go">[21, 164, 307, 450]</span>
+</pre></div>
+</div>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="grandfep.utils.load_sys">
 <span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">load_sys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sys_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.load_sys" title="Link to this definition">¶</a></dt>
@@ -51,8 +168,8 @@
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">grandfep</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">system</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">load_sys</span><span class="p">(</span><span class="s2">&quot;system.xml.gz&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="kn">from</span><span class="w"> </span><span class="nn">grandfep</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+<span class="linenos">2</span><span class="n">system</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">load_sys</span><span class="p">(</span><span class="s2">&quot;system.xml.gz&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -83,6 +200,57 @@ to define the box. Without setting the box, trajectory files may lack box inform
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.random_rotation_matrix">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">random_rotation_matrix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.random_rotation_matrix" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a random rotation matrix using Shoemake method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A 3x3 rotation matrix.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="linenos"> 2</span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">grandfep</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+<span class="linenos"> 4</span><span class="k">def</span><span class="w"> </span><span class="nf">gen_random_vec</span><span class="p">():</span>
+<span class="linenos"> 5</span>    <span class="n">axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="linenos"> 6</span>    <span class="n">axis</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
+<span class="linenos"> 7</span>    <span class="k">return</span> <span class="n">axis</span>
+<span class="linenos"> 8</span><span class="n">res_new</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 9</span><span class="n">res_ref</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">10</span><span class="n">vec_init</span> <span class="o">=</span> <span class="n">gen_random_vec</span><span class="p">()</span> <span class="c1"># regardless of the initial vector, the rotated vector should have uniform distribution on x,y,z</span>
+<span class="linenos">11</span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100000</span><span class="p">):</span>
+<span class="linenos">12</span>    <span class="n">rot_matrix</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">random_rotation_matrix</span><span class="p">()</span>
+<span class="linenos">13</span>    <span class="n">res_new</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">rot_matrix</span><span class="p">,</span> <span class="n">vec_init</span><span class="p">))</span>
+<span class="linenos">14</span>    <span class="n">res_ref</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gen_random_vec</span><span class="p">())</span>
+<span class="linenos">15</span><span class="n">res_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">res_new</span><span class="p">)</span>
+<span class="linenos">16</span><span class="n">res_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">res_ref</span><span class="p">)</span>
+<span class="linenos">17</span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="linenos">18</span><span class="k">for</span> <span class="n">res</span><span class="p">,</span> <span class="n">ax_list</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="n">res_new</span><span class="p">,</span> <span class="n">res_ref</span><span class="p">],</span> <span class="n">axes</span><span class="p">):</span>
+<span class="linenos">19</span>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ax_list</span><span class="p">):</span>
+<span class="linenos">20</span>        <span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">res</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.random_rotation_matrix_protoms">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">random_rotation_matrix_protoms</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.random_rotation_matrix_protoms" title="Link to this definition">¶</a></dt>
+<dd><p>Copied from <a class="reference external" href="https://github.com/essex-lab/grand/blob/master/grand/utils.py">https://github.com/essex-lab/grand/blob/master/grand/utils.py</a>. Possibly be wrong.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A 3x3 rotation matrix.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 
@@ -90,61 +258,8 @@ to define the box. Without setting the box, trajectory files may lack box inform
           
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="Main">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">GrandFEP</a></h1>
-
-
-
-
-
-
-
-
-
-<search id="searchbox" style="display: none" role="search">
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">GrandFEP API</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="sampler.html">sampler</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">utils</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="commandline.html">GrandFEP CLI</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-  <li><a href="modules.html">GrandFEP API</a><ul>
-      <li>Previous: <a href="sampler/NoneqGrandCanonicalMonteCarloSampler.html" title="previous chapter">NoneqGrandCanonicalMonteCarloSampler</a></li>
-      <li>Next: <a href="commandline.html" title="next chapter">GrandFEP CLI</a></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
+    <div class="clearer"></div>
+  </div>
     <div class="footer">
       &#169;2025, Chenggong Hui.
       
@@ -157,6 +272,10 @@ to define the box. Without setting the box, trajectory files may lack box inform
           rel="nofollow">Page source</a>
     </div>
 
+    
+    <a href="https://github.com/huichenggong/GrandFEP" class="github">
+        <img src="_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
     
 
     

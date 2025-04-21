@@ -7,14 +7,14 @@
 
     <title>Introduction &#8212; GrandFEP  documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
-    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=19d41f5c" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=3f530b75" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=fd3c8104" />
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="GrandFEP API" href="modules.html" />
+    <link rel="next" title="Tutorials" href="tutorial/tutorial.html" />
     <link rel="prev" title="GrandFEP documentation" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -24,9 +24,69 @@
   
 
   </head><body>
-  
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">GrandFEP</a></h1>
 
-    <div class="document">
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=huichenggong&repo=GrandFEP&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#background">1. Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">2. Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#citation">3. Citation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#author-s-and-contact">4. Author(s) and Contact</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/tutorial.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">GrandFEP API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="commandline.html">GrandFEP CLI</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">GrandFEP documentation</a></li>
+      <li>Next: <a href="tutorial/tutorial.html" title="next chapter">Tutorials</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
       <div class="documentwrapper">
         <div class="bodywrapper">
           
@@ -52,7 +112,10 @@ calculations using OpenMM</p>
 </section>
 <section id="prepare-the-environment">
 <h3>2.2. Prepare the environment<a class="headerlink" href="#prepare-the-environment" title="Link to this heading">¶</a></h3>
-<p>In the repository directory, you can find the env.yml file. You can use it to create a conda environment</p>
+<p>In the repository root directory, a <code class="docutils literal notranslate"><span class="pre">env.yml</span></code> file is provided. You can use it to create a conda environment.
+Please edit the cuda and MPI version before you run the following command. Use <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code>
+to check the hightest cuda version the driver supports. MPI version should follow your cluster
+configuration.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mamba<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>env.yml
 <span class="c1"># edit cuda and MPI version according to your cluster</span>
 mamba<span class="w"> </span>activate<span class="w"> </span>grandfep_env
@@ -63,25 +126,29 @@ pip<span class="w"> </span>install<span class="w"> </span>.
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mamba<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>grandfep_env<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.12<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>pandas<span class="w"> </span>openmm<span class="w"> </span>openmmtools<span class="w"> </span>pymbar-core<span class="w"> </span><span class="nv">openmpi</span><span class="o">=</span><span class="m">4</span>.1.5<span class="w"> </span>mpi4py<span class="w"> </span>parmed<span class="w"> </span><span class="nv">cudatoolkit</span><span class="o">=</span><span class="m">11</span>.8
 </pre></div>
 </div>
-<p>Be aware that the CUDA version should be compatible with your GPU drivers, and the OpenMPI version
-should be compatible with your cluster.</p>
+<p>Check cuda and MPI as what we previously mentioned.</p>
 </section>
 <section id="later-on-the-cluster">
 <h3>2.3. Later on the cluster<a class="headerlink" href="#later-on-the-cluster" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>/home/NAME/SOFTWARE/miniforge3/bin/activate<span class="w"> </span>grandfep_env
+module<span class="w"> </span>load<span class="w"> </span>openmpi4/gcc/4.1.5
 </pre></div>
 </div>
+</section>
+</section>
+<section id="citation">
+<h2>3. Citation<a class="headerlink" href="#citation" title="Link to this heading">¶</a></h2>
 <p>The GrandFEP module is released under the MIT licence. I hope my publication will come soon.</p>
 </section>
-</section>
 <section id="author-s-and-contact">
-<h2>3. Author(s) and Contact<a class="headerlink" href="#author-s-and-contact" title="Link to this heading">¶</a></h2>
+<h2>4. Author(s) and Contact<a class="headerlink" href="#author-s-and-contact" title="Link to this heading">¶</a></h2>
 <p><strong>Chenggong Hui</strong></p>
 <ul class="simple">
 <li><p><strong>Email:</strong> <a class="reference external" href="mailto:chenggong&#46;hui&#37;&#52;&#48;mpinat&#46;mpg&#46;de">chenggong<span>&#46;</span>hui<span>&#64;</span>mpinat<span>&#46;</span>mpg<span>&#46;</span>de</a></p></li>
 <li><p><strong>ORCID:</strong> <a class="reference external" href="https://orcid.org/0000-0003-2875-4739">0000-0003-2875-4739</a></p></li>
+<li><p><strong>GitHub</strong> <a class="reference external" href="https://github.com/huichenggong/GrandFEP">GrandFEP</a></p></li>
 </ul>
-<p>For any questions or issues regarding this module, please contact Chenggong Hui.</p>
+<p>For any questions or issues regarding this module, please contact Chenggong Hui (惠成功).</p>
 </section>
 </section>
 
@@ -90,60 +157,8 @@ should be compatible with your cluster.</p>
           
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="Main">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">GrandFEP</a></h1>
-
-
-
-
-
-
-
-
-
-<search id="searchbox" style="display: none" role="search">
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#background">1. Background</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#installation">2. Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#author-s-and-contact">3. Author(s) and Contact</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">GrandFEP API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="commandline.html">GrandFEP CLI</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="index.html" title="previous chapter">GrandFEP documentation</a></li>
-      <li>Next: <a href="modules.html" title="next chapter">GrandFEP API</a></li>
-  </ul></li>
-</ul>
-</div>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
+    <div class="clearer"></div>
+  </div>
     <div class="footer">
       &#169;2025, Chenggong Hui.
       
@@ -156,6 +171,10 @@ should be compatible with your cluster.</p>
           rel="nofollow">Page source</a>
     </div>
 
+    
+    <a href="https://github.com/huichenggong/GrandFEP" class="github">
+        <img src="_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
     
 
     

@@ -7,8 +7,8 @@
 
     <title>NoneqGrandCanonicalMonteCarloSampler &#8212; GrandFEP  documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
-    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
-    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=19d41f5c" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=3f530b75" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=fd3c8104" />
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
@@ -24,9 +24,71 @@
   
 
   </head><body>
-  
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">GrandFEP</a></h1>
 
-    <div class="document">
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=huichenggong&repo=GrandFEP&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/tutorial.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../modules.html">GrandFEP API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../sampler.html">sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils.html">utils</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../commandline.html">GrandFEP CLI</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../modules.html">GrandFEP API</a><ul>
+  <li><a href="../sampler.html">sampler</a><ul>
+      <li>Previous: <a href="BaseGrandCanonicalMonteCarloSampler.html" title="previous chapter">BaseGrandCanonicalMonteCarloSampler</a></li>
+      <li>Next: <a href="../utils.html" title="next chapter">utils</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
       <div class="documentwrapper">
         <div class="bodywrapper">
           
@@ -43,8 +105,29 @@
 <p>In this class, GCMC is achieved by performing insertion/deletion in a nonequilibrium candidate Monte Carlo manner.
 The work value of the insertion/deletion will be used to evaluate the acceptance ratio. Insertion/deletion can
 either be performed in the whole box or in a sub-volume (active site) of the box. In an equilibrium sampling, when
-the water is free to move in/out of the sub-volume, I recommend using both the whole box and the sub-volume for
-certain ratio.</p>
+the water is free to move in/out of the sub-volume, I recommend alternating between GCMC and box.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">System</span></code></span>) – The OpenMM System object. Must include <cite>CustomNonbondedForce</cite> and <cite>NonbondedForce</cite> with
+appropriate per-particle parameters and global parameter definitions.</p></li>
+<li><p><strong>topology</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Topology</span></code></span>) – The OpenMM Topology object. Must contain water molecules with the specified residue and atom names. Must have
+the correct boxVector. Only rectangular box is supported.</p></li>
+<li><p><strong>temperature</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code></span>) – The reference temperature for the system, with proper units (e.g., kelvin).</p></li>
+<li><p><strong>collision_rate</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code></span>) – The collision rate (friction) for the Langevin integrator, with time units.</p></li>
+<li><p><strong>timestep</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code></span>) – The timestep for the integrator, with time units (e.g., femtoseconds).</p></li>
+<li><p><strong>log</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code>]</span>) – Path to the log file. This file will be opened in appended mode.</p></li>
+<li><p><strong>platform</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Platform</span></code></span>) – The OpenMM computational platform to use. Default is CUDA.</p></li>
+<li><p><strong>water_resname</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The residue name of water in the topology. Default is ‘HOH’.</p></li>
+<li><p><strong>water_O_name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The atom name of oxygen in water. Default is ‘O’.</p></li>
+<li><p><strong>position</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code></span>) – Initial position of the system. Need to be provided for box Vectors. Default is None.</p></li>
+<li><p><strong>chemical_potential</strong> – Chemical potential of the system. with units. Default is None.</p></li>
+<li><p><strong>standard_volume</strong> – Standard volume of a water molecule in the reservoir. with units. Default is None.</p></li>
+<li><p><strong>sphere_radius</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code></span>) – Radius of the GCMC sphere. Default is 10.0 * unit.angstroms.</p></li>
+<li><p><strong>reference_atoms</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span>) – A list of atom indices in the topology that will be set as the center of the GCMC sphere. Default is None.</p></li>
+</ul>
+</dd>
+</dl>
 <section id="additional-attributes">
 <h2>Additional Attributes<a class="headerlink" href="#additional-attributes" title="Link to this heading">¶</a></h2>
 <dl class="simple">
@@ -60,6 +143,12 @@ certain ratio.</p>
 </ul>
 </dd>
 </dl>
+</dd>
+<dt>chemical_potential<span class="classifier">unit.Quantity</span></dt><dd><p>Chemical potential of the system.</p>
+</dd>
+<dt>standard_volume<span class="classifier">unit.Quantity</span></dt><dd><p>Standard volume of a water molecule in the reservoir.</p>
+</dd>
+<dt>reference_atoms<span class="classifier">list</span></dt><dd><p>A list of atom indices in the topology that will be set as the center of the GCMC sphere.</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -139,6 +228,21 @@ only one that is switching.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.deletion_move_GCMC">
+<span class="sig-name descname"><span class="pre">deletion_move_GCMC</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.deletion_move_GCMC" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.deletion_move_box">
+<span class="sig-name descname"><span class="pre">deletion_move_box</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.deletion_move_box" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.gcmc_move">
+<span class="sig-name descname"><span class="pre">gcmc_move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.gcmc_move" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_ghost_list">
 <span class="sig-name descname"><span class="pre">get_ghost_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">check_system</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_ghost_list" title="Link to this definition">¶</a></dt>
 <dd><p>Get a copy of the current ghost water list.</p>
@@ -201,49 +305,67 @@ epsilonScale
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_reference_atom_indices">
-<span class="sig-name descname"><span class="pre">get_reference_atom_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_atoms_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_reference_atom_indices" title="Link to this definition">¶</a></dt>
-<dd><p>Find atom indices in the topology that match the given reference atom definitions.</p>
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.insertion_move_GCMC">
+<span class="sig-name descname"><span class="pre">insertion_move_GCMC</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.insertion_move_GCMC" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.insertion_move_box">
+<span class="sig-name descname"><span class="pre">insertion_move_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_vdw_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_coulomb_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_prop</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.insertion_move_box" title="Link to this definition">¶</a></dt>
+<dd><p>Perform a non-equilibrium insertion. The vdw will be turned on first, followed by coulomb</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ref_atoms_list</strong> (<em>list</em><em> of </em><em>dict</em>) – <p>A list of dictionaries specifying reference atoms.
-Each dictionary can contain any combination of the following keys:</p>
-<ul class="simple">
-<li><dl class="simple">
-<dt><cite>resname</cite><span class="classifier">str</span></dt><dd><p>Residue name (e.g., “HOH”).</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l_vdw_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code> value that defines the path of insertion</p></li>
+<li><p><strong>l_coulomb_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code> value that defines the path of insertion</p></li>
+<li><p><strong>n_prop</strong> (<em>int</em>) – Number of propergation step (equlibrium MD) between each lambda switching.</p></li>
+</ul>
 </dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>resid</cite><span class="classifier">int</span></dt><dd><p>Residue number.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>resindex</cite><span class="classifier">int</span></dt><dd><p>Index of the residue in the topology.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>chainindex</cite><span class="classifier">int</span></dt><dd><p>Index of the chain in the topology.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>name</cite><span class="classifier">str</span></dt><dd><p>Atom name (e.g., “O”, “H1”).</p>
-</dd>
-</dl>
-</li>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>positions</strong> (<em>unit.Quantity</em>) – Positions after this GCMC move.</p></li>
+<li><p><strong>velocities</strong> (<em>unit.Quantity</em>) – Velocities after this GCMC move.</p></li>
+<li><p><strong>work</strong> (<em>unit.Quantity</em>) – Work during the insertion process.</p></li>
+<li><p><strong>accept</strong> (<em>bool</em>) – Whether the insertion move was accepted.</p></li>
 </ul>
 </p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A list of integer atom indices matching the provided atom specifications.</p>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.random_place_water">
+<span class="sig-name descname"><span class="pre">random_place_water</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sphere_center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.random_place_water" title="Link to this definition">¶</a></dt>
+<dd><p>Shift the coordinate+orientation of a water molecule to a random place. If the center is None, a random position
+in the box will be selected. If the center is not None, a randomed position in the GCMC sphere will be selected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> (<em>openmm.State</em>) – The current state of the simulation context. The positions will be read from this state.</p></li>
+<li><p><strong>res_index</strong> (<em>int</em>) – The residue index of the water molecule to be shifted.</p></li>
+<li><p><strong>sphere_center</strong> (<em>unit.Quantity</em>) – The center of the GCMC sphere. If None, a random position in the box will be selected. Default is None.</p></li>
+</ul>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>positions</strong> (<em>unit.Quantity</em>) – The new positions with the water molecule shifted.</p></li>
+<li><p><strong>velocities</strong> (<em>unit.Quantity</em>) – The new velocities with the water molecule shifted.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.report">
+<span class="sig-name descname"><span class="pre">report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">write_dcd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.report" title="Link to this definition">¶</a></dt>
+<dd><p>Report the GC moves and write trajectory if needed.
+:type write_dcd: 
+:param write_dcd:
+:return:</p>
 </dd></dl>
 
 <dl class="py method">
@@ -297,63 +419,8 @@ the updated <cite>ghost_list</cite>. Default is True.</p></li>
           
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="Main">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../index.html">GrandFEP</a></h1>
-
-
-
-
-
-
-
-
-
-<search id="searchbox" style="display: none" role="search">
-    <div class="searchformwrapper">
-    <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="../modules.html">GrandFEP API</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="../sampler.html">sampler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../utils.html">utils</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../commandline.html">GrandFEP CLI</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../index.html">Documentation overview</a><ul>
-  <li><a href="../modules.html">GrandFEP API</a><ul>
-  <li><a href="../sampler.html">sampler</a><ul>
-      <li>Previous: <a href="BaseGrandCanonicalMonteCarloSampler.html" title="previous chapter">BaseGrandCanonicalMonteCarloSampler</a></li>
-      <li>Next: <a href="../utils.html" title="next chapter">utils</a></li>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
+    <div class="clearer"></div>
+  </div>
     <div class="footer">
       &#169;2025, Chenggong Hui.
       
@@ -366,6 +433,10 @@ the updated <cite>ghost_list</cite>. Default is True.</p></li>
           rel="nofollow">Page source</a>
     </div>
 
+    
+    <a href="https://github.com/huichenggong/GrandFEP" class="github">
+        <img src="../_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
     
 
     
