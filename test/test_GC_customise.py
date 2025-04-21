@@ -2,7 +2,6 @@ import unittest
 from pathlib import Path
 
 import numpy as np
-from docutils.parsers.rst.directives import positive_int
 
 from openmm import app, unit, openmm
 
