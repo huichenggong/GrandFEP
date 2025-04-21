@@ -231,12 +231,14 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         res_index : int
             The residue index of the water molecule to be shifted.
         sphere_center : unit.Quantity
-            The center of the GCMC sphere. If None, a random position in the box will be selected.
+            The center of the GCMC sphere. If None, a random position in the box will be selected. Default is None.
 
         Returns
         -------
         positions : unit.Quantity
             The new positions with the water molecule shifted.
+        velocities : unit.Quantity
+            The new velocities with the water molecule shifted.
         """
 
         # Inside this function, all the positions are in nanometers.
@@ -271,8 +273,12 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         # Translate the 1st atom
         positions[o_index] = insertion_point
 
-        return positions * unit.nanometer
+        # rotate all velocities
+        vel = state.getVelocities(asNumpy=True).value_in_unit(unit.nanometer/unit.picosecond)
+        for atom_index in self.water_res_2_atom[res_index]:
+            vel[atom_index, :] = np.dot(rot_matrix, vel[atom_index, :])
 
+        return positions * unit.nanometer, vel * unit.nanometer/unit.picosecond
 
     def gcmc_move(self, box: bool = 0):
         pass
@@ -294,10 +300,20 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
         """
         # save initial (r,p)
+        state = self.simulation.context.getState(getPositions=True, getVelocities=True, getEnergy=True)
+        position_old = state.getPositions(asNumpy=True)
+        velocity_old = state.getVelocities(asNumpy=True)
+        ghost_list_old = self.get_ghost_list()
 
         # change integrator
+        self.compound_integrator.setCurrentIntegrator(1)
 
-        # random (r,p) of the switching water molecule
+        # random (r,p) of the switching water
+        positions_new, velocity_new = self.random_place_water(state, ghost_list_old[0])
+
+
+
+
 
         # work process
         ## Coulomb 0->1
@@ -317,7 +333,9 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         # update gc_count
 
         # change integrator back
-        pass
+        self.compound_integrator.setCurrentIntegrator(0)
+
+        #
 
     def deletion_move_box(self):
         pass

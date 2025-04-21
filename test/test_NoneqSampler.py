@@ -42,14 +42,14 @@ class MyTestCase(unittest.TestCase):
     def test_random_place_water(self):
         print()
         print("# insert_random_water_box, position should be shifted, bond_length and angle should be kept the same")
-        state = self.ngcmc.simulation.context.getState(getPositions=True)
+        state = self.ngcmc.simulation.context.getState(getPositions=True, getVelocities=True)
 
         o_index, h1_index, h2_index = self.ngcmc.water_res_2_atom[1]
         self.assertListEqual([o_index, h1_index, h2_index], [5,6,7])
 
         positions_old = state.getPositions(asNumpy=True)
 
-        positions_new = self.ngcmc.random_place_water(state, 1)
+        positions_new, vel = self.ngcmc.random_place_water(state, 1)
         # O sites inside the box
         pos_o = positions_new[o_index]
         self.assertFalse(np.any(pos_o == positions_old[o_index])) # xyz should all be different
@@ -61,7 +61,7 @@ class MyTestCase(unittest.TestCase):
         self.check_water_bond_angle(positions_old, positions_new, o_index, h1_index, h2_index)
 
         center = np.array([1.5, 1.5, 1.5]) * unit.nanometers
-        positions_new = self.ngcmc.random_place_water(state, 1, sphere_center = center)
+        positions_new, vel = self.ngcmc.random_place_water(state, 1, sphere_center = center)
         # O sites inside the sphere
         pos_o = positions_new[o_index].value_in_unit(unit.nanometer)
         r = np.linalg.norm(pos_o - center.value_in_unit(unit.nanometer))
