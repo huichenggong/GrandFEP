@@ -422,9 +422,6 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.nonbonded_force.addParticleParameterOffset("lambda_gc_coulomb", at_index, charge, 0.0, 0.0)
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
 
-        # add Derivative
-        self.custom_nonbonded_force.addEnergyParameterDerivative('lambda_gc_vdw')
-
     def _customise_force_charmm(self, system):
         """
         In Charmm, NonbondedForce handles electrostatics, and CustomNonbondedForce handles vdW. For vdW, this function will add
@@ -510,9 +507,6 @@ class BaseGrandCanonicalMonteCarloSampler:
             charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
             self.nonbonded_force.addParticleParameterOffset("lambda_gc_coulomb", at_index, charge, 0.0, 0.0)
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
-
-        # add Derivative
-        self.custom_nonbonded_force.addEnergyParameterDerivative('lambda_gc_vdw')
 
     def _customise_force_hybrid(self, system):
         """
@@ -605,6 +599,39 @@ class BaseGrandCanonicalMonteCarloSampler:
         for atom_idx in range(self.custom_nonbonded_force.getNumParticles()):
             params = self.custom_nonbonded_force.getParticleParameters(atom_idx)
             self.custom_nonbonded_force.setParticleParameters(atom_idx, [*params, 1, 0]) # add is_real=1, is_switching=0
+
+        # find env atoms in interaction groups in CustomNonbondedForce
+        n_groups = self.custom_nonbonded_force.getNumInteractionGroups()
+        if n_groups != 8:
+            raise ValueError("The number of interaction groups is not 8")
+
+        env_index_list = [self.custom_nonbonded_force.getInteractionGroupParameters(i)[1] for i in [1, 3, 4]]
+        flag_1 = env_index_list[0] == env_index_list[1]
+        flag_2 = env_index_list[1] == env_index_list[2]
+        if not flag_1 or not flag_2:
+            raise ValueError(f"{env_index_list}\nThe selected interaction groups (1,3,4) are not the same.")
+
+        at_list = [at for at in self.topology.atoms()]
+        for at_index in env_index_list[0]:
+            at = at_list[at_index]
+            chg, sig, eps = self.nonbonded_force.getParticleParameters(at_index)
+            if at.element.symbol != "H" and eps.value_in_unit(unit.kilojoules_per_mole) < 1e-6:
+                raise ValueError(f"The atom {at.name} in residue {at.residue.index} is a env atom and it has a zero epsilon {eps} in NonbondedForce. Please check the system.")
+
+        for res_index, at_list in self.water_res_2_atom.items():
+            for at_index in at_list:
+                if not at_index in env_index_list[0]:
+                    raise ValueError(f"Water res_index={res_index} atom_index={at_index} is not found in the env group. Please check your atom mapping in HybridTopologyFactory")
+        # add env-env interaction group
+        self.custom_nonbonded_force.addInteractionGroup(env_index_list[0], env_index_list[0])
+
+        # remove all the vdw from NonbondedForce
+        for at in self.topology.atoms():
+            at_index = at.index
+            charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
+            self.nonbonded_force.setParticleParameters(at_index, charge, sigma, 0.0*epsilon)
+
+
         # Add global parameters
         self.custom_nonbonded_force.addGlobalParameter('lambda_gc_vdw', 0.0)  # lambda for vdw part of TI insertion/deletion
         self.nonbonded_force.addGlobalParameter('lambda_gc_coulomb', 0.0)  # lambda for coulomb part of TI insertion/deletion
@@ -621,9 +648,6 @@ class BaseGrandCanonicalMonteCarloSampler:
             charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
             self.nonbonded_force.addParticleParameterOffset("lambda_gc_coulomb", at_index, charge, 0.0, 0.0)
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
-
-        # add Derivative
-        self.custom_nonbonded_force.addEnergyParameterDerivative('lambda_gc_vdw')
 
     def _turn_off_vdw(self):
         """

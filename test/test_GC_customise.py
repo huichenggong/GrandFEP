@@ -184,19 +184,11 @@ class MyTestCase(unittest.TestCase):
                                11: 14, 12: 15, 13: 16, # water res_index=3
                                14: 17, 15: 18, 16: 19, # water res_index=4
                                }
-        old_to_new_core_atom_map = {0: 0,
-                                    5: 8,    6: 9,   7: 10,  # water res_index=1
-                                    8: 11,   9: 12, 10: 13,  # water res_index=2
-                                    11: 14, 12: 15, 13: 16,  # water res_index=3
-                                    14: 17, 15: 18, 16: 19,  # water res_index=4
-                                    }
-        # all the water should be included in core_group, otherwise they will be asigned as
-        # env_group. Water in the env_group will be excluded from custom_nonbonded
-
-
+        old_to_new_core_atom_map = {0: 0,}
         h_factory = utils.HybridTopologyFactory(
             sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
-            old_to_new_atom_map, old_to_new_core_atom_map,
+            old_to_new_atom_map,      # All atoms that should map from A to B
+            old_to_new_core_atom_map, # Alchemical Atoms that should map from A to B
             use_dispersion_correction=True,
             softcore_LJ_v2=False)
 
@@ -206,7 +198,7 @@ class MyTestCase(unittest.TestCase):
             h_factory.hybrid_positions, platform)
 
 
-        print("## Force should be the same before and after adding hybrid")
+        print("## 1. Force should be the same before and after adding hybrid")
         inpcrd_4wat, prmtop_4wat, sys_4wat = load_amber_sys(
             base / "CH4_C2H6" /"lig0"/ "06_solv.inpcrd",
             base / "CH4_C2H6" /"lig0"/ "06_solv.prmtop", nonbonded_settings)
@@ -219,7 +211,7 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
 
-        print("## Force should be the same after customization")
+        print("## 2. Force should be the same after customization")
         baseGC = sampler.BaseGrandCanonicalMonteCarloSampler(
             h_factory.hybrid_system,
             h_factory.omm_hybrid_topology,
@@ -253,7 +245,7 @@ class MyTestCase(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force_4wat[1:], force[1:]) # There is dummy atom connected to atom 0 in state A
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
-        print("## Set lambda_gc=0.0 for the switching water. Force should be the same as a 3-water system")
+        print("## 3. Set lambda_gc=0.0 for the switching water. Force should be the same as a 3-water system")
         inpcrd_3wat, prmtop_3wat, sys_3wat = load_amber_sys(
             base / "CH4_C2H6" /"lig0"/ "MOL_3wat.inpcrd",
             base / "CH4_C2H6" /"lig0"/ "MOL_3wat.prmtop", nonbonded_settings)
@@ -274,7 +266,7 @@ class MyTestCase(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force_3wat[1:], force[1:])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
-        print("## Set one more water to ghost. Force should be the same as a 2-water system")
+        print("## 4. Set one more water to ghost. Force should be the same as a 2-water system")
         inpcrd_2wat, prmtop_2wat, sys_2wat = load_amber_sys(
             base / "CH4_C2H6" /"lig0"/ "MOL_2wat.inpcrd",
             base / "CH4_C2H6" /"lig0"/ "MOL_2wat.prmtop", nonbonded_settings)
@@ -311,15 +303,11 @@ class MyTestCase(unittest.TestCase):
                                11: 14, 12: 15, 13: 16,  # water res_index=3
                                14: 17, 15: 18, 16: 19,  # water res_index=4
                                }
-        old_to_new_core_atom_map = {0: 0,
-                                    5: 8, 6: 9, 7: 10,  # water res_index=1
-                                    8: 11, 9: 12, 10: 13,  # water res_index=2
-                                    11: 14, 12: 15, 13: 16,  # water res_index=3
-                                    14: 17, 15: 18, 16: 19,  # water res_index=4
-                                    }
+        old_to_new_core_atom_map = {0: 0}
         h_factory = utils.HybridTopologyFactory(
             sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
-            old_to_new_atom_map, old_to_new_core_atom_map,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
             use_dispersion_correction=True,
             softcore_LJ_v2=False)
 
@@ -344,7 +332,7 @@ class MyTestCase(unittest.TestCase):
                     "lambda_sterics_insert",]:
             baseGC.simulation.context.setParameter(lam, 1.0)
 
-        print("## Set lambda_gc=1.0. Force should be the same as a 4-water system.")
+        print("## 1. Set lambda_gc=1.0. Force should be the same as a 4-water system.")
         baseGC.simulation.context.setParameter("lambda_gc_coulomb", 1.0)
         baseGC.simulation.context.setParameter("lambda_gc_vdw", 1.0)
         baseGC.simulation.context.setPositions(h_factory.hybrid_positions)
@@ -365,7 +353,7 @@ class MyTestCase(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force[index_hyb], force_4wat[1:])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
-        print("## Set lambda_gc=1.0. Force should be the same as a 3-water system.")
+        print("## 2. Set lambda_gc=1.0. Force should be the same as a 3-water system.")
         baseGC.simulation.context.setParameter("lambda_gc_coulomb", 0.0)
         baseGC.simulation.context.setParameter("lambda_gc_vdw", 0.0)
         state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
@@ -384,7 +372,7 @@ class MyTestCase(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force[index_hyb], force_3wat[1:])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
-        print("## Set one more water to ghost. Force should be the same as a 2-water system.")
+        print("## 3. Set one more water to ghost. Force should be the same as a 2-water system.")
         baseGC.set_ghost_list([3])
         state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
         pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
@@ -401,7 +389,7 @@ class MyTestCase(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force[index_hyb], force_2wat[1:])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
-        print("## Swap the coordinate of water 3 and 4. Force should not change.")
+        print("## 4. Swap the coordinate of water 3 and 4. Force should not change.")
         pos[[11, 12, 13]], pos[[14, 15, 16]] = pos[[14, 15, 16]], pos[[11, 12, 13]]
         baseGC.simulation.context.setPositions(pos)
         state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
@@ -409,7 +397,7 @@ class MyTestCase(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force[index_hyb], force_2wat[1:])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
-        print("## Set lambda_gc=1.0 for the switching water. Force should be the same as a 3-water system")
+        print("## 5. Set lambda_gc=1.0 for the switching water. Force should be the same as a 3-water system")
         baseGC.simulation.context.setParameter("lambda_gc_coulomb", 1.0)
         baseGC.simulation.context.setParameter("lambda_gc_vdw", 1.0)
         state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
@@ -524,6 +512,33 @@ class MyTestCase(unittest.TestCase):
                 "test_base_Charmm_ff.log",
                 platform=platform)
 
+    def test_hybridFF_OPCwater(self):
+        print()
+        print("# Test HybridFF with OPC 4-site water")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+
+        base = Path(__file__).resolve().parent
+
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "HSP90/water_leg/bcc_gaff2" / "2xab/solv_OPC/05_opc.inpcrd",
+            base / "HSP90/water_leg/bcc_gaff2" / "2xab/solv_OPC/05_opc.prmtop", nonbonded_settings)
+        inpcrd1, prmtop1, sys1 = load_amber_sys(
+            base / "HSP90/water_leg/bcc_gaff2" / "2xjg/solv_OPC/05_opc.inpcrd",
+            base / "HSP90/water_leg/bcc_gaff2" / "2xjg/solv_OPC/05_opc.prmtop", nonbonded_settings)
+        old_to_new_atom_map = {}
+        old_to_new_core_atom_map = {}
+        for atA, atB in np.loadtxt(base/"HSP90/water_leg/bcc_gaff2/pairs1.dat", dtype=int):
+            old_to_new_atom_map[atA-1] = atB-1
+            old_to_new_core_atom_map[atA-1] = atB-1
+        for i in range(41,8145):
+            old_to_new_atom_map[i] = i+3
+        h_factory = utils.HybridTopologyFactory(
+            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
+            old_to_new_atom_map,       # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            softcore_LJ_v2=False)
 
 if __name__ == '__main__':
     unittest.main()

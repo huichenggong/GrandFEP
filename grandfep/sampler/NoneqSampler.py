@@ -7,7 +7,6 @@ import math
 import numpy as np
 
 from openmm import unit, app, openmm
-from openmmtools.integrators import BAOABIntegrator
 
 from .. import utils
 
