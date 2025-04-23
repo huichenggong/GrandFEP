@@ -54,11 +54,16 @@ def match_force(force1, force2):
 def load_amber_sys(inpcrd_file, prmtop_file, nonbonded_settings):
     """
     Load Amber system from inpcrd and prmtop file.
-    :param inpcrd_file:
+
+    Parameters
+    ----------
+    inpcrd_file : str
 
     :param prmtop_file:
 
     :return: (inpcrd, prmtop, sys)
+    Returns
+    -------
         inpcrd: openmm.app.AmberInpcrdFile
         prmtop: openmm.app.AmberPrmtopFile
         sys: openmm.System
@@ -539,6 +544,26 @@ class MyTestCase(unittest.TestCase):
             old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
             use_dispersion_correction=True,
             softcore_LJ_v2=False)
+
+        energy_h, force_h = calc_energy_force(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            h_factory.hybrid_positions, platform)
+
+
+        print("## 1. Force should be the same before and after adding hybrid")
+        inpcrd, prmtop, sys = load_amber_sys(
+            base / "HSP90/water_leg/bcc_gaff2" / "2xab/solv_OPC/05_opc.inpcrd",
+            base / "HSP90/water_leg/bcc_gaff2" / "2xab/solv_OPC/05_opc.prmtop", nonbonded_settings)
+        energy_allwat, force_allwat = calc_energy_force(sys, prmtop.topology, inpcrd.positions, platform)
+
+        # The forces should be the same
+        self.assertEqual(len(force_allwat), 8145)
+        # self.assertEqual(len(force_h), 24)
+        all_close_flag, mis_match_list, error_msg = match_force(
+            force_allwat[41:8145], force_h[41:8145])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
 
 if __name__ == '__main__':
     unittest.main()
