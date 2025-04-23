@@ -5,6 +5,7 @@ from pathlib import Path
 import math
 
 import numpy as np
+from mpi4py import MPI
 
 from openmm import unit, app, openmm
 
@@ -30,7 +31,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
     topology :
         The OpenMM Topology object. Must contain water molecules with the specified residue and atom names. Must have
-        the correct boxVector. Only rectangular box is supported.
+        the correct boxVector. Only a rectangular box is supported.
 
     temperature :
         The reference temperature for the system, with proper units (e.g., kelvin).
@@ -57,7 +58,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         Initial position of the system. Need to be provided for box Vectors. Default is None.
 
     chemical_potential :
-        Chemical potential of the system. with units. Default is None.
+        Chemical potential of the system, with units. Default is None.
 
     standard_volume :
         Standard volume of a water molecule in the reservoir. with units. Default is None.
@@ -421,3 +422,26 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
 
 
+class NoneqGrandCanonicalMonteCarloSamplerMPI(NoneqGrandCanonicalMonteCarloSampler):
+    """
+    Nonequilibrium Grand Canonical Monte Carlo (Noneq-GCMC) sampler with MPI (replica exchange) support.
+    """
+    def __init__(self,
+                 system: openmm.System,
+                 topology: app.Topology,
+                 temperature: unit.Quantity,
+                 collision_rate: unit.Quantity,
+                 timestep: unit.Quantity,
+                 log: Union[str, Path],
+                 platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
+                 water_resname: str = "HOH",
+                 water_O_name: str = "O",
+                 position: unit.Quantity = None,
+                 chemical_potential=None,
+                 standard_volume=None,
+                 sphere_radius: unit.Quantity = 10.0*unit.angstroms,
+                 reference_atoms: list =None
+                 ):
+        """
+        """
+        pass

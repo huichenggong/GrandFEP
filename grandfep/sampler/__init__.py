@@ -1,3 +1,3 @@
 from .base         import BaseGrandCanonicalMonteCarloSampler
-from .NoneqSampler import NoneqGrandCanonicalMonteCarloSampler
-from .NoneqMPI     import NoneqGrandCanonicalMonteCarloSamplerMPI
+from .NoneqSampler import NoneqGrandCanonicalMonteCarloSampler, NoneqGrandCanonicalMonteCarloSamplerMPI
+from .NPT          import NPTSampler, NPTSamplerMPI
