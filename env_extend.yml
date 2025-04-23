@@ -14,8 +14,8 @@ dependencies:
   - mpi4py
   - parmed
   - cudatoolkit=11.8
-  # additional packages
   - mdtraj
+  # additional packages
   - mdanalysis
   - ipykernel
   - ipywidgets
