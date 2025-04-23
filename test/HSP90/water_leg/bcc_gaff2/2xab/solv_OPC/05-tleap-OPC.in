@@ -1,0 +1,13 @@
+source leaprc.water.opc
+source leaprc.gaff2
+MOL = loadMol2 ../02-chg.mol2
+loadamberparams ../03-missing.frcmod
+
+MOLWAT = loadPdb 05_in.pdb
+
+setBox MOLWAT "vdw" 0.0
+
+saveAmberParm MOLWAT 05_opc.prmtop 05_opc.inpcrd
+savepdb       MOLWAT 05_opc.pdb
+
+quit
