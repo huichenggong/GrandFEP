@@ -7,3 +7,4 @@ sampler
 
     sampler/BaseGrandCanonicalMonteCarloSampler
     sampler/NoneqGrandCanonicalMonteCarloSampler
+    sampler/NoneqGrandCanonicalMonteCarloSamplerMPI
