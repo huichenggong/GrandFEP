@@ -2,9 +2,10 @@ import gzip
 from pathlib import Path
 from typing import Union
 
+import yaml
 import numpy as np
 
-from openmm import app, openmm
+from openmm import app, openmm, unit
 
 from .relative import HybridTopologyFactory
 
@@ -219,3 +220,103 @@ def random_rotation_matrix_protoms():
                            [xz*(1-cos_theta) - y*sin_theta, yz*(1-cos_theta) + x*sin_theta, cos_theta + z2*(1-cos_theta)  ]])
 
     return rot_matrix
+
+class MDParams:
+    """
+    Class to manage MD parameters with default values and YAML overrides.
+
+    Attributes:
+        integrator (str): Name of the integrator.
+        dt (unit.Quantity): Time step. Unit in ps
+        maxh (float): The maximum run time. Unit in hour
+        nsteps (int): Number of step.
+        nstdcd (int): Number of step per dcd trajectory output.
+        nstenergy (int): Number of step per csv energy file output.
+        tau_t (unit.Quantity): Temperature coupling time constant. Unit in ps
+        ref_t (unit.Quantity): Reference temperature. Unit in K
+        gen_vel (bool): Generate velocities.
+        gen_temp (unit.Quantity): Temperature for random velocity generation. Unit in K
+        restraint (bool): Whether to apply restraints.
+        restraint_fc (unit.Quantity): Restraint force constant. Unit in kJ/mol/nm^2
+        pcoupltype (str): Specifies the kind of pressure coupling used. MonteCarloBarostat, MonteCarloMembraneBarostat
+        ref_p (unit.Quantity): Reference pressure. Unit in bar
+        nstpcouple (int): Pressure coupling frequency.
+        surface_tension (unit.Quantity): Surface tension. Unit in bar*nm
+        ex_potential (unit.Quantity): Excess potential in GC. Unit in kcal/mol
+        standard_volume (unit.Quantity): Standard volume in GC. Unit in nm^3
+        calc_neighbor_only (bool): Whether to calculate the energy of the nearest neighbor only
+            when performing replica exchange.
+        md_gc_re_protocol (list): MD, Grand Canonical, Replica Exchange protocol. The default is
+            ``[("MD", 200),("GC", 1),("MD", 200),("RE", 1),("MD", 200),("RE", 1),("MD", 200),("RE", 1)]``
+
+    """
+
+    def __init__(self, yml_file=None):
+        # Default parameter values
+        self.integrator = "LangevinIntegrator"
+        self.dt = 0.002 * unit.picoseconds
+        self.maxh = 1.0
+        self.nsteps = 100
+        self.nstdcd = 5000
+        self.nstenergy = 1000
+        self.tau_t = 1.0 * unit.picoseconds
+        self.ref_t = 300.0 * unit.kelvin
+        self.gen_vel = True
+        self.gen_temp = 300.0 * unit.kelvin
+        self.restraint = False
+        self.restraint_fc = 1000.0  * unit.kilojoule_per_mole / unit.nanometer**2
+        self.pcoupltype = None
+        self.ref_p = 1.0 * unit.bar
+        self.nstpcouple = 25
+        self.surface_tension = 0.0 * unit.bar * unit.nanometer
+        self.ex_potential = -6.314 * unit.kilocalorie_per_mole # +- 0.022
+        self.standard_volume = 2.96299369e-02 * unit.nanometer**3
+        self.calc_neighbor_only = True
+        self.md_gc_re_protocol = [("MD", 200),
+                                  ("GC", 1),
+                                  ("MD", 200),
+                                  ("RE", 1),
+                                  ("MD", 200),
+                                  ("RE", 1),
+                                  ("MD", 200),
+                                  ("RE", 1)]
+
+        # Override with YAML file if provided
+        if yml_file:
+            self._read_yml(yml_file)
+
+    def _read_yml(self, yaml_file):
+        """Load parameters from YAML file and override defaults."""
+        with open(yaml_file, "r") as file:
+            params = yaml.safe_load(file)
+
+        # Override default attributes only if provided in YAML
+        for key, value in params.items():
+            if hasattr(self, key):
+                setattr(self, key, self._convert_unit(key, value))
+            else:
+                raise ValueError(f"Parameter '{key}' is not valid.")
+
+    def _convert_unit(self, key, value):
+        """Handle unit conversion based on parameter key."""
+        unit_map = {
+            "dt": unit.picoseconds,
+            "tau_t": unit.picoseconds,
+            "ref_t": unit.kelvin,
+            "gen_temp": unit.kelvin,
+            "restraint_fc": unit.kilojoule_per_mole / unit.nanometer ** 2,
+            "ref_p": unit.bar,
+            "surface_tension": unit.bar * unit.nanometer,
+            "ex_potential": unit.kilocalorie_per_mole,
+            "standard_volume": unit.nanometer ** 3,
+        }
+
+        if key in unit_map:
+            return value * unit_map[key]
+        else:
+            return value  # For parameters without explicit units
+
+    def __str__(self):
+        """Print parameters for easy checking."""
+        params = {attr: getattr(self, attr) for attr in dir(self) if not attr.startswith("_")}
+        return "\n".join(f"{k}: {v}" for k, v in params.items())
