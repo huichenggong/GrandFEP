@@ -526,17 +526,18 @@ class MyTestCase(unittest.TestCase):
         base = Path(__file__).resolve().parent
 
         inpcrd0, prmtop0, sys0 = load_amber_sys(
-            base / "HSP90/water_leg/bcc_gaff2" / "2xab/solv_OPC/05_opc.inpcrd",
-            base / "HSP90/water_leg/bcc_gaff2" / "2xab/solv_OPC/05_opc.prmtop", nonbonded_settings)
+            base / "HSP90/water_leg/bcc_gaff2" / "2xab/solv_OPC/06_opc.inpcrd",
+            base / "HSP90/water_leg/bcc_gaff2" / "2xab/solv_OPC/06_opc.prmtop", nonbonded_settings)
         inpcrd1, prmtop1, sys1 = load_amber_sys(
-            base / "HSP90/water_leg/bcc_gaff2" / "2xjg/solv_OPC/05_opc.inpcrd",
-            base / "HSP90/water_leg/bcc_gaff2" / "2xjg/solv_OPC/05_opc.prmtop", nonbonded_settings)
+            base / "HSP90/water_leg/bcc_gaff2" / "2xjg/solv_OPC/06_opc.inpcrd",
+            base / "HSP90/water_leg/bcc_gaff2" / "2xjg/solv_OPC/06_opc.prmtop", nonbonded_settings)
         old_to_new_atom_map = {}
         old_to_new_core_atom_map = {}
-        for atA, atB in np.loadtxt(base/"HSP90/water_leg/bcc_gaff2/pairs1.dat", dtype=int):
+        pair_arr = np.loadtxt(base/"HSP90/water_leg/bcc_gaff2/pairs1.dat", dtype=int)
+        for atA, atB in pair_arr:
             old_to_new_atom_map[atA-1] = atB-1
             old_to_new_core_atom_map[atA-1] = atB-1
-        for i in range(41,8145):
+        for i in range(41,233):
             old_to_new_atom_map[i] = i+3
         h_factory = utils.HybridTopologyFactory(
             sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
@@ -550,18 +551,44 @@ class MyTestCase(unittest.TestCase):
             h_factory.omm_hybrid_topology,
             h_factory.hybrid_positions, platform)
 
-
         print("## 1. Force should be the same before and after adding hybrid")
         inpcrd, prmtop, sys = load_amber_sys(
-            base / "HSP90/water_leg/bcc_gaff2" / "2xab/solv_OPC/05_opc.inpcrd",
-            base / "HSP90/water_leg/bcc_gaff2" / "2xab/solv_OPC/05_opc.prmtop", nonbonded_settings)
+            base / "HSP90/water_leg/bcc_gaff2" / "2xab/solv_OPC/06_opc.inpcrd",
+            base / "HSP90/water_leg/bcc_gaff2" / "2xab/solv_OPC/06_opc.prmtop", nonbonded_settings)
         energy_allwat, force_allwat = calc_energy_force(sys, prmtop.topology, inpcrd.positions, platform)
 
         # The forces should be the same
-        self.assertEqual(len(force_allwat), 8145)
-        # self.assertEqual(len(force_h), 24)
+        self.assertEqual(len(force_allwat), 233)
+        self.assertEqual(len(force_h), 238)
         all_close_flag, mis_match_list, error_msg = match_force(
-            force_allwat[41:8145], force_h[41:8145])
+            force_allwat[41:233], force_h[41:233])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        print("## 2. Force should be the same before and after adding customization")
+        baseGC = sampler.BaseGrandCanonicalMonteCarloSampler(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_base_Hybrid.log",
+            platform=platform,
+        )
+        water_res_2_atom = {i:[i*4+37, i*4+38, i*4+39, i*4+40] for i in range(1, 49)}
+        self.assertDictEqual(baseGC.water_res_2_atom, water_res_2_atom)
+
+        # all lambdas are 0.0
+        for lam in baseGC.simulation.context.getParameters():
+            if lam.startswith("lambda"):
+                self.assertAlmostEqual(baseGC.simulation.context.getParameter(lam), 0.0)
+        baseGC.simulation.context.setParameter("lambda_gc_coulomb", 1.0)
+        baseGC.simulation.context.setParameter("lambda_gc_vdw", 1.0)
+        baseGC.simulation.context.setPositions(h_factory.hybrid_positions)
+        state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
+        pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
+        # The forces should be the same
+        self.assertEqual(len(force), 238)
+        all_close_flag, mis_match_list, error_msg = match_force(force_h, force)
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
 

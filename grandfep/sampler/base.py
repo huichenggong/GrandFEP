@@ -615,7 +615,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         for at_index in env_index_list[0]:
             at = at_list[at_index]
             chg, sig, eps = self.nonbonded_force.getParticleParameters(at_index)
-            if at.element.symbol != "H" and eps.value_in_unit(unit.kilojoules_per_mole) < 1e-6:
+            if at.element is not None and at.element.symbol != "H" and eps.value_in_unit(unit.kilojoules_per_mole) < 1e-6:
                 raise ValueError(f"The atom {at.name} in residue {at.residue.index} is a env atom and it has a zero epsilon {eps} in NonbondedForce. Please check the system.")
 
         for res_index, at_list in self.water_res_2_atom.items():

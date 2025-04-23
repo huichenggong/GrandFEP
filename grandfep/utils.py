@@ -107,6 +107,7 @@ def find_reference_atom_indices(topology : app.Topology, ref_atoms_list: list) -
 
     Examples
     --------
+    >>> from grandfep import utils
     >>> top = "test/KcsA_5VKE_SF/step1_pdbreader_12WAT.psf"
     >>> topology, _ = utils.load_top(top)
     >>> ref_atoms_list = [{"res_id":"71", "res_name":"GLU", "atom_name":"O"}]
