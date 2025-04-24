@@ -221,7 +221,7 @@ def random_rotation_matrix_protoms():
 
     return rot_matrix
 
-class MDParams:
+class md_params_yml:
     """
     Class to manage MD parameters with default values and YAML overrides.
 
@@ -229,9 +229,9 @@ class MDParams:
         integrator (str): Name of the integrator.
         dt (unit.Quantity): Time step. Unit in ps
         maxh (float): The maximum run time. Unit in hour
-        nsteps (int): Number of step.
-        nstdcd (int): Number of step per dcd trajectory output.
-        nstenergy (int): Number of step per csv energy file output.
+        nsteps (int): Number of steps.
+        nstdcd (int): Number of steps per dcd trajectory output.
+        nstenergy (int): Number of steps per csv energy file output.
         tau_t (unit.Quantity): Temperature coupling time constant. Unit in ps
         ref_t (unit.Quantity): Reference temperature. Unit in K
         gen_vel (bool): Generate velocities.
@@ -244,8 +244,11 @@ class MDParams:
         surface_tension (unit.Quantity): Surface tension. Unit in bar*nm
         ex_potential (unit.Quantity): Excess potential in GC. Unit in kcal/mol
         standard_volume (unit.Quantity): Standard volume in GC. Unit in nm^3
+
+        init_lambda_state (int): The lambda state index to simulate
         calc_neighbor_only (bool): Whether to calculate the energy of the nearest neighbor only
             when performing replica exchange.
+
         md_gc_re_protocol (list): MD, Grand Canonical, Replica Exchange protocol. The default is
             ``[("MD", 200),("GC", 1),("MD", 200),("RE", 1),("MD", 200),("RE", 1),("MD", 200),("RE", 1)]``
 
@@ -271,6 +274,7 @@ class MDParams:
         self.surface_tension = 0.0 * unit.bar * unit.nanometer
         self.ex_potential = -6.314 * unit.kilocalorie_per_mole # +- 0.022
         self.standard_volume = 2.96299369e-02 * unit.nanometer**3
+        self.init_lambda_state = 0
         self.calc_neighbor_only = True
         self.md_gc_re_protocol = [("MD", 200),
                                   ("GC", 1),
@@ -294,8 +298,8 @@ class MDParams:
         for key, value in params.items():
             if hasattr(self, key):
                 setattr(self, key, self._convert_unit(key, value))
-            else:
-                raise ValueError(f"Parameter '{key}' is not valid.")
+            # else:
+            #     raise ValueError(f"Parameter '{key}' is not valid.")
 
     def _convert_unit(self, key, value):
         """Handle unit conversion based on parameter key."""

@@ -32,8 +32,8 @@ class MyTestCase(unittest.TestCase):
 
             rot_matrix = utils.random_rotation_matrix_protoms()
             res_old.append(np.dot(rot_matrix, vec_init))
-        np.save(self.base_path / "rotation_matrix_new.npy", res_new)
-        np.save(self.base_path / "rotation_matrix_old.npy", res_old)
+        np.save(self.base_path / "output/rotation_matrix_new.npy", res_new)
+        np.save(self.base_path / "output/rotation_matrix_old.npy", res_old)
 
 
 

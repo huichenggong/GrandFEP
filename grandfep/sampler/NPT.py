@@ -19,6 +19,33 @@ class NPTSampler:
 
     Parameters
     ----------
+    system : openmm.System
+        OpenMM system object, this system should include a barostat
+
+    topology : app.Topology
+        OpenMM topology object
+
+    temperature : unit.Quantity
+        Reference temperature of the system, with unit
+
+    collision_rate : unit.Quantity
+        Collision rate of the system, with unit. e.g., 1 / (1.0 * unit.picoseconds)
+
+    timestep : unit.Quantity
+        Timestep of the simulation, with unit. e.g., 4 * unit.femtoseconds with Hydrogen Mass Repartitioning
+
+    log : Union[str, Path]
+        Log file path for the simulation
+
+    platform : openmm.Platform
+        OpenMM platform to use for the simulation. Default is 'CUDA'.
+
+    rst_file : str
+        Restart file path for the simulation. Default is "md.rst7".
+
+    dcd_file : str
+        DCD file path for the simulation. Default is None, which means no dcd output.
+
     """
     def __init__(self,
                  system: openmm.System,
@@ -29,16 +56,16 @@ class NPTSampler:
                  log: Union[str, Path],
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  rst_file: str = "md.rst7",
-                 dcd_file: str = "md.dcd"
+                 dcd_file: str = None
                  ):
         """
         Initialize the NPT sampler
         """
         # prepare logger
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.INFO)
         file_handler = logging.FileHandler(log)
-        file_handler.setLevel(logging.DEBUG)
+        file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s: %(message)s',
                                                     "%m-%d %H:%M:%S"))
         self.logger.addHandler(file_handler)
@@ -52,11 +79,14 @@ class NPTSampler:
         self.topology = topology
         self.system = system
         integrator = BAOABIntegrator(temperature, collision_rate, timestep)
-        self.simulation = app.Simulation(self.topology, self.system, platform)
+        self.simulation = app.Simulation(self.topology, self.system, integrator, platform)
 
         # IO related
         self.rst_reporter = parmed.openmm.reporters.RestartReporter(rst_file, 0, netcdf=True)
-        self.dcd_reporter = app.dcdreporter.DCDReporter(dcd_file, 0)
+        if dcd_file is not None:
+            self.dcd_reporter = app.DCDReporter(dcd_file, 0)
+        else:
+            self.dcd_reporter = None
 
     def check_temperature(self) -> unit.Quantity:
         """
@@ -66,11 +96,22 @@ class NPTSampler:
         -------
         temperature : unit.Quantity
         """
-        pass
+        # find the barostat in system
+        barostat = None
+        for force in self.system.getForces():
+            if isinstance(force, openmm.MonteCarloBarostat) or isinstance(force, openmm.MonteCarloMembraneBarostat):
+                barostat = force
+                break
+        if barostat is None:
+            raise ValueError("No barostat found in the system")
+        ref_t_baro = barostat.getDefaultTemperature()
+        if not np.isclose(ref_t_baro.value_in_unit(unit.kelvin), self.temperature.value_in_unit(unit.kelvin)):
+            raise ValueError(f"Reference temperature in barostat ({ref_t_baro}) is not equal to the input temperature ({self.temperature})")
+        return self.temperature
 
     def report_rst(self):
         """
-        Write a Amber rst7 restart file.
+        Write an Amber rst7 restart file.
 
         :return: None
         """
@@ -92,15 +133,51 @@ class NPTSampler:
         None
         """
         rst = app.AmberInpcrdFile(rst_input)
-        sim.context.setPeriodicBoxVectors(*rst.getBoxVectors())
-        sim.context.setPositions(rst.getPositions())
-        sim.context.setVelocities(rst.getVelocities())
+        self.simulation.context.setPeriodicBoxVectors(*rst.getBoxVectors())
+        self.simulation.context.setPositions(rst.getPositions())
+        self.simulation.context.setVelocities(rst.getVelocities())
         self.logger.debug(f"Load boxVectors/positions/velocities from {rst_input}")
 
 
-class NPTSamplerMPI:
+class NPTSamplerMPI(NPTSampler):
     """
     NPT Sampler class with MPI (replica exchange) support. Only Hamiltonian is allowed to be different.
+
+        Parameters
+    ----------
+    system : openmm.System
+        OpenMM system object, this system should include a barostat
+
+    topology : app.Topology
+        OpenMM topology object
+
+    temperature : unit.Quantity
+        Reference temperature of the system, with unit
+
+    collision_rate : unit.Quantity
+        Collision rate of the system, with unit. e.g., 1 / (1.0 * unit.picoseconds)
+
+    timestep : unit.Quantity
+        Timestep of the simulation, with unit. e.g., 4 * unit.femtoseconds with Hydrogen Mass Repartitioning
+
+    log : Union[str, Path]
+        Log file path for the simulation
+
+    platform : openmm.Platform
+        OpenMM platform to use for the simulation. Default is 'CUDA'.
+
+    rst_file : str
+        Restart file path for the simulation. Default is "md.rst7".
+
+    dcd_file : str
+        DCD file path for the simulation. Default is None, which means no dcd output.
+
+    Additional Attributes
+    ---------------------
+    re_step : int
+        Number of replica exchanges performed
+
+
     """
     def __init__(self,
                  system: openmm.System,
@@ -111,16 +188,17 @@ class NPTSamplerMPI:
                  log: Union[str, Path],
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  rst_file: str = "md.rst7",
-                 dcd_file: str = "md.dcd"
+                 dcd_file: str = None
                  ):
         """
         Initialize the NPT sampler with MPI support
         """
-        super().__init__(system, topology, temperature, collision_rate, timestep, log)
+        super().__init__(system, topology, temperature, collision_rate, timestep, log, platform, rst_file, dcd_file)
         self.re_step = 0
         self.comm = MPI.COMM_WORLD
         self.rank = self.comm.Get_rank()
         self.size = self.comm.Get_size()
+        self.logger.info(f"Rank {self.rank} of {self.size} initialized NPT sampler")
 
     def set_re_step(self, re_step: int):
         """

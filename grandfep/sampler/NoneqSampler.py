@@ -8,6 +8,7 @@ import numpy as np
 from mpi4py import MPI
 
 from openmm import unit, app, openmm
+import parmed
 
 from .. import utils
 
@@ -69,6 +70,12 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
     reference_atoms :
         A list of atom indices in the topology that will be set as the center of the GCMC sphere. Default is None.
 
+    rst_file :
+        File name for the restart file.
+
+    dcd_file :
+        File name for the DCD trajectory file.
+
 
     Additional Attributes
     ---------------------
@@ -106,7 +113,9 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
                  chemical_potential=None,
                  standard_volume=None,
                  sphere_radius: unit.Quantity = 10.0*unit.angstroms,
-                 reference_atoms: list =None
+                 reference_atoms: list =None,
+                 rst_file: str = "md.rst7",
+                 dcd_file: str = "md.dcd"
                  ):
         """
         """
@@ -170,6 +179,10 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         for at_index in self.reference_atoms:
             self.logger.info(f"    {at_list[at_index]}")
 
+        # rst, dcd reporter
+        self.rst_reporter = parmed.openmm.reporters.RestartReporter(rst_file, 0, netcdf=True)
+        self.dcd_reporter = app.dcdreporter.DCDReporter(dcd_file, 0)
+
 
     def update_gc_count(self,
                         insert_delete: int,
@@ -209,15 +222,6 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         self.gc_count["N"].append(n_water)
         self.gc_count["accept"].append(accept)
 
-
-
-    def report(self, write_dcd=False):
-        """
-        Report the GC moves and write trajectory if needed.
-        :param write_dcd:
-        :return:
-        """
-        pass
 
     def random_place_water(self, state: openmm.State, res_index: int, sphere_center: unit.Quantity=None) -> unit.Quantity:
         """
@@ -296,7 +300,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             A list of ``lambda_gc_coulomb`` value that defines the path of insertion
 
         n_prop : int
-            Number of propergation step (equlibrium MD) between each lambda switching.
+            Number of propergation step (equilibrium MD) between each lambda switching.
 
         Returns
         -------
@@ -308,7 +312,6 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             Work during the insertion process.
         accept : bool
             Whether the insertion move was accepted.
-
 
         """
         # save initial (r,p)

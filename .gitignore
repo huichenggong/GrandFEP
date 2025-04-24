@@ -175,4 +175,5 @@ cython_debug/
 
 /IGNORE_LOG.md
 
-/test/rotation_matrix_*.npy
+# unit test output
+/test/output/*
