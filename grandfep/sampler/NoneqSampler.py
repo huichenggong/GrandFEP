@@ -77,27 +77,6 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         File name for the DCD trajectory file.
 
 
-    Additional Attributes
-    ---------------------
-    gc_count : dict
-        Dictionary to keep track of the GCMC moves. The keys are:
-            - current_move: (int) the current move number
-            - move: (list) list of move numbers
-            - insert_delete: (list) list of 0/1 for insertion/deletion
-            - work: (list) list of work values. In the unit of kcal/mol
-            - box_GCMC: (list) list of 0/1 for box/GCMC
-            - N: (list) list of number of water molecules in the box or GCMC sub-volume
-            - accept: (list) list of 0/1 for rejection/acceptance
-
-    chemical_potential : unit.Quantity
-        Chemical potential of the system.
-
-    standard_volume : unit.Quantity
-        Standard volume of a water molecule in the reservoir.
-
-    reference_atoms : list
-        A list of atom indices in the topology that will be set as the center of the GCMC sphere.
-
     """
     def __init__(self,
                  system: openmm.System,
@@ -136,7 +115,15 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
         self.logger.info("Initializing NoneqGrandCanonicalMonteCarloSampler")
 
-        # counter for insertion/deletion, work, box/GCMC, N, accept/reject,
+        """
+        Dictionary to keep track of the GCMC moves. The keys are:
+            - current_move: (int) the current move number
+            - move: (list) list of move numbers
+            - insert_delete: (list) list of 0/1 for insertion/deletion
+            - work: (list) list of work values. In the unit of kcal/mol
+            - box_GCMC: (list) list of 0/1 for box/GCMC
+            - N: (list) list of number of water molecules in the box or GCMC sub-volume
+            - accept: (list) list of 0/1 for rejection/acceptance"""
         self.gc_count = {
             "current_move"  : 0,
             "move"          : [],
@@ -147,12 +134,14 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             "accept"        : [],
         }
 
-        self.chemical_potential = chemical_potential
-        self.standard_volume = standard_volume
+        #: Chemical potential of the GC particle.
+        self.chemical_potential: unit.Quantity = chemical_potential
+        #: Standard volume of a water molecule in the reservoir.
+        self.standard_volume: unit.Quantity = standard_volume
 
         self.simulation.context.setPositions(position)
 
-        # set Adam value
+        # Adam value settings
         self.sphere_radius = sphere_radius
         state = self.simulation.context.getState(getPositions=True)
         self.box_vectors = state.getPeriodicBoxVectors(asNumpy=True)
@@ -170,18 +159,21 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         self.logger.info(f"The Adam value of the box is {self.Adam_box}.")
         self.logger.info(f"The Adam value of the GCMC sphere is {self.Adam_GCMC}.")
 
+        # GCMC sphere settings
         if self.sphere_radius > min(self.box_vectors[0, 0], self.box_vectors[1, 1], self.box_vectors[2, 2]) / 2:
             raise ValueError(f"The sphere radius {self.sphere_radius} is larger than half of the box size.")
-
+        #: A list of atom indices that will be set as the center of the GCMC sphere.
         self.reference_atoms = reference_atoms
         self.logger.info(f"GCMC sphere is based on reference atom IDs: {self.reference_atoms}")
         at_list = [at for at in self.topology.atoms()]
         for at_index in self.reference_atoms:
             self.logger.info(f"    {at_list[at_index]}")
 
-        # rst, dcd reporter
+        # reporter
+        #: Call this reporter to write the rst7 restart file.
         self.rst_reporter = parmed.openmm.reporters.RestartReporter(rst_file, 0, netcdf=True)
-        self.dcd_reporter = app.dcdreporter.DCDReporter(dcd_file, 0)
+        #: Call this reporter to write the dcd trajectory file.
+        self.dcd_reporter = app.DCDReporter(dcd_file, 0)
 
 
     def update_gc_count(self,
