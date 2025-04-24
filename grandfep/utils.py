@@ -223,7 +223,15 @@ def random_rotation_matrix_protoms():
 
 class md_params_yml:
     """
-    Class to manage MD parameters with default values and YAML overrides.
+    Class to manage MD parameters with default values and YAML overrides. This class reads whatever in the yml file, and
+    it does not guarantee the correct usage of the parameters anywhere else. The built-in parameters in
+    ``self._unit_map`` will be automatically added with units. If you want a unit to be attached, you can add it to
+    ``self._unit_map`` before loading the yml file.
+
+    Example:
+    --------
+    >>> from grandfep import utils
+    >>> mdp = utils.md_params_yml("test/Water_Chemical_Potential/OPC/multidir/0/md.yml")
 
     Attributes:
         integrator (str): Name of the integrator.
@@ -255,6 +263,19 @@ class md_params_yml:
     """
 
     def __init__(self, yml_file=None):
+        # default unit attribute
+        self._unit_map = {
+            "dt": unit.picoseconds,
+            "tau_t": unit.picoseconds,
+            "ref_t": unit.kelvin,
+            "gen_temp": unit.kelvin,
+            "restraint_fc": unit.kilojoule_per_mole / unit.nanometer ** 2,
+            "ref_p": unit.bar,
+            "surface_tension": unit.bar * unit.nanometer,
+            "ex_potential": unit.kilocalorie_per_mole,
+            "standard_volume": unit.nanometer ** 3,
+        }
+
         # Default parameter values
         self.integrator = "LangevinIntegrator"
         self.dt = 0.002 * unit.picoseconds
@@ -303,20 +324,9 @@ class md_params_yml:
 
     def _convert_unit(self, key, value):
         """Handle unit conversion based on parameter key."""
-        unit_map = {
-            "dt": unit.picoseconds,
-            "tau_t": unit.picoseconds,
-            "ref_t": unit.kelvin,
-            "gen_temp": unit.kelvin,
-            "restraint_fc": unit.kilojoule_per_mole / unit.nanometer ** 2,
-            "ref_p": unit.bar,
-            "surface_tension": unit.bar * unit.nanometer,
-            "ex_potential": unit.kilocalorie_per_mole,
-            "standard_volume": unit.nanometer ** 3,
-        }
 
-        if key in unit_map:
-            return value * unit_map[key]
+        if key in self._unit_map:
+            return value * self._unit_map[key]
         else:
             return value  # For parameters without explicit units
 

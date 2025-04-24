@@ -143,7 +143,7 @@ class NPTSamplerMPI(NPTSampler):
     """
     NPT Sampler class with MPI (replica exchange) support. Only Hamiltonian is allowed to be different.
 
-        Parameters
+    Parameters
     ----------
     system : openmm.System
         OpenMM system object, this system should include a barostat
@@ -172,11 +172,6 @@ class NPTSamplerMPI(NPTSampler):
     dcd_file : str
         DCD file path for the simulation. Default is None, which means no dcd output.
 
-    Additional Attributes
-    ---------------------
-    re_step : int
-        Number of replica exchanges performed
-
 
     """
     def __init__(self,
@@ -194,11 +189,86 @@ class NPTSamplerMPI(NPTSampler):
         Initialize the NPT sampler with MPI support
         """
         super().__init__(system, topology, temperature, collision_rate, timestep, log, platform, rst_file, dcd_file)
-        self.re_step = 0
+
+        # MPI related properties
+        #: MPI communicator
         self.comm = MPI.COMM_WORLD
+
+        #: Rank of this process
         self.rank = self.comm.Get_rank()
+
+        #: Size of the communicator (number of processes)
         self.size = self.comm.Get_size()
+
+        # RE related properties
+        #: Number of replica exchanges performed
+        self.re_step = 0
+        #: The lambda state for this replica, counting from 0
+        self.init_lambda_state: int = None
+        #: A dictionary of mapping from global parameters to their values in all the sampling states.
+        self.lambda_dict: dict = None
+        #: lambda state list in this set of simulation. The lambda state for each replica can be fetched with
+        #: ``self.lambda_states_list[rank]``
+        self.lambda_states_list: int = None
+
         self.logger.info(f"Rank {self.rank} of {self.size} initialized NPT sampler")
+
+    def set_lambda_dict(self, init_lambda_state: int, lambda_dict: dict) -> None:
+        """
+        Set internal attributes :
+            - ``init_lambda_state``: (int) Lambda state index for this replica, counting from 0
+            - ``lambda_dict``: (dict) Global parameter values for all the sampling states
+            - ``lambda_states_list``: (list) Lambda state indices in this set of simulation. The lambda state for each replica can be fetched with from this list.
+
+
+        Parameters
+        ----------
+        init_lambda_state : int
+            The lambda state for this replica, counting from 0
+
+        lambda_dict : dict
+            A dictionary of mapping from global parameters to their values in all the sampling states.
+            For example, ``{"lambda_gc_vdw": [0.0, 0.5, 1.0, 1.0, 1.0], "lambda_gc_coulomb": [0.0, 0.0, 1.0, 0.5, 1.0]}``
+
+        Returns
+        -------
+        None
+        """
+        # safety check
+        ## All values in the lambda_dict should have the same length
+        if len(set([len(v) for v in lambda_dict.values()])) != 1:
+            raise ValueError("All values in the lambda_dict should have the same length")
+
+        ## The length of the lambda_dict should no smaller than the number of replicas
+        if len(lambda_dict[list(lambda_dict.keys())[0]]) < self.size:
+            raise ValueError("The length of the lambda_dict should no smaller than the number of replicas")
+
+        ## The init_lambda_state should be smaller than the size of the lambda_dict
+        if init_lambda_state >= len(lambda_dict[list(lambda_dict.keys())[0]]):
+            raise ValueError("The init_lambda_state should be smaller than the size of the lambda_dict")
+
+        ## lambda_dict should be identical across all MPI
+        all_l_dict = self.comm.allgather(lambda_dict)
+        for l_dict in all_l_dict[1:]:
+            if l_dict.keys() != all_l_dict[0].keys():
+                raise ValueError(f"The lamda in all replicas are not the same \n{all_l_dict[0].keys()}\n{l_dict.keys()}")
+            for lam_str in all_l_dict[0]:
+                val_list0 = all_l_dict[0][lam_str]
+                val_listi = l_dict[lam_str]
+                if not np.all(np.isclose(val_list0, val_listi)):
+                    raise ValueError(f"{lam_str} is not the same across all replicas \n{val_list0}\n{val_listi}")
+
+        self.init_lambda_state = init_lambda_state
+        self.lambda_dict = lambda_dict
+        # all gather the lambda states
+        self.lambda_states_list = self.comm.allgather(self.init_lambda_state)
+        msg = "MPI rank              :" + "".join([f" {i:6d}" for i in range(self.size)])
+        self.logger.info(msg)
+        msg = "lambda_states         :" + "".join([f" {i:6d}" for i in self.lambda_states_list])
+        self.logger.info(msg)
+        for lambda_key, lambda_val_list in self.lambda_dict.items():
+            msg = f"{lambda_key:<22}:" + "".join([f" {lambda_val_list[i]:6.3f}" for i in self.lambda_states_list])
+            self.logger.info(msg)
 
     def set_re_step(self, re_step: int):
         """
@@ -227,7 +297,7 @@ class NPTSamplerMPI(NPTSampler):
         None
         """
 
-    def replica_exchange(self, calc_neighbor_only: bool = True, lambda_dict: dict = None):
+    def replica_exchange(self, calc_neighbor_only: bool = True):
         """
         Perform one neighbor swap replica exchange. In odd RE steps, attempt exchange between 0-1, 2-3, ...
         In even RE steps, attempt exchange between 1-2, 3-4, ... If RE is accepted, update the

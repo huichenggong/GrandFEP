@@ -1,4 +1,4 @@
-for i in {0..3}
+for i in {0..4}
 do
     mkdir -p $i
     cp md.yml $i

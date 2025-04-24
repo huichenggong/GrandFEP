@@ -22,9 +22,12 @@ def test_RE():
     print()
     print("# Initiate an NPTSamplerMPI with pure OPC water")
     base = Path(__file__).resolve().parent
-    multidir = [base / f"Water_Chemical_Potential/OPC/multidir/{i}" for i in range(4)]
+    multidir = [base / f"Water_Chemical_Potential/OPC/multidir/{i}" for i in range(1,5)]
     sim_dir = multidir[MPI.COMM_WORLD.Get_rank()]
-    mdp = utils.md_params_yml(sim_dir / "md.yml")
+    mdp = utils.md_params_yml()
+    mdp.lambda_gc_vdw = None
+    mdp.lambda_gc_coulomb = None
+    mdp._read_yml(sim_dir / "md.yml")
 
     inpcrd = app.AmberInpcrdFile(str(base / "Water_Chemical_Potential/OPC/water_opc.inpcrd"))
     prmtop = app.AmberPrmtopFile(str(base / "Water_Chemical_Potential/OPC/water_opc.prmtop"),
@@ -41,6 +44,11 @@ def test_RE():
         log=str(sim_dir / "test_npt.log"),
         rst_file=str(sim_dir / "opc_npt_output.rst7"),
     )
-    npt.logger.info("MD Parameters\n"+str(mdp))
-    assert mdp.init_lambda_state == npt.rank
+    npt.logger.info("MD Parameters:\n"+str(mdp))
+    assert mdp.init_lambda_state == npt.rank+1
+
+    lambda_dict = {"lambda_gc_vdw"     : mdp.lambda_gc_vdw,
+                   "lambda_gc_coulomb" : mdp.lambda_gc_coulomb,
+                   }
+    npt.set_lambda_dict(mdp.init_lambda_state, lambda_dict)
 
