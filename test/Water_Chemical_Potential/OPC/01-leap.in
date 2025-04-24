@@ -1,0 +1,9 @@
+source leaprc.water.opc
+
+WATBOX = combine { OPCBOX }
+
+solvatebox WATBOX OPCBOX 21.0 iso
+
+saveamberparm  WATBOX  water_opc.prmtop  water_opc.inpcrd
+savepdb        WATBOX  water_opc.pdb
+quit

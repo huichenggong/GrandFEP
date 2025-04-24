@@ -1,0 +1,9 @@
+source leaprc.water.opc
+
+WATBOX = loadPdb 01-6661.pdb
+
+setBox WATBOX "vdw" 0.0
+
+saveamberparm  WATBOX  water_opc.prmtop  water_opc.inpcrd
+savepdb        WATBOX  water_opc.pdb
+quit
