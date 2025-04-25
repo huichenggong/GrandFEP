@@ -56,7 +56,7 @@ cover/
 *.pot
 
 # Django stuff:
-*.log
+# *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -177,3 +177,5 @@ cython_debug/
 
 # unit test output
 /test/output/*
+/test/test_*.log
+/test/Water_Chemical_Potential/OPC/multidir/*/test_npt.log
