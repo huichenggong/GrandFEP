@@ -6,4 +6,12 @@ setBox WATBOX "vdw" 0.0
 
 saveamberparm  WATBOX  water_opc.prmtop  water_opc.inpcrd
 savepdb        WATBOX  water_opc.pdb
+
+WATBOX1 = loadPdb 02-6660.pdb
+
+setBox WATBOX1 "vdw" 0.0
+
+saveamberparm  WATBOX1  water_opc-1.prmtop  water_opc-1.inpcrd
+savepdb        WATBOX1  water_opc-1.pdb
+
 quit
