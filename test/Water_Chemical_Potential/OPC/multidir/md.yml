@@ -4,6 +4,6 @@ ref_t: 300.0        # in K
 
 # RE
 calc_only_neighbor : true
-lambda_gc_vdw      : [1.0, 1.0, 1.0, 1.0, 1.0]
-lambda_gc_coulomb  : [1.0, 0.9, 0.8, 0.7, 0.6]
+lambda_gc_vdw      : [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+lambda_gc_coulomb  : [1.0, 0.9, 0.8, 0.7, 0.6, 0.5]
 init_lambda_state  : INIT_LAMBDA

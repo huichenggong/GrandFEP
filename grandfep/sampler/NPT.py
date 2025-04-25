@@ -1,7 +1,7 @@
-from copy import deepcopy
 import logging
 from typing import Union
 from pathlib import Path
+import math
 
 import numpy as np
 from mpi4py import MPI
@@ -9,8 +9,6 @@ from mpi4py import MPI
 from openmm import unit, app, openmm
 from openmmtools.integrators import BAOABIntegrator
 import parmed
-
-from .. import utils
 
 
 class NPTSampler:
@@ -138,6 +136,18 @@ class NPTSampler:
         self.simulation.context.setVelocities(rst.getVelocities())
         self.logger.debug(f"Load boxVectors/positions/velocities from {rst_input}")
 
+    def report_dcd(self):
+        """
+        Write a DCD file.
+
+        :return: None
+        """
+        state = self.simulation.context.getState(getPositions=True)
+        if not self.dcd_reporter:
+            raise ValueError("DCD reporter is not set")
+        self.dcd_reporter.report(self.simulation, state)
+        self.logger.debug(f"Write DCD file {self.dcd_reporter.fname}")
+
 
 class NPTSamplerMPI(NPTSampler):
     """
@@ -172,6 +182,12 @@ class NPTSamplerMPI(NPTSampler):
     dcd_file : str
         DCD file path for the simulation. Default is None, which means no dcd output.
 
+    init_lambda_state : int
+        Lambda state index for this replica, counting from 0
+
+    lambda_dict : dict
+        A dictionary of mapping from global parameters to their values in all the sampling states.
+
 
     """
     def __init__(self,
@@ -183,7 +199,9 @@ class NPTSamplerMPI(NPTSampler):
                  log: Union[str, Path],
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  rst_file: str = "md.rst7",
-                 dcd_file: str = None
+                 dcd_file: str = None,
+                 init_lambda_state: int = None,
+                 lambda_dict: dict = None
                  ):
         """
         Initialize the NPT sampler with MPI support
@@ -203,13 +221,16 @@ class NPTSamplerMPI(NPTSampler):
         # RE related properties
         #: Number of replica exchanges performed
         self.re_step = 0
-        #: The lambda state for this replica, counting from 0
+        #: Lambda state index for this replica, counting from 0
         self.init_lambda_state: int = None
         #: A dictionary of mapping from global parameters to their values in all the sampling states.
         self.lambda_dict: dict = None
-        #: lambda state list in this set of simulation. The lambda state for each replica can be fetched with
-        #: ``self.lambda_states_list[rank]``
-        self.lambda_states_list: int = None
+        #: Index of the Lambda state which is simulated. All the init_lambda_state in this MPI run can be fetched with ``self.lambda_states_list[rank]``
+        self.lambda_states_list: list = None
+        #: Number of Lambda state to be sampled. It should be equal to the length of the values in ``lambda_dict``.
+        self.n_lambda_states: int = None
+
+        self.set_lambda_dict(init_lambda_state, lambda_dict)
 
         self.logger.info(f"Rank {self.rank} of {self.size} initialized NPT sampler")
 
@@ -218,7 +239,13 @@ class NPTSamplerMPI(NPTSampler):
         Set internal attributes :
             - ``init_lambda_state``: (int) Lambda state index for this replica, counting from 0
             - ``lambda_dict``: (dict) Global parameter values for all the sampling states
-            - ``lambda_states_list``: (list) Lambda state indices in this set of simulation. The lambda state for each replica can be fetched with from this list.
+            - ``lambda_states_list``: (list) Index of the Lambda state which is simulated. All the init_lambda_state in this MPI run
+            - ``n_lambda_states``: (int) Number of Lambda state to be sampled
+
+        You can have 10 states defined in the ``lambda_dict``, and only simulate 4 replicas. In this case,
+        each value in the ``lambda_dict`` will have a length of 10, and ``n_lambda_states=10``,
+        and the ``lambda_states_list`` will be a list of 4 integers, continuously increasing between 0 and 9,
+        and init_lambda_state should be one of the values in ``lambda_states_list``.
 
 
         Parameters
@@ -235,17 +262,30 @@ class NPTSamplerMPI(NPTSampler):
         None
         """
         # safety check
+        ##
+        if init_lambda_state is None:
+            raise ValueError("init_lambda_state should be set")
+        if lambda_dict is None:
+            raise ValueError("lambda_dict should be set")
+
         ## All values in the lambda_dict should have the same length
+        self.n_lambda_states = len(lambda_dict[list(lambda_dict.keys())[0]])
         if len(set([len(v) for v in lambda_dict.values()])) != 1:
             raise ValueError("All values in the lambda_dict should have the same length")
 
         ## The length of the lambda_dict should no smaller than the number of replicas
-        if len(lambda_dict[list(lambda_dict.keys())[0]]) < self.size:
+        if self.n_lambda_states < self.size:
             raise ValueError("The length of the lambda_dict should no smaller than the number of replicas")
 
         ## The init_lambda_state should be smaller than the size of the lambda_dict
-        if init_lambda_state >= len(lambda_dict[list(lambda_dict.keys())[0]]):
+        if init_lambda_state >= self.n_lambda_states:
             raise ValueError("The init_lambda_state should be smaller than the size of the lambda_dict")
+
+        ## Check if the global parameter exist in the context
+        parameters = self.simulation.context.getParameters()
+        for lam in lambda_dict:
+            if lam not in parameters:
+                raise ValueError(f"{lam} is not found as a Global Parameter")
 
         ## lambda_dict should be identical across all MPI
         all_l_dict = self.comm.allgather(lambda_dict)
@@ -262,6 +302,12 @@ class NPTSamplerMPI(NPTSampler):
         self.lambda_dict = lambda_dict
         # all gather the lambda states
         self.lambda_states_list = self.comm.allgather(self.init_lambda_state)
+        l_0 = self.lambda_states_list[0]
+        for l_i in self.lambda_states_list[1:]:
+            if l_i != l_0 + 1:
+                raise ValueError(f"The lambda states are not continuously increasing: {self.lambda_states_list}")
+            l_0 = l_i
+
         msg = "MPI rank              :" + "".join([f" {i:6d}" for i in range(self.size)])
         self.logger.info(msg)
         msg = "lambda_states         :" + "".join([f" {i:6d}" for i in self.lambda_states_list])
@@ -269,6 +315,10 @@ class NPTSamplerMPI(NPTSampler):
         for lambda_key, lambda_val_list in self.lambda_dict.items():
             msg = f"{lambda_key:<22}:" + "".join([f" {lambda_val_list[i]:6.3f}" for i in self.lambda_states_list])
             self.logger.info(msg)
+
+        # set the current state
+        for lam, val_list in self.lambda_dict.items():
+            self.simulation.context.setParameter(lam, val_list[self.init_lambda_state])
 
     def set_re_step(self, re_step: int):
         """
@@ -297,6 +347,74 @@ class NPTSamplerMPI(NPTSampler):
         None
         """
 
+        with open(log_input) as f:
+            lines = f.readlines()
+        re_step = 0
+        for l in lines[-1::-1]:
+            if "RE Step" in l:
+                re_step = int(l.split("RE Step")[-1])
+        self.re_step = re_step
+
+    def _calc_neighbor_reduced_energy(self) -> np.array:
+        """
+        Use the current configuration and compute the energy of the neighboring sampling state. Later BAR can be performed on this data.
+
+        Returns
+        -------
+        reduced_energy :
+            reduced energy in kBT, no unit
+        """
+        reduced_energy = np.zeros(self.n_lambda_states, dtype=np.float64)
+        state = self.simulation.context.getState(getEnergy=True)
+        reduced_energy[self.init_lambda_state] = state.getPotentialEnergy() / self.kBT
+
+        # when there is left neighbor
+        if self.init_lambda_state >=1:
+            i = self.init_lambda_state-1
+            for lam, val_list in self.lambda_dict.items():
+                self.simulation.context.setParameter(lam, val_list[i])
+            state = self.simulation.context.getState(getEnergy=True)
+            reduced_energy[i] = state.getPotentialEnergy() / self.kBT
+
+        # when there is right neighbor
+        if self.init_lambda_state < self.n_lambda_states:
+            i = self.init_lambda_state +1
+            for lam, val_list in self.lambda_dict.items():
+                self.simulation.context.setParameter(lam, val_list[i])
+            state = self.simulation.context.getState(getEnergy=True)
+            reduced_energy[i] = state.getPotentialEnergy() / self.kBT
+
+        # back to the current state
+        for lam, val_list in self.lambda_dict.items():
+            self.simulation.context.setParameter(lam, val_list[self.init_lambda_state])
+        return reduced_energy
+
+    def _calc_full_reduced_energy(self) -> np.array:
+        """
+        Use the current configuration and compute the energy of all the sampling states. Later MBAR can be performed on this data.
+
+        Returns
+        -------
+        reduced_energy :
+            reduced energy in kBT, no unit
+        """
+        reduced_energy = np.zeros(self.n_lambda_states, dtype=np.float64)
+        state = self.simulation.context.getState(getEnergy=True)
+        reduced_energy[self.init_lambda_state] = state.getPotentialEnergy() / self.kBT
+
+        for i in range(self.n_lambda_states):
+            if i != self.init_lambda_state:
+                # set global parameters
+                for lam, val_list in self.lambda_dict.items():
+                    self.simulation.context.setParameter(lam, val_list[i])
+                state = self.simulation.context.getState(getEnergy=True)
+                reduced_energy[i] = state.getPotentialEnergy() / self.kBT
+
+        # back to the current state
+        for lam, val_list in self.lambda_dict.items():
+            self.simulation.context.setParameter(lam, val_list[self.init_lambda_state])
+        return reduced_energy
+
     def replica_exchange(self, calc_neighbor_only: bool = True):
         """
         Perform one neighbor swap replica exchange. In odd RE steps, attempt exchange between 0-1, 2-3, ...
@@ -305,5 +423,109 @@ class NPTSamplerMPI(NPTSampler):
 
         Parameters
         ----------
+        calc_neighbor_only :
+            If True, only the nearest neighbor will be calculated.
+
+        Returns
+        -------
+        reduced_energy_matrix : np.array
+            A numpy array with the size of (n_lambda_states, n_simulated_states)
+
+        re_decision : dict
+            The exchange decision between all the pairs. e.g., ``{(0,1):(True, ratio_0_1), (2,3):(True, ratio_2_3)}``.
+            The key is the MPI rank pairs, and the value is the dicision and the acceptance ratio.
+
         """
-        pass
+
+        # re_step has to be the same across all replicas. If not, raise an error.
+        re_step_all = self.comm.allgather(self.re_step)
+        if len(set(re_step_all)) != 1:
+            raise ValueError(f"RE step is not the same across all replicas: {re_step_all}")
+
+        self.logger.info(f"RE Step {self.re_step}")
+
+        # calculate reduced energy
+        if calc_neighbor_only:
+            reduced_energy = self._calc_neighbor_reduced_energy()
+        else:
+            reduced_energy = self._calc_full_reduced_energy() # kBT unit
+
+        reduced_energy_matrix = np.empty((len(self.lambda_states_list), self.n_lambda_states),
+                                         dtype=np.float64)
+        self.comm.Allgather([reduced_energy,        MPI.DOUBLE],      # send buffer
+                            [reduced_energy_matrix, MPI.DOUBLE])      # receive buffer
+
+        # rank 0 decides the exchange
+        if self.rank == 0:
+            re_decision = {}
+            for rank_i in range(self.re_step % 2, self.size - 1, 2):
+                i = self.lambda_states_list[rank_i]
+                delta_energy = (  reduced_energy_matrix[rank_i, i+1] + reduced_energy_matrix[rank_i + 1, i]
+                                - reduced_energy_matrix[rank_i, i]   - reduced_energy_matrix[rank_i + 1, i+1])
+                accept_prob = math.exp(-delta_energy)
+                if np.random.rand() < accept_prob:
+                    re_decision[(rank_i, rank_i + 1)] = (True, min(1,accept_prob))
+                else:
+                    re_decision[(rank_i, rank_i + 1)] = (False, min(1,accept_prob))
+        else:
+            re_decision = None  # placeholder on other ranks
+
+        re_decision = self.comm.bcast(re_decision, root=0)
+
+        # exchange position/boxVector/velocity
+        for (rank_i, rank_j), (decision, ratio) in re_decision.items():
+            # exchange boxVector/positions/velocities
+            if decision:
+                if self.rank == rank_i:
+                    neighbor = rank_j
+                elif self.rank == rank_j:
+                    neighbor = rank_i
+                else:
+                    continue
+
+                state = self.simulation.context.getState(getPositions=True, getVelocities=True)
+
+                # Exchange with the neighbor
+                vel = state.getVelocities(asNumpy=True).value_in_unit(unit.nanometer / unit.picosecond)
+                vel = np.ascontiguousarray(vel, dtype='float64')
+                recv_vel = np.empty_like(vel, dtype='float64')
+                self.comm.Sendrecv(sendbuf=vel, dest=neighbor, sendtag=0, recvbuf=recv_vel, source=neighbor, recvtag=0)
+
+                pos = state.getPositions(asNumpy=True).value_in_unit(unit.nanometer)
+                pos = np.ascontiguousarray(pos, dtype='float64')
+                recv_pos = np.empty_like(pos, dtype='float64')
+                self.comm.Sendrecv(sendbuf=pos, dest=neighbor, sendtag=1, recvbuf=recv_pos, source=neighbor, recvtag=1)
+
+                box_v = state.getPeriodicBoxVectors(asNumpy=True).value_in_unit(unit.nanometer)
+                box_v = np.ascontiguousarray(box_v, dtype='float64')
+                recv_box_v = np.empty_like(box_v, dtype='float64')
+                self.comm.Sendrecv(sendbuf=box_v, dest=neighbor, sendtag=2, recvbuf=recv_box_v, source=neighbor, recvtag=2)
+
+                # set the new positions/boxVector/velocities
+                self.simulation.context.setPeriodicBoxVectors(* (recv_box_v * unit.nanometer))
+                self.simulation.context.setPositions(recv_pos * unit.nanometer)
+                self.simulation.context.setVelocities(recv_vel * (unit.nanometer / unit.picosecond))
+
+        # log results
+        msg = " ".join([f"{i:13}" for i in reduced_energy])
+        self.logger.info("Reduced Energy U_i(x):"+msg)
+
+        if self.rank == 0:
+            # log the exchange decision
+            x_dict = {True: "x", False: " "}
+            msg_ex = "Repl ex :"
+            msg_pr = "Repl pr :"
+            if not (0,1) in re_decision:
+                msg_ex += f"{self.lambda_states_list[0]:2}   "
+                msg_pr +=  "     "
+            msg_ex += "   ".join([f"{self.lambda_states_list[j]:2} {x_dict[re_decision[(j, j+1)][0]]} {self.lambda_states_list[j+1]:2}" for j in range(0, self.size) if (j, j+1) in re_decision])
+            msg_pr += "   ".join([f"{re_decision[(j, j+1)][1]:7.3f}" for j in range(0, self.size) if (j, j+1) in re_decision])
+            if not (self.size-2, self.size-1) in re_decision:
+                msg_ex += f"   {self.lambda_states_list[self.size - 1]:2}"
+            self.logger.info(msg_ex)
+            self.logger.info(msg_pr)
+
+
+        self.re_step += 1
+        return reduced_energy_matrix, re_decision
+

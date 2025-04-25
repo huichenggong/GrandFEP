@@ -306,6 +306,9 @@ class md_params_yml:
                                   ("MD", 200),
                                   ("RE", 1)]
 
+        self.lambda_gc_vdw = None
+        self.lambda_gc_coulomb = None
+
         # Override with YAML file if provided
         if yml_file:
             self._read_yml(yml_file)

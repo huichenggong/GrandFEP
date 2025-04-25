@@ -1,0 +1,94 @@
+04-25 11:15:57 - INFO: Initializing NPT Sampler
+04-25 11:15:58 - INFO: MPI rank              :      0      1      2      3
+04-25 11:15:58 - INFO: lambda_states         :      1      2      3      4
+04-25 11:15:58 - INFO: lambda_gc_vdw         :  1.000  1.000  1.000  1.000
+04-25 11:15:58 - INFO: lambda_gc_coulomb     :  0.900  0.800  0.700  0.600
+04-25 11:15:58 - INFO: Rank 0 of 4 initialized NPT sampler
+04-25 11:15:58 - INFO: MD Parameters:
+calc_neighbor_only: True
+dt: 0.002 ps
+ex_potential: -6.314 kcal/mol
+gen_temp: 300.0 K
+gen_vel: True
+init_lambda_state: 1
+integrator: LangevinIntegrator
+lambda_gc_coulomb: [1.0, 0.9, 0.8, 0.7, 0.6, 0.5]
+lambda_gc_vdw: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+maxh: 1.0
+md_gc_re_protocol: [('MD', 200), ('GC', 1), ('MD', 200), ('RE', 1), ('MD', 200), ('RE', 1), ('MD', 200), ('RE', 1)]
+nstdcd: 5000
+nstenergy: 1000
+nsteps: 100
+nstpcouple: 25
+pcoupltype: None
+ref_p: 1.0 bar
+ref_t: 300.0 K
+restraint: False
+restraint_fc: 1000.0 kJ/(nm**2 mol)
+standard_volume: 0.0296299369 nm**3
+surface_tension: 0.0 nm bar
+tau_t: 1.0 ps
+04-25 11:15:58 - INFO: RE Step 0
+04-25 11:15:58 - INFO: Reduced Energy U_i(x):-137429.18917162457 -137425.19418753978 -137421.19607136238 -137417.2022618123 -137413.20727772746 -137409.21072759636
+04-25 11:15:58 - INFO: Repl ex : 1 x  2    3 x  4
+04-25 11:15:58 - INFO: Repl pr :  1.000     0.995
+04-25 11:15:58 - INFO: MD 200
+04-25 11:15:59 - INFO: RE Step 1
+04-25 11:15:59 - INFO: Reduced Energy U_i(x):-137493.10265279652 -137488.42643857573 -137483.75570551693           0.0           0.0           0.0
+04-25 11:15:59 - INFO: Repl ex : 1    2 x  3    4
+04-25 11:15:59 - INFO: Repl pr :       1.000
+04-25 11:15:59 - INFO: re reject test pass
+04-25 11:15:59 - INFO: MD 200
+04-25 11:16:00 - INFO: RE Step 2
+04-25 11:16:00 - INFO: Reduced Energy U_i(x):-137645.2878991291 -137640.6684540863 -137636.05018357822           0.0           0.0           0.0
+04-25 11:16:00 - INFO: Repl ex : 1 x  2    3 x  4
+04-25 11:16:00 - INFO: Repl pr :  0.569     1.000
+04-25 11:16:00 - INFO: re accept test pass close_pos=34, close_vel=0
+04-25 11:16:00 - INFO: MD 200
+04-25 11:16:00 - INFO: RE Step 3
+04-25 11:16:00 - INFO: Reduced Energy U_i(x):-137414.25759361035 -137409.40852703035 -137404.5612222524           0.0           0.0           0.0
+04-25 11:16:00 - INFO: Repl ex : 1    2    3    4
+04-25 11:16:00 - INFO: Repl pr :       0.693
+04-25 11:16:00 - INFO: re reject test pass
+04-25 11:16:00 - INFO: MD 200
+04-25 11:16:01 - INFO: RE Step 4
+04-25 11:16:01 - INFO: Reduced Energy U_i(x):-137462.33630764025 -137457.6095884266 -137452.88443525924           0.0           0.0           0.0
+04-25 11:16:01 - INFO: Repl ex : 1    2    3 x  4
+04-25 11:16:01 - INFO: Repl pr :  0.075     0.084
+04-25 11:16:01 - INFO: re reject test pass
+04-25 11:16:01 - INFO: MD 200
+04-25 11:16:02 - INFO: RE Step 5
+04-25 11:16:02 - INFO: Reduced Energy U_i(x):-137192.521898303 -137189.04214344747 -137185.5600395225           0.0           0.0           0.0
+04-25 11:16:02 - INFO: Repl ex : 1    2 x  3    4
+04-25 11:16:02 - INFO: Repl pr :       1.000
+04-25 11:16:02 - INFO: re reject test pass
+04-25 11:16:02 - INFO: MD 200
+04-25 11:16:03 - INFO: RE Step 6
+04-25 11:16:03 - INFO: Reduced Energy U_i(x):-137630.06070742765 -137625.84138721184 -137621.62050094974           0.0           0.0           0.0
+04-25 11:16:03 - INFO: Repl ex : 1    2    3 x  4
+04-25 11:16:03 - INFO: Repl pr :  0.341     1.000
+04-25 11:16:03 - INFO: re reject test pass
+04-25 11:16:03 - INFO: MD 200
+04-25 11:16:03 - INFO: RE Step 7
+04-25 11:16:03 - INFO: Reduced Energy U_i(x):-137614.4870493604 -137610.30296518613 -137606.12279612757           0.0           0.0           0.0
+04-25 11:16:03 - INFO: Repl ex : 1    2    3    4
+04-25 11:16:03 - INFO: Repl pr :       0.099
+04-25 11:16:03 - INFO: re reject test pass
+04-25 11:16:03 - INFO: MD 200
+04-25 11:16:04 - INFO: RE Step 8
+04-25 11:16:04 - INFO: Reduced Energy U_i(x):-137455.84941726114 -137450.77621030592 -137445.69947974657           0.0           0.0           0.0
+04-25 11:16:04 - INFO: Repl ex : 1    2    3    4
+04-25 11:16:04 - INFO: Repl pr :  0.040     0.221
+04-25 11:16:04 - INFO: re reject test pass
+04-25 11:16:04 - INFO: MD 200
+04-25 11:16:05 - INFO: RE Step 9
+04-25 11:16:05 - INFO: Reduced Energy U_i(x):-137619.97920895624 -137615.12309516792 -137610.26893893746           0.0           0.0           0.0
+04-25 11:16:05 - INFO: Repl ex : 1    2 x  3    4
+04-25 11:16:05 - INFO: Repl pr :       1.000
+04-25 11:16:05 - INFO: re reject test pass
+04-25 11:16:05 - INFO: MD 200
+04-25 11:16:06 - INFO: RE Step 10
+04-25 11:16:06 - INFO: Reduced Energy U_i(x):-137605.79400646812 -137601.86264301385 -137597.9257983975           0.0           0.0           0.0
+04-25 11:16:06 - INFO: Repl ex : 1    2    3    4
+04-25 11:16:06 - INFO: Repl pr :  0.241     0.390
+04-25 11:16:06 - INFO: re reject test pass
