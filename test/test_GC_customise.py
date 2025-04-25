@@ -591,6 +591,71 @@ class MyTestCase(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force_h, force)
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
+    def test_OPC_AmberFF(self):
+        print()
+        print("# Test AmberFF with OPC water")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+
+        base = Path(__file__).resolve().parent
+        inpcrd, prmtop, system = load_amber_sys(
+            base / "Water_Chemical_Potential/OPC/water_opc.inpcrd",
+            base / "Water_Chemical_Potential/OPC/water_opc.prmtop", nonbonded_settings)
+        topology = prmtop.topology
+        self.assertTrue(system.usesPeriodicBoundaryConditions())
+
+        print("## Energy and force should be the same before and after customization")
+        energy_ref, force_ref = calc_energy_force(system, topology, inpcrd.positions, platform)
+        baseGC = sampler.BaseGrandCanonicalMonteCarloSampler(
+            system,
+            topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_base_Amber_OPC.log",
+            platform=platform,
+        )  # Reference platform is necessary for exact force comparison
+        self.assertEqual(baseGC.system_type, "Amber")
+        baseGC.simulation.context.setPositions(inpcrd.positions)
+
+        # Can we get the same force before and after?
+        baseGC.simulation.context.setParameter("lambda_gc_coulomb", 1.0)
+        baseGC.simulation.context.setParameter("lambda_gc_vdw", 1.0)
+        state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
+        pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
+
+        # The energy and force should be the same
+        self.assertTrue(
+            np.allclose(
+                energy_ref.value_in_unit(unit.kilojoule_per_mole),
+                energy.value_in_unit(unit.kilojoule_per_mole)
+            ), f"Energy mismatch: {energy_ref} vs {energy}")
+        self.assertEqual(len(force), 26644)
+        self.assertEqual(len(force_ref), 26644)
+        all_close_flag, mis_match_list, error_msg = match_force(force_ref, force)
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        print("## Set lambda_gc=0.0 for the switching water. Force should be the same as -1 water system")
+        inpcrd, prmtop, system = load_amber_sys(
+            base / "Water_Chemical_Potential/OPC/water_opc-1.inpcrd",
+            base / "Water_Chemical_Potential/OPC/water_opc-1.prmtop", nonbonded_settings)
+        topology = prmtop.topology
+        energy_ref, force_ref = calc_energy_force(system, topology, inpcrd.positions, platform)
+
+        baseGC.simulation.context.setParameter("lambda_gc_coulomb", 0.0)
+        baseGC.simulation.context.setParameter("lambda_gc_vdw", 0.0)
+        state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
+        pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
+        self.assertTrue(
+            np.allclose(
+                energy_ref.value_in_unit(unit.kilojoule_per_mole),
+                energy.value_in_unit(unit.kilojoule_per_mole)
+            ), f"Energy mismatch: {energy_ref} vs {energy}")
+        self.assertEqual(len(force), 26644)
+        self.assertEqual(len(force_ref), 26640)
+        all_close_flag, mis_match_list, error_msg = match_force(force_ref, force)
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
 
 if __name__ == '__main__':
     unittest.main()
