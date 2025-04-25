@@ -169,11 +169,16 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         for at_index in self.reference_atoms:
             self.logger.info(f"    {at_list[at_index]}")
 
-        # reporter
+        # IO related
         #: Call this reporter to write the rst7 restart file.
         self.rst_reporter = parmed.openmm.reporters.RestartReporter(rst_file, 0, netcdf=True)
         #: Call this reporter to write the dcd trajectory file.
-        self.dcd_reporter = app.DCDReporter(dcd_file, 0)
+        self.dcd_reporter = None
+        if dcd_file is not None:
+            self.dcd_reporter = app.DCDReporter(dcd_file, 0)
+
+        self.logger.info(f"T   = {temperature}.")
+        self.logger.info(f"kBT = {self.kBT}.")
 
 
     def update_gc_count(self,
