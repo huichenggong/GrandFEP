@@ -65,64 +65,6 @@ class BaseGrandCanonicalMonteCarloSampler:
     water_O_name :
         The atom name of oxygen in water. Default is 'O'.
 
-
-    Attributes
-    ----------
-    logger : logging.Logger
-
-    compound_integrator : openmm.CompoundIntegrator
-        2 integrators in this attribute. The 1st one is for Canonical simulation, the 2nd one is for non-equilibirum insertion/deletion.
-
-    simulation : app.Simulation
-        simulation ties together Topology, System, Integrator, and Context in this sampler.
-
-    temperature : unit.Quantity
-        The reference temperature for the system, with proper units (e.g., kelvin).
-
-    kBT : unit.Quantity
-        k_B * T, with unit.
-
-    topology : app.Topology
-        The OpenMM Topology object. All the res_name, atom_index, atom_name, etc. are in this topology.
-
-    Adam_box : unit.Quantity
-        Adam value, considering the whole simulation box and all water molecules.
-
-    Adam_GCMC : unit.Quantity
-        Adam value, considering the selected sphere and water molecules in the sphere.
-
-    ghost_list : list
-        A list of residue indices of water that are set to ghost. Should only be modified with set_ghost_list(),
-        and get by get_ghost_list().
-
-    water_res_2_atom : dict
-        A dictionary of residue index to a list of atom indices of water.
-
-    water_res_2_O : dict
-        A dictionary of residue index to a list of atom indices of water oxygen.
-
-    switching_water : int
-        The residue index of the switching water. The switching water will be set as the last water during initialization.
-        It should not be changed during the simulation, as the ParticleParameterOffset can not be updated in NonbondedForce.
-
-    num_of_points_water : int
-        The number of points in the water model. 3 for TIP3P, 4 for OPC.
-
-    custom_nonbonded_force : openmm.CustomNonbondedForce
-        This force handles vdW. It has PerParticleParameter is_real and is_switching to control real/ghost and
-        switching/non-switching. It also has a global parameter ``lambda_gc_vdw`` to control the switching water.
-
-    nonbonded_force : openmm.NonbondedForce
-        This force handles Coulomb. The switching water has ParticleParameterOffset with global parameter
-        ``lambda_gc_coulomb`` to control the switching water.
-
-    wat_params : dict
-        A dictionary to track the nonbonded parameter of water. The keys are "charge", "sigma", "epsilon",
-        The values are a list of parameters with unit.
-
-    system_type : str
-        The type of the system. Can be Amber, Charmm or Hybrid depending on the system and energy expression in the given CustomNonbondedForce.
-
     """
     def __init__(self,
                  system: openmm.System,
@@ -149,7 +91,8 @@ class BaseGrandCanonicalMonteCarloSampler:
         """
 
         # prepare logger
-        self.logger = logging.getLogger(__name__)
+        #: Logger object
+        self.logger: logging.Logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         file_handler = logging.FileHandler(log)
         file_handler.setLevel(logging.INFO)
@@ -158,29 +101,52 @@ class BaseGrandCanonicalMonteCarloSampler:
         self.logger.addHandler(file_handler)
         self.logger.info("Initializing BaseGrandCanonicalMonteCarloSampler")
 
-        self.system = None
-        self.compound_integrator = None
-        self.simulation = None
-        self.topology = topology
+        #: The OpenMM System object.
+        self.system: openmm.System = None
+        #: 2 integrators in this attribute. The 1st one is for Canonical simulation, the 2nd one is for non-equilibirum insertion/deletion.
+        self.compound_integrator: openmm.CompoundIntegrator = None
+        #: Simulation ties together Topology, System, Integrator, and Context in this sampler.
+        self.simulation: app.Simulation = None
+        #: The OpenMM Topology object. All the res_name, atom_index, atom_name, etc. are in this topology.
+        self.topology: app.Topology = topology
 
         # constants and simulation configuration
-        self.kBT = unit.BOLTZMANN_CONSTANT_kB * unit.AVOGADRO_CONSTANT_NA * temperature
-        self.temperature = temperature
-        self.Adam_box = None
-        self.Adam_GCMC = None
+
+        #: k\ :sub:`B`\ * T, with unit.
+        self.kBT: unit.Quantity = unit.BOLTZMANN_CONSTANT_kB * unit.AVOGADRO_CONSTANT_NA * temperature
+        #: The reference temperature for the system, with proper units (e.g., kelvin).
+        self.temperature: unit.Quantity = temperature
+        #: Adam value, considering the whole simulation box and all water molecules.
+        self.Adam_box: unit.Quantity = None
+        #: Adam value, considering the selected sphere and water molecules in the sphere.
+        self.Adam_GCMC: unit.Quantity = None
 
 
+        #: A list of residue indices of water that are set to ghost. Should only be modified with set_ghost_list(), and get by get_ghost_list().
         self.ghost_list = []
-        self.water_res_2_atom = None
-        self.water_res_2_O = None
-        self.switching_water = None
-        self.num_of_points_water = None
+        #: A dictionary of residue index to a list of atom indices of water.
+        self.water_res_2_atom: dict = None
+        #: A dictionary of residue index to a list of atom indices of water oxygen.
+        self.water_res_2_O: dict = None
+        #: The residue index of the switching water. The switching water will be set as the last water during initialization.
+        #: It should not be changed during the simulation, as the ParticleParameterOffset can not be updated in NonbondedForce.
+        self.switching_water: int = None
+        #: The number of points in the water model. 3 for TIP3P, 4 for OPC.
+        self.num_of_points_water: int = None
 
         # system and force field related attributes
-        self.custom_nonbonded_force = None
-        self.nonbonded_force = None
-        self.wat_params = None
-        self.system_type = None
+
+        #: This force handles vdW. It has PerParticleParameter is_real and is_switching to control real/ghost and
+        #: switching/non-switching. It also has a global parameter ``lambda_gc_vdw`` to control the switching water.
+        self.custom_nonbonded_force: openmm.CustomNonbondedForce = None
+        #: This force handles Coulomb. The switching water has ParticleParameterOffset with global parameter
+        #: ``lambda_gc_coulomb`` to control the switching water.
+        self.nonbonded_force: openmm.NonbondedForce = None
+        #: A dictionary to track the nonbonded parameter of water. The keys are ``charge``, ``sigma``, ``epsilon``,
+        #: The values are a list of parameters with unit.
+        self.wat_params: dict = None
+        #: The type of the system. Can be Amber, Charmm or Hybrid depending on the system and energy expression in the given CustomNonbondedForce.
+        self.system_type: str = None
 
         # preparation based on the topology
         self.logger.info("Check topology")
@@ -213,6 +179,8 @@ class BaseGrandCanonicalMonteCarloSampler:
         self.compound_integrator.setCurrentIntegrator(0)
 
 
+        self.logger.info(f"T   = {temperature}.")
+        self.logger.info(f"kBT = {self.kBT}.")
 
     def _find_all_water(self, resname, water_O_name):
         """
