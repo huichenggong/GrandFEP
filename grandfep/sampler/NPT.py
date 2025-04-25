@@ -86,6 +86,9 @@ class NPTSampler:
         else:
             self.dcd_reporter = None
 
+        self.logger.info(f"T   = {temperature}.")
+        self.logger.info(f"kBT = {self.kBT}.")
+
     def check_temperature(self) -> unit.Quantity:
         """
         Check the reference temperature in the integrator and barostat. If they are not close, raise an Error
@@ -353,7 +356,7 @@ class NPTSamplerMPI(NPTSampler):
         for l in lines[-1::-1]:
             if "RE Step" in l:
                 re_step = int(l.split("RE Step")[-1])
-        self.re_step = re_step
+        self.re_step = re_step + 1
 
     def _calc_neighbor_reduced_energy(self) -> np.array:
         """
