@@ -26,10 +26,7 @@ def test_RE():
     base = Path(__file__).resolve().parent
     multidir = [base / f"Water_Chemical_Potential/OPC/multidir/{i}" for i in range(1,5)]
     sim_dir = multidir[MPI.COMM_WORLD.Get_rank()]
-    mdp = utils.md_params_yml()
-    mdp.lambda_gc_vdw = None
-    mdp.lambda_gc_coulomb = None
-    mdp._read_yml(sim_dir / "md.yml")
+    mdp = utils.md_params_yml(sim_dir / "md.yml")
 
     inpcrd = app.AmberInpcrdFile(str(base / "Water_Chemical_Potential/OPC/water_opc.inpcrd"))
     prmtop = app.AmberPrmtopFile(str(base / "Water_Chemical_Potential/OPC/water_opc.prmtop"),
