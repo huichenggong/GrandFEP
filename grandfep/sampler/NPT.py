@@ -381,7 +381,7 @@ class NPTSamplerMPI(NPTSampler):
             reduced_energy[i] = state.getPotentialEnergy() / self.kBT
 
         # when there is right neighbor
-        if self.init_lambda_state < self.n_lambda_states:
+        if self.init_lambda_state < self.n_lambda_states-1:
             i = self.init_lambda_state +1
             for lam, val_list in self.lambda_dict.items():
                 self.simulation.context.setParameter(lam, val_list[i])
@@ -512,7 +512,7 @@ class NPTSamplerMPI(NPTSampler):
 
         # log results
         msg = " ".join([f"{i:13}" for i in reduced_energy])
-        self.logger.info("Reduced Energy U_i(x):"+msg)
+        self.logger.info("Reduced Energy U_i(x): " + msg)
 
         if self.rank == 0:
             # log the exchange decision
