@@ -4,8 +4,10 @@ from typing import Union
 
 import yaml
 import numpy as np
+import pandas as pd
 
 from openmm import app, openmm, unit
+import pymbar
 
 from .relative import HybridTopologyFactory
 
@@ -296,7 +298,7 @@ class md_params_yml:
         self.ex_potential = -6.314 * unit.kilocalorie_per_mole # +- 0.022
         self.standard_volume = 2.96299369e-02 * unit.nanometer**3
         self.init_lambda_state = 0
-        self.calc_neighbor_only = True
+        self.calc_neighbor_only = False
         self.md_gc_re_protocol = [("MD", 200),
                                   ("GC", 1),
                                   ("MD", 200),
@@ -337,3 +339,138 @@ class md_params_yml:
         """Print parameters for easy checking."""
         params = {attr: getattr(self, attr) for attr in dir(self) if not attr.startswith("_")}
         return "\n".join(f"{k}: {v}" for k, v in params.items())
+
+class FreeEAnalysis:
+    """
+    Class to analyze free energy calculations using BAR/MBAR.
+
+    Parameters
+    ----------
+
+    """
+    def __init__(self, file_list: list, keyword: str, separator: str, begin: int=0):
+        self.file_list = file_list
+        self.U_all = [self.read_energy(f, keyword=keyword, separator=separator, begin=begin) for f in self.file_list]
+        self.u_unco = None
+        self.N_k = None
+        self.eq_time = None
+        self.sub_sample()
+
+    @staticmethod
+    def read_energy(log_file: Union[str,Path],
+                    keyword: str ="Reduced Energy U_i(x):",
+                    separator: str =" ",
+                    begin: int=0) -> np.array:
+        """
+        Parse the energy from a file
+
+        Parameters
+        ----------
+        log_file
+            File to be parsed
+
+        keyword:
+           The keyword to locate the line
+
+        separator:
+            The separator to use between energy in the file
+
+        """
+        with open(log_file) as f:
+            lines = f.readlines()
+        e_array = []
+        for i, l in enumerate(lines):
+            if keyword in l:
+                e_string = l.rstrip().split(keyword)[-1]
+                e_array_tmp = np.array([float(energy) for energy in e_string.split(separator)]) # reduced energy in kBT
+                e_array.append(e_array_tmp)
+        return np.array(e_array[begin:])
+
+    def sub_sample(self):
+
+        n_sample, n_ham = self.U_all[0].shape
+        N_k = np.zeros(n_ham, dtype=np.int64)
+        eq_time = np.zeros(n_ham, dtype=np.int64)
+        u_unco = []
+        for i, U_series in enumerate(self.U_all):
+            n_equil, g, neff_max = pymbar.timeseries.detect_equilibration(U_series[:, i])
+            U_equil = U_series[n_equil:, :]
+            indices = pymbar.timeseries.subsample_correlated_data(U_equil[:, i], g=g)
+            u_unco.append(U_equil[indices, :])
+            # u_unco.append(U_series[:, :])
+            N_k[i] = len(indices)
+            eq_time[i] = n_equil
+        self.u_unco, self.N_k, self.eq_time = u_unco, N_k, eq_time
+        return u_unco, N_k, eq_time
+
+    def print_uncorrelate(self):
+        """
+        Print the number of uncorrelated sample in each file
+        """
+        max_width = max(len(str(fname)) for fname in self.file_list)
+        max_width = max(max_width, 9)
+        print(f"{'File Name':<{max_width}} |  N/N_all  | Equil")
+        print("-" * (max_width + 20))  # Add a separator line
+        N = [len(u) for u in self.U_all]
+        for fname, n, n_all, eq0 in zip(self.file_list, self.N_k, N, self.eq_time):
+            print(f"{str(fname):<{max_width}} | {n:>4d}/{n_all:<4d} | {eq0:4d}")
+
+    def mbar_U_all(self, kBT_val):
+        u_unco = self.u_unco
+        N_k = self.N_k
+        mbar = pymbar.MBAR(np.vstack(u_unco).T, N_k)
+        res = mbar.compute_free_energy_differences()
+        dG = res["Delta_f"] * kBT_val
+        dG_err = res["dDelta_f"] * kBT_val
+
+        res_format = []
+        for i in range(len(dG) - 1):
+            res_format.append([dG[i, i + 1], dG_err[i, i + 1]])
+        return dG, dG_err, np.array(res_format)
+
+    def bar_U_all(self, kBT_val):
+        u_unco = self.u_unco
+        dG = np.zeros((len(u_unco), len(u_unco)))
+        dG_err = np.zeros((len(u_unco), len(u_unco)))
+        res_format = []
+        n_states = len(u_unco)
+        for i in range(n_states - 1):
+            u_F = u_unco[i][:, i + 1] - u_unco[i][:, i]
+            u_R = u_unco[i + 1][:, i] - u_unco[i + 1][:, i + 1]
+            res_tmp = pymbar.other_estimators.bar(u_F, u_R)
+            res_format.append([res_tmp['Delta_f'] * kBT_val, res_tmp['dDelta_f'] * kBT_val])
+            dG[i, i + 1] = res_tmp['Delta_f'] * kBT_val
+            dG_err[i, i + 1] = res_tmp['dDelta_f'] * kBT_val
+        # fill in the rest of dG and dG_err
+        for i in range(n_states):
+            for j in range(i + 2, n_states):
+                dG[i, j] = dG[i, j - 1] + dG[j - 1, j]
+                dG_err[i, j] = np.sqrt(dG_err[i, j - 1] ** 2 + dG_err[j - 1, j] ** 2)
+
+        # Fill lower triangular part
+        for i in range(n_states):
+            for j in range(i):
+                dG[i, j] = -dG[j, i]
+                dG_err[i, j] = dG_err[j, i]
+        return dG, dG_err, np.array(res_format)
+
+    @staticmethod
+    def print_res_all(res_all):
+        print(f" A - B :   ", end="")
+        for k, v in res_all.items():
+            print(f"{k:18}", end="")
+        print()
+
+        print("-" * (10 + len(res_all) * 18))
+
+        for i in range(len(v[-1])):
+            print(f"{i:2d} -{i + 1:2d} :", end="")
+            for k, (dG, dG_err, v) in res_all.items():
+                print(f" {v[i, 0]:7.3f} +- {v[i, 1]:6.3f}", end="")
+            print()
+
+        print("-" * (10 + len(res_all) * 18))
+        print("Total  :", end="")
+        for k, (dG, dG_err, v) in res_all.items():
+            print(f" {dG[0, -1]:7.3f} +- {dG_err[0, -1]:6.3f}", end="")
+        print()
