@@ -81,6 +81,8 @@ def test_RE():
         assert np.all(np.isclose(reduced_e_matrix[i, :], reduced_e))
 
     npt.simulation.context.setVelocitiesToTemperature(mdp.ref_t)
+    npt.logger.info("MD 25000")
+    npt.simulation.step(25000)
     for i in range(10):
         npt.logger.info("MD 200")
         npt.simulation.step(200)
