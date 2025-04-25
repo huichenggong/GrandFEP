@@ -70,21 +70,27 @@ class NPTSampler:
         self.logger.info("Initializing NPT Sampler")
 
         # constants and simulation configuration
+        #: k\ :sub:`B`\ * T, with unit.
         self.kBT = unit.BOLTZMANN_CONSTANT_kB * unit.AVOGADRO_CONSTANT_NA * temperature
-        self.temperature = temperature
+        #: reference temperature of the system, with unit
+        self.temperature: unit.Quantity = temperature
 
         # set up simulation
+        #: The OpenMM Topology object. All the res_name, atom_index, atom_name, etc. are in this topology.
         self.topology = topology
+        #: The OpenMM System object.
         self.system = system
         integrator = BAOABIntegrator(temperature, collision_rate, timestep)
-        self.simulation = app.Simulation(self.topology, self.system, integrator, platform)
+        #: Simulation ties together Topology, System, Integrator, and Context in this sampler.
+        self.simulation: app.Simulation = app.Simulation(self.topology, self.system, integrator, platform)
 
         # IO related
+        #: Call this reporter to write the rst7 restart file.
         self.rst_reporter = parmed.openmm.reporters.RestartReporter(rst_file, 0, netcdf=True)
+        #: Call this reporter to write the dcd trajectory file.
+        self.dcd_reporter = None
         if dcd_file is not None:
             self.dcd_reporter = app.DCDReporter(dcd_file, 0)
-        else:
-            self.dcd_reporter = None
 
         self.logger.info(f"T   = {temperature}.")
         self.logger.info(f"kBT = {self.kBT}.")
@@ -110,13 +116,14 @@ class NPTSampler:
             raise ValueError(f"Reference temperature in barostat ({ref_t_baro}) is not equal to the input temperature ({self.temperature})")
         return self.temperature
 
-    def report_rst(self):
+    def report_rst(self, state=None):
         """
         Write an Amber rst7 restart file.
 
         :return: None
         """
-        state = self.simulation.context.getState(getPositions=True, getVelocities=True)
+        if not state:
+            state = self.simulation.context.getState(getPositions=True, getVelocities=True)
         self.rst_reporter.report(self.simulation, state)
         self.logger.debug(f"Write restart file {self.rst_reporter.fname}")
 
@@ -139,13 +146,14 @@ class NPTSampler:
         self.simulation.context.setVelocities(rst.getVelocities())
         self.logger.debug(f"Load boxVectors/positions/velocities from {rst_input}")
 
-    def report_dcd(self):
+    def report_dcd(self, state=None):
         """
-        Write a DCD file.
+        Append a frame to the DCD trajectory file.
 
         :return: None
         """
-        state = self.simulation.context.getState(getPositions=True)
+        if not state:
+            state = self.simulation.context.getState(getPositions=True)
         if not self.dcd_reporter:
             raise ValueError("DCD reporter is not set")
         self.dcd_reporter.report(self.simulation, state)
@@ -320,7 +328,9 @@ class NPTSamplerMPI(NPTSampler):
             self.logger.info(msg)
 
         # set the current state
+        self.logger.info(f"init_lambda_state={self.init_lambda_state}")
         for lam, val_list in self.lambda_dict.items():
+            self.logger.info(f"Set {lam}={val_list[self.init_lambda_state]}")
             self.simulation.context.setParameter(lam, val_list[self.init_lambda_state])
 
     def set_re_step(self, re_step: int):
@@ -511,7 +521,7 @@ class NPTSamplerMPI(NPTSampler):
                 self.simulation.context.setVelocities(recv_vel * (unit.nanometer / unit.picosecond))
 
         # log results
-        msg = " ".join([f"{i:13}" for i in reduced_energy])
+        msg = ",".join([f"{i:13}" for i in reduced_energy])
         self.logger.info("Reduced Energy U_i(x): " + msg)
 
         if self.rank == 0:
