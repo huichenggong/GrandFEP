@@ -356,6 +356,7 @@ class NPTSamplerMPI(NPTSampler):
         for l in lines[-1::-1]:
             if "RE Step" in l:
                 re_step = int(l.split("RE Step")[-1])
+                break
         self.re_step = re_step + 1
 
     def _calc_neighbor_reduced_energy(self) -> np.array:
