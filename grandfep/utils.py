@@ -1,4 +1,5 @@
 import gzip
+import warnings
 from pathlib import Path
 from typing import Union
 
@@ -350,7 +351,9 @@ class FreeEAnalysis:
     """
     def __init__(self, file_list: list, keyword: str, separator: str, begin: int=0):
         self.file_list = file_list
-        self.U_all = [self.read_energy(f, keyword=keyword, separator=separator, begin=begin) for f in self.file_list]
+        data_all = [self.read_energy(f, keyword=keyword, separator=separator, begin=begin) for f in self.file_list]
+        self.temperature, self.kBT = data_all[0][1:]
+        self.U_all = [i[0] for i in data_all]
         self.u_unco = None
         self.N_k = None
         self.eq_time = None
@@ -384,7 +387,16 @@ class FreeEAnalysis:
                 e_string = l.rstrip().split(keyword)[-1]
                 e_array_tmp = np.array([float(energy) for energy in e_string.split(separator)]) # reduced energy in kBT
                 e_array.append(e_array_tmp)
-        return np.array(e_array[begin:])
+
+        temperature = None
+        kBT = None
+        for l in lines:
+            if "T   =" in l:
+                temperature = float(l.split()[-2]) * unit.kelvin
+                kBT = unit.BOLTZMANN_CONSTANT_kB * unit.AVOGADRO_CONSTANT_NA * temperature
+
+
+        return np.array(e_array[begin:]), temperature, kBT
 
     def sub_sample(self):
 
@@ -415,7 +427,8 @@ class FreeEAnalysis:
         for fname, n, n_all, eq0 in zip(self.file_list, self.N_k, N, self.eq_time):
             print(f"{str(fname):<{max_width}} | {n:>4d}/{n_all:<4d} | {eq0:4d}")
 
-    def mbar_U_all(self, kBT_val):
+    def mbar_U_all(self):
+        kBT_val = self.kBT.value_in_unit(unit.kilocalorie_per_mole)
         u_unco = self.u_unco
         N_k = self.N_k
         mbar = pymbar.MBAR(np.vstack(u_unco).T, N_k)
@@ -426,9 +439,14 @@ class FreeEAnalysis:
         res_format = []
         for i in range(len(dG) - 1):
             res_format.append([dG[i, i + 1], dG_err[i, i + 1]])
+
+        overlap = mbar.compute_overlap()["matrix"]
+        for i in range(len(dG) - 1):
+            res_format[i].append(overlap[i, i+1])
         return dG, dG_err, np.array(res_format)
 
-    def bar_U_all(self, kBT_val):
+    def bar_U_all(self):
+        kBT_val = self.kBT.value_in_unit(unit.kilocalorie_per_mole)
         u_unco = self.u_unco
         dG = np.zeros((len(u_unco), len(u_unco)))
         dG_err = np.zeros((len(u_unco), len(u_unco)))
@@ -438,7 +456,13 @@ class FreeEAnalysis:
             u_F = u_unco[i][:, i + 1] - u_unco[i][:, i]
             u_R = u_unco[i + 1][:, i] - u_unco[i + 1][:, i + 1]
             res_tmp = pymbar.other_estimators.bar(u_F, u_R)
-            res_format.append([res_tmp['Delta_f'] * kBT_val, res_tmp['dDelta_f'] * kBT_val])
+            over_lab = 0
+            try:
+                over_lab = pymbar.other_estimators.bar_overlap(u_F, u_R)
+            except:
+                warnings.warn("pymbar fail to compute BAR overlap")
+
+            res_format.append([res_tmp['Delta_f'] * kBT_val, res_tmp['dDelta_f'] * kBT_val, over_lab])
             dG[i, i + 1] = res_tmp['Delta_f'] * kBT_val
             dG_err[i, i + 1] = res_tmp['dDelta_f'] * kBT_val
         # fill in the rest of dG and dG_err
@@ -458,19 +482,19 @@ class FreeEAnalysis:
     def print_res_all(res_all):
         print(f" A - B :   ", end="")
         for k, v in res_all.items():
-            print(f"{k:18}", end="")
+            print(f"{k:23}", end="")
         print()
 
-        print("-" * (10 + len(res_all) * 18))
+        print("-" * (10 + len(res_all) * 23))
 
         for i in range(len(v[-1])):
             print(f"{i:2d} -{i + 1:2d} :", end="")
             for k, (dG, dG_err, v) in res_all.items():
-                print(f" {v[i, 0]:7.3f} +- {v[i, 1]:6.3f}", end="")
+                print(f" {v[i, 0]:7.3f} +- {v[i, 1]:6.3f} {v[i, 2]:4.2f}", end="")
             print()
 
-        print("-" * (10 + len(res_all) * 18))
+        print("-" * (10 + len(res_all) * 23))
         print("Total  :", end="")
         for k, (dG, dG_err, v) in res_all.items():
-            print(f" {dG[0, -1]:7.3f} +- {dG_err[0, -1]:6.3f}", end="")
+            print(f" {dG[0, -1]:7.3f} +- {dG_err[0, -1]:6.3f}     ", end="")
         print()

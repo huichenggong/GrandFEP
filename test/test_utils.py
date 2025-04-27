@@ -36,18 +36,16 @@ class MyTestCase(unittest.TestCase):
         np.save(self.base_path / "output/rotation_matrix_old.npy", res_old)
 
     def test_free_e_analysis(self):
-        file_list = [self.base_path / f"Water_Chemical_Potential/OPC/MBAR/{i}/md.log" for i in range(20)]
+        file_list = [self.base_path / f"Water_Chemical_Potential/Tip3p/MBAR/{i}/md.log" for i in range(20)]
+        file_list = [f"/home/chui/E29Project-2023-04-11/136-grandFEP/benchmark/05-Water-Solv/Tip3p/0-0mmol/rep_0/{i}/md.log" for i in range(20)]
         keyword="Reduced Energy U_i(x):"
         separator=","
 
-        analysis = utils.FreeEAnalysis(file_list, keyword, separator, 100)
+        analysis = utils.FreeEAnalysis(file_list, keyword, separator, 10)
         print()
         analysis.print_uncorrelate()
-        res_all = {}
-        dG, dG_err, res_format = analysis.bar_U_all(kBT_val = 0.5961612775922496)
-        res_all["BAR"] = ( dG, dG_err, res_format )
-        dG, dG_err, res_format = analysis.mbar_U_all(kBT_val=0.5961612775922496)
-        res_all["MBAR"] = ( dG, dG_err, res_format )
+        res_all = {"MBAR": analysis.mbar_U_all(),
+                   "BAR": analysis.bar_U_all()}
 
         analysis.print_res_all(res_all)
 
