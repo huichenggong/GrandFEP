@@ -369,6 +369,11 @@ class NPTSamplerMPI(NPTSampler):
                 break
         self.re_step = re_step + 1
 
+        # re_step has to be the same across all replicas. If not, raise an error.
+        re_step_all = self.comm.allgather(self.re_step)
+        if len(set(re_step_all)) != 1:
+            raise ValueError(f"RE step is not the same across all replicas: {re_step_all}")
+
     def _calc_neighbor_reduced_energy(self) -> np.array:
         """
         Use the current configuration and compute the energy of the neighboring sampling state. Later BAR can be performed on this data.
