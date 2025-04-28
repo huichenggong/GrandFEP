@@ -359,10 +359,10 @@ class md_params_yml:
         """
         Evaluate system_setting, and return them in a dictionary
         """
-        nonbonded = {}
+        system_setting = {}
         for k, v in self.system_setting.items():
-            nonbonded[k] = eval(v)
-        return nonbonded
+            system_setting[k] = eval(v)
+        return system_setting
 
     def _convert_unit(self, key, value):
         """Handle unit conversion based on parameter key."""

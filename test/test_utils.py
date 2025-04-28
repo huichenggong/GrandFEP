@@ -61,7 +61,8 @@ class MyTestCase(unittest.TestCase):
         print()
         print("# Load a yaml file which has the MD parameters")
         mdp = utils.md_params_yml(self.base_path/"Water_Chemical_Potential/OPC/multidir/0/md.yml")
-        print(mdp.get_nonbonded())
+        print(mdp.get_system_setting())
+        print(mdp)
 
 if __name__ == '__main__':
     unittest.main()
