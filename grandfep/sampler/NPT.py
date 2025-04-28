@@ -157,8 +157,6 @@ class NPTSampler:
         if not self.dcd_reporter:
             raise ValueError("DCD reporter is not set")
         self.dcd_reporter.report(self.simulation, state)
-        self.logger.debug(f"Write DCD file {self.dcd_reporter.fname}")
-
 
 class NPTSamplerMPI(NPTSampler):
     """
@@ -483,9 +481,9 @@ class NPTSamplerMPI(NPTSampler):
                                 - reduced_energy_matrix[rank_i, i]   - reduced_energy_matrix[rank_i + 1, i+1])
                 accept_prob = math.exp(-delta_energy)
                 if np.random.rand() < accept_prob:
-                    re_decision[(rank_i, rank_i + 1)] = (True, min(1,accept_prob))
+                    re_decision[(rank_i, rank_i + 1)] = (True, min(1, accept_prob))
                 else:
-                    re_decision[(rank_i, rank_i + 1)] = (False, min(1,accept_prob))
+                    re_decision[(rank_i, rank_i + 1)] = (False, min(1, accept_prob))
         else:
             re_decision = None  # placeholder on other ranks
 
