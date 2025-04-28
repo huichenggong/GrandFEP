@@ -241,8 +241,10 @@ class md_params_yml:
         dt (unit.Quantity): Time step. Unit in ps
         maxh (float): The maximum run time. Unit in hour
         nsteps (int): Number of steps.
-        nstdcd (int): Number of steps per dcd trajectory output.
-        nstenergy (int): Number of steps per csv energy file output.
+        nst_dcd (int): Number of steps per dcd trajectory output.
+        nst_csv (int): Number of steps per csv energy file output.
+        ncycle_dcd (int): Number of cycle per dcd trajectory output.
+        ncycle_csv (int): Number of cycle per csv energy file output.
         tau_t (unit.Quantity): Temperature coupling time constant. Unit in ps
         ref_t (unit.Quantity): Reference temperature. Unit in K
         gen_vel (bool): Generate velocities.
@@ -284,8 +286,10 @@ class md_params_yml:
         self.dt = 0.002 * unit.picoseconds
         self.maxh = 1.0
         self.nsteps = 100
-        self.nstdcd = 5000
-        self.nstenergy = 1000
+        self.nst_dcd = 0
+        self.nst_csv = 0
+        self.ncycle_dcd = 0
+        self.ncycle_csv = 5
         self.tau_t = 1.0 * unit.picoseconds
         self.ref_t = 300.0 * unit.kelvin
         self.gen_vel = True
@@ -321,12 +325,8 @@ class md_params_yml:
         with open(yaml_file, "r") as file:
             params = yaml.safe_load(file)
 
-        # Override default attributes only if provided in YAML
         for key, value in params.items():
-            if hasattr(self, key):
-                setattr(self, key, self._convert_unit(key, value))
-            # else:
-            #     raise ValueError(f"Parameter '{key}' is not valid.")
+            setattr(self, key, self._convert_unit(key, value))
 
     def _convert_unit(self, key, value):
         """Handle unit conversion based on parameter key."""
@@ -351,19 +351,43 @@ class FreeEAnalysis:
     """
     def __init__(self, file_list: list, keyword: str, separator: str, begin: int=0):
         self.file_list = file_list
-        data_all = [self.read_energy(f, keyword=keyword, separator=separator, begin=begin) for f in self.file_list]
-        self.temperature, self.kBT = data_all[0][1:]
-        self.U_all = [i[0] for i in data_all]
+        data_T_all = [self.read_energy(f, keyword=keyword, separator=separator, begin=begin) for f in self.file_list]
+
+        self.temperature = None
+        self.kBT = None
+        if data_T_all[0][1] is not None:
+            # all the temperature should be the same
+            t_all = [data[1].value_in_unit(unit.kelvin) for data in data_T_all]
+            if not np.all(np.isclose(t_all[1], [t for t in t_all])):
+                msg = "\n".join([f"{f}: {t}" for f, t in zip(self.file_list, [data[1] for data in data_T_all])])
+                raise ValueError(f"Temperature are not the same in given files:\n"+msg)
+
+            self.temperature = data_T_all[0][1]
+            self.kBT = unit.BOLTZMANN_CONSTANT_kB * unit.AVOGADRO_CONSTANT_NA * self.temperature
+
+        self.U_all = [i[0] for i in data_T_all]
         self.u_unco = None
         self.N_k = None
         self.eq_time = None
         self.sub_sample()
 
+    def set_temperature(self, temperature: unit.Quantity):
+        """
+        Set the temperature for the analysis.
+
+        Parameters
+        ----------
+        temperature : unit.Quantity
+            Temperature in Kelvin, with unit
+        """
+        self.temperature = temperature
+        self.kBT = unit.BOLTZMANN_CONSTANT_kB * unit.AVOGADRO_CONSTANT_NA * self.temperature
+
     @staticmethod
     def read_energy(log_file: Union[str,Path],
                     keyword: str ="Reduced Energy U_i(x):",
-                    separator: str =" ",
-                    begin: int=0) -> np.array:
+                    separator: str =",",
+                    begin: int=0) -> tuple[np.ndarray, unit.Quantity]:
         """
         Parse the energy from a file
 
@@ -373,10 +397,21 @@ class FreeEAnalysis:
             File to be parsed
 
         keyword:
-           The keyword to locate the line
+           The keyword to locate the line. The energy should immediately follow this keyword.
 
         separator:
             The separator to use between energy in the file
+
+        begin:
+            The first frame to be analyzed. The first frame is 0.
+
+        Returns
+        -------
+        e_array : np.array
+            The energy array.
+
+        temperature : unit.Quantity
+            The temperature in Kelvin. If not found, None is returned.
 
         """
         with open(log_file) as f:
@@ -387,16 +422,14 @@ class FreeEAnalysis:
                 e_string = l.rstrip().split(keyword)[-1]
                 e_array_tmp = np.array([float(energy) for energy in e_string.split(separator)]) # reduced energy in kBT
                 e_array.append(e_array_tmp)
+        e_array = np.array(e_array[begin:])
 
         temperature = None
-        kBT = None
         for l in lines:
             if "T   =" in l:
                 temperature = float(l.split()[-2]) * unit.kelvin
-                kBT = unit.BOLTZMANN_CONSTANT_kB * unit.AVOGADRO_CONSTANT_NA * temperature
 
-
-        return np.array(e_array[begin:]), temperature, kBT
+        return e_array, temperature
 
     def sub_sample(self):
 
