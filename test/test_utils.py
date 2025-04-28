@@ -37,11 +37,12 @@ class MyTestCase(unittest.TestCase):
 
     def test_free_e_analysis(self):
         file_list = [self.base_path / f"Water_Chemical_Potential/Tip3p/MBAR/{i}/md.log" for i in range(20)]
-        file_list = [f"/home/chui/E29Project-2023-04-11/136-grandFEP/benchmark/05-Water-Solv/Tip3p/0-0mmol/rep_0/{i}/md.log" for i in range(20)]
         keyword="Reduced Energy U_i(x):"
         separator=","
 
         analysis = utils.FreeEAnalysis(file_list, keyword, separator, 10)
+        self.assertAlmostEqual(analysis.temperature.value_in_unit(unit.kelvin), 300.0)
+
         print()
         analysis.print_uncorrelate()
         res_all = {"MBAR": analysis.mbar_U_all(),
