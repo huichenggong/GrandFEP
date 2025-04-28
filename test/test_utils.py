@@ -36,7 +36,7 @@ class MyTestCase(unittest.TestCase):
         np.save(self.base_path / "output/rotation_matrix_old.npy", res_old)
 
     def test_free_e_analysis(self):
-        file_list = [self.base_path / f"Water_Chemical_Potential/Tip3p/MBAR/{i}/md.log" for i in range(20)]
+        file_list = [self.base_path / f"Water_Chemical_Potential/OPC/MBAR/{i}/md.log" for i in range(20)]
         keyword="Reduced Energy U_i(x):"
         separator=","
 
