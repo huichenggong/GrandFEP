@@ -125,7 +125,6 @@ class NPTSampler:
         if not state:
             state = self.simulation.context.getState(getPositions=True, getVelocities=True)
         self.rst_reporter.report(self.simulation, state)
-        self.logger.debug(f"Write restart file {self.rst_reporter.fname}")
 
     def load_rst(self, rst_input: Union[str, Path]):
         """
