@@ -257,13 +257,27 @@ class md_params_yml:
         surface_tension (unit.Quantity): Surface tension. Unit in bar*nm
         ex_potential (unit.Quantity): Excess potential in GC. Unit in kcal/mol
         standard_volume (unit.Quantity): Standard volume in GC. Unit in nm^3
-
         init_lambda_state (int): The lambda state index to simulate
         calc_neighbor_only (bool): Whether to calculate the energy of the nearest neighbor only
             when performing replica exchange.
 
         md_gc_re_protocol (list): MD, Grand Canonical, Replica Exchange protocol. The default is
             ``[("MD", 200),("GC", 1),("MD", 200),("RE", 1),("MD", 200),("RE", 1),("MD", 200),("RE", 1)]``
+
+        system_setting (dict): Nonbonded parameters for the OpenMM createSystem. The default is
+            ``{"nonbondedMethod": app.PME, "nonbondedCutoff": 1.0 * unit.nanometer, "constraints": app.HBonds}``
+
+        lambda_gc_vdw (list): This is the ghobal parameter for controlling the vdw on the switching water
+        lambda_gc_coulomb (list): This is the ghobal parameter for controlling the Coulomb on the switching water
+        lambda_angles (list): Lambda
+        lambda_bonds (list): Lambda
+        lambda_sterics_core (list): Lambda
+        lambda_electrostatics_core (list): Lambda
+        lambda_sterics_delete (list): Lambda
+        lambda_electrostatics_delete (list): Lambda
+        lambda_sterics_insert (list): Lambda
+        lambda_electrostatics_insert (list): Lambda
+        lambda_torsions (list): Lambda
 
     """
 
@@ -312,9 +326,22 @@ class md_params_yml:
                                   ("RE", 1),
                                   ("MD", 200),
                                   ("RE", 1)]
+        self.system_setting = {"nonbondedMethod": "app.PME",
+                               "nonbondedCutoff": "1.0 * unit.nanometer",
+                               "constraints"    : "app.HBonds"}
 
         self.lambda_gc_vdw = None
         self.lambda_gc_coulomb = None
+        self.lambda_angles                = None
+        self.lambda_bonds                 = None
+        self.lambda_electrostatics_core   = None
+        self.lambda_electrostatics_delete = None
+        self.lambda_electrostatics_insert = None
+        self.lambda_sterics_core          = None
+        self.lambda_sterics_delete        = None
+        self.lambda_sterics_insert        = None
+        self.lambda_torsions              = None
+
 
         # Override with YAML file if provided
         if yml_file:
@@ -328,6 +355,15 @@ class md_params_yml:
         for key, value in params.items():
             setattr(self, key, self._convert_unit(key, value))
 
+    def get_system_setting(self):
+        """
+        Evaluate system_setting, and return them in a dictionary
+        """
+        nonbonded = {}
+        for k, v in self.system_setting.items():
+            nonbonded[k] = eval(v)
+        return nonbonded
+
     def _convert_unit(self, key, value):
         """Handle unit conversion based on parameter key."""
 
@@ -338,7 +374,7 @@ class md_params_yml:
 
     def __str__(self):
         """Print parameters for easy checking."""
-        params = {attr: getattr(self, attr) for attr in dir(self) if not attr.startswith("_")}
+        params = {attr: getattr(self, attr) for attr in dir(self) if (not attr.startswith("_")) or (not attr.startswith("get"))}
         return "\n".join(f"{k}: {v}" for k, v in params.items())
 
 class FreeEAnalysis:
