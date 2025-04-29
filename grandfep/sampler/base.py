@@ -126,7 +126,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         self.ghost_list = []
         #: A dictionary of residue index to a list of atom indices of water.
         self.water_res_2_atom: dict = None
-        #: A dictionary of residue index to a list of atom indices of water oxygen.
+        #: A dictionary of residue index to the atom index of water oxygen.
         self.water_res_2_O: dict = None
         #: The residue index of the switching water. The switching water will be set as the last water during initialization.
         #: It should not be changed during the simulation, as the ParticleParameterOffset can not be updated in NonbondedForce.
@@ -206,11 +206,13 @@ class BaseGrandCanonicalMonteCarloSampler:
             if res.name == resname:
                 self.switching_water = res.index
                 self.water_res_2_atom[res.index] = []
-                self.water_res_2_O[res.index] = []
+                self.water_res_2_O[res.index] = None
                 for atom in res.atoms():
                     self.water_res_2_atom[res.index].append(atom.index)
                     if atom.name == water_O_name:
-                        self.water_res_2_O[res.index].append(atom.index)
+                        self.water_res_2_O[res.index] = atom.index
+                if self.water_res_2_O[res.index] is None:
+                    raise ValueError(f"The water ({resname}) does not have the oxygen atom ({water_O_name}). Please check the topology.")
         self.logger.info(f"Water {self.switching_water} will be set as the switching water")
 
         if len(self.water_res_2_atom) == 0:

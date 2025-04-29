@@ -179,3 +179,4 @@ cython_debug/
 /test/output/*
 /test/test_*.log
 /test/Water_Chemical_Potential/OPC/multidir/*/test_npt.log
+/test/md.dcd

@@ -123,7 +123,9 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             - work: (list) list of work values. In the unit of kcal/mol
             - box_GCMC: (list) list of 0/1 for box/GCMC
             - N: (list) list of number of water molecules in the box or GCMC sub-volume
-            - accept: (list) list of 0/1 for rejection/acceptance"""
+            - accept: (list) list of 0/1 for rejection/acceptance
+            - acc_prob: (list) list of float for acceptance probability
+            """
         self.gc_count = {
             "current_move"  : 0,
             "move"          : [],
@@ -132,6 +134,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             "box_GCMC"      : [],
             "N"             : [],
             "accept"        : [],
+            "acc_prob"      : []
         }
 
         #: Chemical potential of the GC particle.
@@ -144,6 +147,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         # Adam value settings
         self.sphere_radius = sphere_radius
         state = self.simulation.context.getState(getPositions=True)
+        #: The box vectors of the system. The box has to be rectangular.
         self.box_vectors = state.getPeriodicBoxVectors(asNumpy=True)
         for i in range(3):
             for j in range(3):
@@ -186,7 +190,9 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
                         work: unit.Quantity,
                         box_GCMC: int,
                         n_water: int,
-                        accept: int) -> None:
+                        accept: bool,
+                        acc_prob: float
+                        ) -> None:
         """
         Update the internal `gc_count` dictionary that tracks GCMC insertion/deletion statistics.
 
@@ -202,10 +208,13 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             Region type indicator: `0` for the whole simulation box, `1` for a GCMC sub-volume.
 
         n_water : int
-            Number of water molecules in the whole box or in the GCMC sub-volume, depending on `box_GCMC`.
+            Number of water molecules after this move in the whole box or in the GCMC sub-volume, depending on `box_GCMC`.
 
-        accept : int
-            Indicator of whether the move was accepted: `1` for accepted, `0` for rejected.
+        accept : bool
+            Indicator of whether the move was accepted
+
+        acc_prob : float
+            Acceptance probability.
 
         Returns
         -------
@@ -217,7 +226,11 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         self.gc_count["work"].append(work.value_in_unit(unit.kilocalories_per_mole))
         self.gc_count["box_GCMC"].append(box_GCMC)
         self.gc_count["N"].append(n_water)
-        self.gc_count["accept"].append(accept)
+        if accept:
+            self.gc_count["accept"].append(1)
+        else:
+            self.gc_count["accept"].append(0)
+        self.gc_count["acc_prob"].append(acc_prob)
 
 
     def random_place_water(self, state: openmm.State, res_index: int, sphere_center: unit.Quantity=None) -> unit.Quantity:
@@ -281,43 +294,162 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
         return positions * unit.nanometer, vel * unit.nanometer/unit.picosecond
 
-    def gcmc_move(self, box: bool = 0):
-        pass
 
-    def insertion_move_box(self, l_vdw_list: list, l_coulomb_list: list, n_prop: int):
+    def _move_init(self):
         """
-        Perform a non-equilibrium insertion. The vdw will be turned on first, followed by coulomb
-
-        Parameters
-        ----------
-        l_vdw_list : list
-            A list of ``lambda_gc_vdw`` value that defines the path of insertion
-
-        l_coulomb_list : list
-            A list of ``lambda_gc_coulomb`` value that defines the path of insertion
-
-        n_prop : int
-            Number of propergation step (equilibrium MD) between each lambda switching.
+        Initialize the GCMC move.
 
         Returns
         -------
-        positions : unit.Quantity
-            Positions after this GCMC move.
-        velocities : unit.Quantity
-            Velocities after this GCMC move.
-        work : unit.Quantity
-            Work during the insertion process.
-        accept : bool
-            Whether the insertion move was accepted.
+        state : openmm.State
+            The current state of the simulation context, with positions, velocities, and energy.
 
+        pos_old : unit.Quantity
+            The current positions of the system.
+
+        vel_old : unit.Quantity
+            The current velocities of the system.
+
+        ghost_list_old : list
+            The current list of ghost water molecules in the system.
         """
-        # save initial (r,p)
         state = self.simulation.context.getState(getPositions=True, getVelocities=True, getEnergy=True)
         pos_old = state.getPositions(asNumpy=True)
         vel_old = state.getVelocities(asNumpy=True)
         ghost_list_old = self.get_ghost_list()
+        return state, pos_old, vel_old, ghost_list_old
 
+    def work_process(self, n_prop: int, l_vdw_list: list, l_chg_list: list) -> tuple[bool, unit.Quantity, list]:
+        """
+        Perform the work process for insertion/deletion.
 
+        Parameters
+        ----------
+        n_prop
+            Number of propagation steps (equilibrium MD) between each lambda switching.
+
+        l_vdw_list
+            A list of value for ``lambda_gc_vdw``.
+
+        l_chg_list
+            A list of value for ``lambda_gc_coulomb``
+
+        Returns
+        -------
+        explosion : bool
+            Whether the non-equilibrium process get nan.
+
+        protocol_work : unit.Quantity
+            The work done during the insertion process.
+
+        protocol_work_list : list
+            A list of work done during each perturbation step, in kcal/mol. no unit in this list.
+        """
+
+        # change integrator
+        self.compound_integrator.setCurrentIntegrator(1)
+        protocol_work = 0.0 * unit.kilocalories_per_mole
+        protocol_work_list = []
+        explosion = False
+        ## (vdW,chg), A -> B
+        l_vdw = l_vdw_list[0]
+        l_chg = l_chg_list[0]
+        # work process
+        self.simulation.context.setParameter("lambda_gc_vdw", l_vdw)
+        self.simulation.context.setParameter("lambda_gc_coulomb", l_chg)
+        for l_vdw, l_chg  in zip(l_vdw_list[1:-1], l_chg_list[1:-1]):
+            # perturbation step
+            state = self.simulation.context.getState(getEnergy=True)
+            energy_0 = state.getPotentialEnergy()
+            self.simulation.context.setParameter("lambda_gc_vdw", l_vdw)
+            self.simulation.context.setParameter("lambda_gc_coulomb", l_chg)
+            state = self.simulation.context.getState(getEnergy=True)
+            energy_i = state.getPotentialEnergy()
+            protocol_work += energy_i - energy_0
+            protocol_work_list.append(
+                (energy_i - energy_0).value_in_unit(unit.kilocalories_per_mole)
+            )
+            # check nan
+            nan_flag0 = np.isnan(energy_0.value_in_unit(unit.kilocalories_per_mole))
+            nan_flagi = np.isnan(energy_i.value_in_unit(unit.kilocalories_per_mole))
+            if nan_flag0 or nan_flagi:
+                explosion = True
+                break
+
+            # propagation step
+            try:
+                self.ncmc_integrator.step(n_prop)
+            except:
+                explosion = True
+                break
+
+            if not explosion:
+                # last perturbation step
+                l_vdw = l_vdw_list[-1]
+                l_chg = l_chg_list[-1]
+                state = self.simulation.context.getState(getEnergy=True)
+                energy_0 = state.getPotentialEnergy()
+                self.simulation.context.setParameter("lambda_gc_vdw", l_vdw)
+                self.simulation.context.setParameter("lambda_gc_coulomb", l_chg)
+                state = self.simulation.context.getState(getEnergy=True)
+                energy_i = state.getPotentialEnergy()
+                protocol_work += energy_i - energy_0
+                protocol_work_list.append(
+                    (energy_i - energy_0).value_in_unit(unit.kilocalories_per_mole)
+                )
+                # check nan
+                nan_flag0 = np.isnan(energy_0.value_in_unit(unit.kilocalories_per_mole))
+                nan_flagi = np.isnan(energy_i.value_in_unit(unit.kilocalories_per_mole))
+                if nan_flag0 or nan_flagi:
+                    explosion = True
+
+        if explosion:
+            self.logger.info(f"Insertion failed at (vdw,Coulomb)=({l_vdw},{l_chg})")
+
+        # change integrator back
+        self.compound_integrator.setCurrentIntegrator(0)
+
+        self.simulation.context.setParameter("lambda_gc_vdw", 0.0)
+        self.simulation.context.setParameter("lambda_gc_coulomb", 0.0)
+
+        return explosion, protocol_work, protocol_work_list
+
+    def move_insertion_box(self, l_vdw_list: list, l_chg_list: list, n_prop: int) -> tuple[bool, float, unit.Quantity, list, int]:
+        """
+        Perform a non-equilibrium insertion, according the given lambda schedule
+
+        Parameters
+        ----------
+        l_vdw_list : list
+            A list of ``lambda_gc_vdw`` value that defines the path of insertion. It should start with 0.0 and end with 1.0.
+
+        l_chg_list : list
+            A list of ``lambda_gc_coulomb`` value that defines the path of insertion. It should start with 0.0 and end with 1.0.
+
+        n_prop : int
+            Number of propergation steps (equilibrium MD) between each lambda switching.
+
+        Returns
+        -------
+        accept : bool
+            Whether the insertion is accepted.
+
+        acc_prob : float
+            The acceptance probability of the insertion.
+
+        protocol_work : unit.Quantity
+            The work done during the insertion process, with unit.
+
+        protocol_work_list : list
+            A list of work values during each perturbation step, in kcal/mol. no unit in this list.
+
+        n_water : int
+            The number of water molecules in the system after the insertion.
+
+        """
+        self.logger.info("Insertion Box")
+        # save initial (r,p)
+        state, pos_old, vel_old, ghost_list_old = self._move_init()
 
         # random (r,p) of the switching water
         pos_new, vel_new = self.random_place_water(state, ghost_list_old[0])
@@ -329,94 +461,180 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         self.simulation.context.setPositions(pos_new)
         self.simulation.context.setVelocities(vel_new)
 
-        # work process
-        self.simulation.context.setParameter("lambda_gc_coulomb", 0.0)
-        self.simulation.context.setParameter("lambda_gc_vdw", 0.0)
-        # change integrator
-        self.compound_integrator.setCurrentIntegrator(1)
-        protocol_work = 0.0 * unit.kilocalories_per_mole
-        explosion = False
-        ## vdW 0->1
-        l_vdw = 0
-        try:
-            self.ncmc_integrator.step(n_prop)
-        except:
-            explosion = True
-            self.logger.info(f"Insertion failed at lambda_gc_vdw={l_vdw}")
-        for l_vdw in l_vdw_list[1:]:
-            state = self.simulation.context.getState(getEnergy=True)
-            energy_0 = state.getPotentialEnergy()
-            self.simulation.context.setParameter("lambda_gc_vdw", l_vdw)
-            state = self.simulation.context.getState(getEnergy=True)
-            energy_i = state.getPotentialEnergy()
-            protocol_work += energy_i - energy_0
-            # check nan
-            if np.isnan(energy_0.value_in_unit(unit.kilocalories_per_mole)) or np.isnan(
-                    energy_i.value_in_unit(unit.kilocalories_per_mole)):
-                explosion = True
-                break
-            try:
-                self.ncmc_integrator.step(n_prop)
-            except:
-                explosion = True
-                break
-        if explosion:
-            self.logger.info(f"Insertion failed at lambda_gc_vdw={l_vdw}")
-
-        ## Coulomb 0->1, NonbondedForce has no addEnergyParameterDerivative
-        if not explosion:
-            for l_chg in l_coulomb_list[1:]:
-                state = self.simulation.context.getState(getEnergy=True)
-                energy_0 = state.getPotentialEnergy()
-                self.simulation.context.setParameter("lambda_gc_coulomb", l_chg)
-                state = self.simulation.context.getState(getEnergy=True)
-                energy_i = state.getPotentialEnergy()
-                protocol_work += energy_i - energy_0
-                # check nan
-                if np.isnan(energy_0.value_in_unit(unit.kilocalories_per_mole)) or np.isnan(
-                        energy_i.value_in_unit(unit.kilocalories_per_mole)):
-                    explosion = True
-                    break
-                try:
-                    self.ncmc_integrator.step(n_prop)
-                except:
-                    explosion = True
-                    break
-            if explosion:
-                self.logger.info(f"Insertion failed at lambda_gc_coulomb={l_chg}")
-
+        explosion, protocol_work, protocol_work_list = self.work_process(n_prop, l_vdw_list, l_chg_list)
 
         # Acceptance ratio
+        #         num_of_water_including_s   - num_of_ghosts       -1
+        n_water = len(self.water_res_2_atom) - len(ghost_list_old) -1 # The Total number of water mols include 1 switching water
         if explosion:
             acc_prob = 0
         else:
-            n_water = len(self.water_res_2_atom) - len(ghost_list_old) + 1
-            acc_prob = math.exp(self.Adam_box) * math.exp(-protocol_work / self.kBT) / len(self.water_res_2_atom)
+            acc_prob = math.exp(self.Adam_box) * math.exp(-protocol_work / self.kBT) / (n_water + 1)
 
-        ## Accept :
-        ### swap (r,p) of the switching water molecule with a ghost water molecule
-        ### lambda_gc to 0
-        ### set ghost to real, and update ghost_list
+        accept = np.random.rand() < acc_prob
+        if accept:
+            n_water += 1
+            ### swap (r,p) of the switching water molecule with a ghost water molecule
+            state = self.simulation.context.getState(getPositions=True, getVelocities=True, getEnergy=True)
+            pos_new = state.getPositions(asNumpy=True)
+            vel_new = state.getVelocities(asNumpy=True)
+            for at_ghost, at_switch in zip(self.water_res_2_atom[ghost_list_old[0]],
+                                           self.water_res_2_atom[self.switching_water]):
+                # swap
+                pos_new[[at_ghost,at_switch]] = pos_new[[at_switch,at_ghost]]
+                vel_new[[at_ghost,at_switch]] = vel_new[[at_switch,at_ghost]]
+            self.simulation.context.setPositions(pos_new)
+            self.simulation.context.setVelocities(vel_new)
 
-        ## Reject :
-        ### revert the initial (r,p)
-        ### lambda_gc to 0
+            ### set ghost to real, and update ghost_list
+            ghost_list_old.pop(0)
+            self.set_ghost_list(ghost_list_old)
+        else:
+            ### revert the initial (r,p)
+            self.simulation.context.setPositions(pos_old)
+            self.simulation.context.setVelocities(vel_old)
+
+            ### move the selected ghost to the end of ghost_list
+            self.ghost_list = self.ghost_list[1:] + [self.ghost_list[0]]
 
         # update gc_count
-        self.logger.info(f"Acceptance Ratio = {acc_prob}")
+        self.update_gc_count(0, protocol_work, 0, n_water, accept, acc_prob)
 
-        # change integrator back
-        self.compound_integrator.setCurrentIntegrator(0)
+        self.logger.info(f"{min(1,acc_prob):.3f}, Accept={accept}, N={n_water}")
 
-        #
+        return accept, acc_prob, protocol_work, protocol_work_list, n_water
 
-    def deletion_move_box(self):
+    def move_deletion_box(self, l_vdw_list: list, l_chg_list: list, n_prop: int) -> tuple[bool, float, unit.Quantity, list, int]:
+        """
+        Perform a non-equilibrium deletion, according the given lambda schedule
+
+        Parameters
+        ----------
+        l_vdw_list : list
+            A list of ``lambda_gc_vdw`` value that defines the path of insertion. It should start with 1.0 and end with 0.0.
+
+        l_chg_list : list
+            A list of ``lambda_gc_coulomb`` value that defines the path of insertion. It should start with 1.0 and end with 0.0.
+
+        n_prop : int
+            Number of propergation steps (equilibrium MD) between each lambda switching.
+
+        Returns
+        -------
+        accept : bool
+            Whether the insertion is accepted.
+
+        acc_prob : float
+            The acceptance probability of the insertion.
+
+        protocol_work : unit.Quantity
+            The work done during the insertion process, with unit.
+
+        protocol_work_list : list
+            A list of work values during each perturbation step, in kcal/mol. no unit in this list.
+
+        n_water : int
+            The number of water molecules in the system after the insertion.
+
+        """
+        self.logger.info("Deletion Box")
+        # save initial (r,p)
+        state, pos_old, vel_old, ghost_list_old = self._move_init()
+
+        pos_new = deepcopy(pos_old)
+        vel_new = deepcopy(vel_old)
+        # random a real water to be deleted
+        r_wat_set = set(self.water_res_2_atom) - set(ghost_list_old) - {self.switching_water}
+        r_wat_index = np.random.choice(list(r_wat_set))
+        self.set_ghost_list(ghost_list_old + [r_wat_index])
+        for at_real, at_switch in zip(self.water_res_2_atom[r_wat_index],
+                                       self.water_res_2_atom[self.switching_water]):
+            # swap
+            pos_new[[at_real,at_switch]] = pos_new[[at_switch,at_real]]
+            vel_new[[at_real,at_switch]] = vel_new[[at_switch,at_real]]
+        self.simulation.context.setPositions(pos_new)
+        self.simulation.context.setVelocities(vel_new)
+
+        explosion, protocol_work, protocol_work_list = self.work_process(n_prop, l_vdw_list, l_chg_list)
+
+        # Acceptance ratio
+        #         num_of_water_including_s   - num_of_ghosts       -1
+        n_water = len(self.water_res_2_atom) - len(ghost_list_old) - 1  # The Total number of water mols include 1 switching water
+        if explosion:
+            acc_prob = 0
+        else:
+            acc_prob = math.exp(-self.Adam_box) * math.exp(-protocol_work / self.kBT) / n_water
+
+        accept = np.random.rand() < acc_prob
+        if accept:
+            n_water -= 1
+
+        else:
+            ### revert the initial (r,p)
+            self.simulation.context.setPositions(pos_old)
+            self.simulation.context.setVelocities(vel_old)
+
+            ### revert the ghost_list
+            self.set_ghost_list(ghost_list_old)
+
+        # update gc_count
+        self.update_gc_count(1, protocol_work, 0, n_water, accept, acc_prob)
+
+        self.logger.info(f"{min(1, acc_prob):.3f}, Accept={accept}, N={n_water}")
+
+        return accept, acc_prob, protocol_work, protocol_work_list, n_water
+
+    def get_sphere_center(self, positions: unit.Quantity) -> unit.Quantity:
+        """
+        Average the reference atoms positions
+
+        Returns
+        -------
+        sphere_center : unit.Quantity
+            The center of the GCMC sphere, with unit
+        """
+        center_pos = positions[self.reference_atoms]
+        return np.mean(center_pos, axis=0)
+
+    def get_water_state(self, positions):
+        """
+        Check whether the water molecule is inside the box (1) or not (0).
+
+        Parameters
+        ----------
+        positions : unit.Quantity
+            The current positions of the system.
+
+        Returns
+        -------
+        water_state_dict : dict
+            A dictionary label whether the water molecule is inside the box (1) or not (0).
+        """
+        sphere_center = self.get_sphere_center(positions).value_in_unit(unit.nanometer)
+        simulation_box = np.array([self.box_vectors[0, 0].value_in_unit(unit.nanometer),
+                                   self.box_vectors[1, 1].value_in_unit(unit.nanometer),
+                                   self.box_vectors[2, 2].value_in_unit(unit.nanometer)])
+
+        # shift everything so that the sphere is at [box_x/2, box_y/2, box_z/2]
+        half_box = (simulation_box / 2)
+        positions = positions.value_in_unit(unit.nanometer)
+        positions += half_box - sphere_center
+        positions = np.mod(positions, simulation_box)
+        water_o_index = [o_index  for res_index, o_index in self.water_res_2_O.items()]
+        dist_all_o = np.linalg.norm(positions[water_o_index] - half_box, axis=1)
+
+        water_state_dict = {}
+        for resid, dist in zip(self.water_res_2_O, dist_all_o):
+            if dist < self.sphere_radius.value_in_unit(unit.nanometer):
+                water_state_dict[resid] = 1
+            else:
+                water_state_dict[resid] = 0
+        return water_state_dict, dist_all_o
+
+    def move_insertion_GCMC(self):
         pass
 
-    def insertion_move_GCMC(self):
-        pass
-
-    def deletion_move_GCMC(self):
+    def move_deletion_GCMC(self):
         pass
 
 
