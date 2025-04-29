@@ -374,7 +374,7 @@ class md_params_yml:
 
     def __str__(self):
         """Print parameters for easy checking."""
-        params = {attr: getattr(self, attr) for attr in dir(self) if (not attr.startswith("_")) or (not attr.startswith("get"))}
+        params = {attr: getattr(self, attr) for attr in dir(self) if (not attr.startswith("_")) and (not attr.startswith("get"))}
         return "\n".join(f"{k}: {v}" for k, v in params.items())
 
 class FreeEAnalysis:
