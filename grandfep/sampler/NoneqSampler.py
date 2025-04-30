@@ -1,8 +1,9 @@
+import os
 from copy import deepcopy
-import logging
 from typing import Union
 from pathlib import Path
 import math
+import json
 
 import numpy as np
 from mpi4py import MPI
@@ -76,6 +77,13 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
     dcd_file :
         File name for the DCD trajectory file.
 
+    append_dcd :
+        Whether to append to the DCD file. Default is True.
+
+    jsonl_file :
+        File name for the JSONL file. Default is "md.jsonl". This file saves the ghost_list. dcd trajectory need this
+        jsonl to remove the ghost water molecules.
+
 
     """
     def __init__(self,
@@ -94,7 +102,9 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
                  sphere_radius: unit.Quantity = 10.0*unit.angstroms,
                  reference_atoms: list =None,
                  rst_file: str = "md.rst7",
-                 dcd_file: str = "md.dcd"
+                 dcd_file: str = None,
+                 append_dcd: bool = True,
+                 jsonl_file: str = None,
                  ):
         """
         """
@@ -178,8 +188,16 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         self.rst_reporter = parmed.openmm.reporters.RestartReporter(rst_file, 0, netcdf=True)
         #: Call this reporter to write the dcd trajectory file.
         self.dcd_reporter = None
+        self.dcd_jsonl = None
         if dcd_file is not None:
-            self.dcd_reporter = app.DCDReporter(dcd_file, 0)
+            self.dcd_reporter = app.DCDReporter(dcd_file, 0, append_dcd)
+            self.dcd_jsonl = jsonl_file
+            if not append_dcd:
+                # clean self.dcd_jsonl
+                if os.path.exists(self.dcd_jsonl):
+                    os.remove(self.dcd_jsonl)
+
+
 
         self.logger.info(f"T   = {temperature}.")
         self.logger.info(f"kBT = {self.kBT}.")
@@ -843,6 +861,53 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
         return accept, acc_prob, protocol_work, protocol_work_list, n_water, sw_water_inside
 
+    def report_dcd(self, state=None):
+        """
+        Append a frame to the DCD trajectory file.
+
+        :return: None
+        """
+        if not state:
+            state = self.simulation.context.getState(getPositions=True, getVelocities=True)
+        if not self.dcd_reporter:
+            raise ValueError("DCD reporter is not set")
+        if not self.dcd_jsonl:
+            raise ValueError("JSONL is not set")
+        self.dcd_reporter.report(self.simulation, state)
+        with open(self.dcd_jsonl, 'a') as f:
+            json.dump({"GC_count": self.gc_count["current_move"],
+                       "ghost_list": self.ghost_list}, f)
+            f.write('\n')
+        self.report_rst(state)
+
+    def report_rst(self, state=None):
+        """
+        Write an Amber rst7 restart file.
+
+        :return: None
+        """
+        if not state:
+            state = self.simulation.context.getState(getPositions=True, getVelocities=True)
+        self.rst_reporter.report(self.simulation, state)
+
+    def set_ghost_from_jsonl(self, jsonl_file):
+        """
+        Read the last line of a jsonl file and set the current ghost_list,gc_count.
+
+        Parameters
+        ----------
+        jsonl_file
+
+        Returns
+        -------
+        None
+        """
+        with open(jsonl_file) as f:
+            lines = f.readlines()
+        l = lines[-1]
+        log_dict = json.loads(l)
+        self.gc_count["current_move"] = log_dict["GC_count"]
+        self.set_ghost_list(log_dict["ghost_list"])
 
 
 class NoneqGrandCanonicalMonteCarloSamplerMPI(NoneqGrandCanonicalMonteCarloSampler):

@@ -180,3 +180,4 @@ cython_debug/
 /test/test_*.log
 /test/Water_Chemical_Potential/OPC/multidir/*/test_npt.log
 /test/md.dcd
+/test/CH4_C2H6/lig0/test_IO.*
