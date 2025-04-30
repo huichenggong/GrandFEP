@@ -9,6 +9,8 @@ from pytraj import get_velocity
 
 from grandfep import utils, sampler
 
+l_vdw = [0.0, 0.11, 0.22, 0.33, 0.44, 0.55, 0.67, 0.89, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+l_chg = [0.0, 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
 class MyTestCase(unittest.TestCase):
     def setUp(self):
@@ -37,7 +39,7 @@ class MyTestCase(unittest.TestCase):
             "position" : inpcrd.positions,
             "chemical_potential" : -6.09 * unit.kilocalories_per_mole,
             "standard_volume" : 30.345 * unit.angstroms ** 3,
-            "sphere_radius" : 10.0 * unit.angstroms,
+            "sphere_radius" : 7.0 * unit.angstroms,
             "reference_atoms" : [0],
         }
         self.args_dict2 = copy.copy(self.args_dict)
@@ -54,6 +56,18 @@ class MyTestCase(unittest.TestCase):
         self.args_dict3["topology"] = prmtop.topology
         self.args_dict3["position"] = inpcrd.positions
         self.args_dict3["platform"] = openmm.Platform.getPlatformByName('CUDA')
+
+        self.args_dict4 = copy.copy(self.args_dict3)
+        inpcrd = app.AmberInpcrdFile(
+            str(self.base / "CH4_C2H6/lig0/05_solv.rst7"))
+        prmtop = app.AmberPrmtopFile(
+            str(self.base / "CH4_C2H6/lig0/05_solv.prmtop"),
+            periodicBoxVectors=inpcrd.boxVectors)
+        sys = prmtop.createSystem(**self.nonbonded_Amber)
+        self.args_dict4["system"] = sys
+        self.args_dict4["topology"] = prmtop.topology
+        self.args_dict4["position"] = inpcrd.positions
+
 
     def check_water_bond_angle(self, positions_old, positions_new, o_index, h1_index, h2_index):
         """
@@ -109,25 +123,20 @@ class MyTestCase(unittest.TestCase):
 
     def test_move_box(self):
         print()
-        print("# insertion_move_box")
+        print("# move_insertion_box, move_deletion_box")
         ngcmc = sampler.NoneqGrandCanonicalMonteCarloSampler(**self.args_dict)
         ngcmc.set_ghost_list([1,2,3])
         ngcmc.simulation.context.setParameter("lambda_gc_coulomb", 0.0)
         ngcmc.simulation.context.setParameter("lambda_gc_vdw",     0.0)
         ngcmc.simulation.minimizeEnergy()
         ngcmc.simulation.step(100)
-        l_vdw = [0.0, 0.11, 0.22, 0.33, 0.44, 0.55, 0.67, 0.89, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-        l_chg = [0.0, 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-        print(ngcmc.move_insertion_box(l_vdw,
-                                            l_chg,
-                                            10))
+
+        print(ngcmc.move_insertion_box(l_vdw, l_chg, 10))
 
         ngcmc.set_ghost_list([1, 2])
         ngcmc.simulation.minimizeEnergy()
         ngcmc.simulation.step(100)
-        print(ngcmc.move_deletion_box(l_vdw[::-1],
-                                      l_chg[::-1],
-                                      10))
+        print(ngcmc.move_deletion_box(l_vdw[::-1], l_chg[::-1], 10))
 
     def test_get_sphere_center(self):
         print()
@@ -152,63 +161,192 @@ class MyTestCase(unittest.TestCase):
 
     def test_insert_empty(self):
         print()
-        print("# Insert a water into an empty box")
+        print("# Insertion BOX, with high Adam")
         ngcmc = sampler.NoneqGrandCanonicalMonteCarloSampler(**self.args_dict3)
         ghost_list = [res_index for res_index in ngcmc.water_res_2_O][:-1]
         ngcmc.set_ghost_list(ghost_list)
-        ngcmc.simulation.context.setVelocitiesToTemperature(200 * unit.kelvin)
-        state = ngcmc.simulation.context.getState(getPositions=True, getVelocities=True)
-        pos_old = state.getPositions(asNumpy=True)
-        vel_old = state.getVelocities(asNumpy=True)
+        N_water = 0
+        for i in range(10):
+            ngcmc.Adam_box += 0.2
+            ngcmc.simulation.context.setVelocitiesToTemperature(300 * unit.kelvin)
+            state = ngcmc.simulation.context.getState(getPositions=True,
+                                                      getVelocities=True,
+                                                      getForces=True,
+                                                      enforcePeriodicBox=True,)
+            pos_old = state.getPositions(asNumpy=True)
+            vel_old = state.getVelocities(asNumpy=True)
+            force_old = state.getForces(asNumpy=True)
 
-        l_vdw = [0.0, 0.11, 0.22, 0.33, 0.44, 0.55, 0.67, 0.89, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-        l_chg = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-        accept, acc_prob, protocol_work, protocol_work_list, n_water = ngcmc.move_insertion_box(
-            l_vdw, l_chg, 10)
-        state = ngcmc.simulation.context.getState(getPositions=True, getVelocities=True)
-        pos_new = state.getPositions(asNumpy=True)
-        vel_new = state.getVelocities(asNumpy=True)
-        if accept:
-            self.assertEqual(n_water, 1)
-            close_pos = np.sum(np.isclose(pos_old, pos_new))
-            self.assertTrue(close_pos<50, f"Number of pos_xyz that are very close : {close_pos}")
-            close_vel = np.sum(np.isclose(vel_old, vel_new))
-            self.assertTrue(close_vel<10, f"Number of vel_xyz that are very close : {close_vel}")
-        else:
-            self.assertEqual(n_water, 0)
-            self.assertTrue(np.all(np.isclose(pos_old, pos_new)), "Move is rejected, but the position has been changed")
-            self.assertTrue(np.all(np.isclose(vel_old, vel_new)), "Move is rejected, but the velocity has been changed")
-        print(accept, acc_prob, protocol_work, n_water)
+            accept, acc_prob, protocol_work, protocol_work_list, n_water = ngcmc.move_insertion_box(
+                l_vdw, l_chg, 10)
+            state = ngcmc.simulation.context.getState(getPositions=True,
+                                                      getVelocities=True,
+                                                      getForces=True,
+                                                      enforcePeriodicBox=True,)
+            pos_new = state.getPositions(asNumpy=True)
+            vel_new = state.getVelocities(asNumpy=True)
+            force_new = state.getForces(asNumpy=True)
+            if accept:
+                N_water += 1
+                self.assertEqual(n_water, N_water)
+                close_pos = np.sum(np.isclose(pos_old, pos_new))
+                self.assertTrue(close_pos<80, f"Number of pos_xyz that are very close : {close_pos}")
+                close_vel = np.sum(np.isclose(vel_old, vel_new))
+                self.assertTrue(close_vel<10, f"Number of vel_xyz that are very close : {close_vel}")
+            else:
+                self.assertEqual(n_water, N_water)
+                self.assertTrue(np.all(np.isclose(pos_old, pos_new)), "Move is rejected, but the position has been changed")
+                self.assertTrue(np.all(np.isclose(vel_old, vel_new)), "Move is rejected, but the velocity has been changed")
+                f_match = np.isclose(force_old, force_new, rtol=1e-02, atol=1e-03)
+                self.assertTrue(
+                    np.all(f_match),
+                    f"Move is rejected, but the Force has been changed. Diff by {np.sum(f_match)}"
+                )
+            print(accept, acc_prob, protocol_work, n_water)
 
-    def test_delete_empty(self):
+    def test_delete_low_Adam(self):
         print()
-        print("# Deletion but with small Adam")
+        print("# Deletion Box, with low Adam")
         ngcmc = sampler.NoneqGrandCanonicalMonteCarloSampler(**self.args_dict3)
-        ngcmc.Adam_box = -35
 
-        ngcmc.simulation.context.setVelocitiesToTemperature(200 * unit.kelvin)
-        state = ngcmc.simulation.context.getState(getPositions=True, getVelocities=True)
-        pos_old = state.getPositions(asNumpy=True)
-        vel_old = state.getVelocities(asNumpy=True)
+        N_water = 6660
+        for i in range(10):
+            ngcmc.Adam_box -= 2.5
+            ngcmc.simulation.context.setVelocitiesToTemperature(300 * unit.kelvin)
+            state = ngcmc.simulation.context.getState(getPositions=True,
+                                                      getVelocities=True,
+                                                      getForces=True,
+                                                      enforcePeriodicBox=True,)
+            pos_old = state.getPositions(asNumpy=True)
+            vel_old = state.getVelocities(asNumpy=True)
+            force_old = state.getForces(asNumpy=True)
 
-        l_vdw = [0.0, 0.11, 0.22, 0.33, 0.44, 0.55, 0.67, 0.89, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-        l_chg = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-        accept, acc_prob, protocol_work, protocol_work_list, n_water = ngcmc.move_deletion_box(
-            l_vdw[::-1], l_chg[::-1], 10)
-        state = ngcmc.simulation.context.getState(getPositions=True, getVelocities=True)
-        pos_new = state.getPositions(asNumpy=True)
-        vel_new = state.getVelocities(asNumpy=True)
-        if accept:
-            self.assertEqual(n_water, 6659)
-            close_pos = np.sum(np.isclose(pos_old, pos_new))
-            self.assertTrue(close_pos < 50, f"Number of pos_xyz that are very close : {close_pos}")
-            close_vel = np.sum(np.isclose(vel_old, vel_new))
-            self.assertTrue(close_vel < 10, f"Number of vel_xyz that are very close : {close_vel}")
-        else:
-            self.assertEqual(n_water, 6660)
-            self.assertTrue(np.all(np.isclose(pos_old, pos_new)), "Move is rejected, but the position has been changed")
-            self.assertTrue(np.all(np.isclose(vel_old, vel_new)), "Move is rejected, but the velocity has been changed")
-        print(accept, acc_prob, protocol_work, n_water)
+            accept, acc_prob, protocol_work, protocol_work_list, n_water = ngcmc.move_deletion_box(
+                l_vdw[::-1], l_chg[::-1], 10)
+            state = ngcmc.simulation.context.getState(getPositions=True,
+                                                      getVelocities=True,
+                                                      getForces=True,
+                                                      enforcePeriodicBox=True,)
+            pos_new = state.getPositions(asNumpy=True)
+            vel_new = state.getVelocities(asNumpy=True)
+            force_new = state.getForces(asNumpy=True)
+            if accept:
+                N_water -= 1
+                self.assertEqual(n_water, N_water)
+                close_pos = np.sum(np.isclose(pos_old, pos_new))
+                self.assertTrue(close_pos < 80, f"Number of pos_xyz that are very close : {close_pos}")
+                close_vel = np.sum(np.isclose(vel_old, vel_new))
+                self.assertTrue(close_vel < 10, f"Number of vel_xyz that are very close : {close_vel}")
+            else:
+                self.assertEqual(n_water, N_water)
+                self.assertTrue(np.all(np.isclose(pos_old, pos_new)), "Move is rejected, but the position has been changed")
+                self.assertTrue(np.all(np.isclose(vel_old, vel_new)), "Move is rejected, but the velocity has been changed")
+                f_match = np.isclose(force_old, force_new, rtol=1e-02, atol=1e-03)
+                self.assertTrue(
+                    np.all(f_match),
+                    f"Move is rejected, but the Force has been changed. Diff by {np.sum(f_match)}"
+                )
+            print(accept, acc_prob, protocol_work, n_water)
+
+    def test_insert_GCMC(self):
+        print()
+        print("# Insertion GCMC, with high Adam")
+        ngcmc = sampler.NoneqGrandCanonicalMonteCarloSampler(**self.args_dict4)
+        ghost_list = [res_index for res_index in ngcmc.water_res_2_O][:-1]
+        ngcmc.set_ghost_list(ghost_list)
+        N_water = 0
+        for i in range(10):
+            ngcmc.Adam_GCMC += 0.9
+            ngcmc.simulation.context.setVelocitiesToTemperature(300 * unit.kelvin)
+            state = ngcmc.simulation.context.getState(getPositions=True,
+                                                      getVelocities=True,
+                                                      getForces=True,
+                                                      enforcePeriodicBox=True,)
+            pos_old = state.getPositions(asNumpy=True)
+            vel_old = state.getVelocities(asNumpy=True)
+            force_old = state.getForces(asNumpy=True)
+
+            accept, acc_prob, protocol_work, protocol_work_list, n_water, sw_inside = ngcmc.move_insertion_GCMC(
+                l_vdw, l_chg, 20)
+            state = ngcmc.simulation.context.getState(getPositions=True,
+                                                      getVelocities=True,
+                                                      getForces=True,
+                                                      enforcePeriodicBox=True,)
+            pos_new = state.getPositions(asNumpy=True)
+            vel_new = state.getVelocities(asNumpy=True)
+            force_new = state.getForces(asNumpy=True)
+            w_state_dict = ngcmc.get_water_state(pos_new)[0]
+            ngcmc.check_ghost_list()
+            n_re_count = sum([s for res_index, s in w_state_dict.items() if
+                              res_index != ngcmc.switching_water and res_index not in ngcmc.ghost_list])
+            self.assertEqual(n_re_count, n_water)
+            if accept:
+                N_water += 1
+                self.assertEqual(462-len(ngcmc.ghost_list), N_water)
+                close_pos = np.sum(np.isclose(pos_old, pos_new))
+                self.assertTrue(close_pos<80, f"Number of pos_xyz that are very close : {close_pos}")
+                close_vel = np.sum(np.isclose(vel_old, vel_new))
+                self.assertTrue(close_vel<10, f"Number of vel_xyz that are very close : {close_vel}")
+            else:
+                self.assertEqual(462-len(ngcmc.ghost_list), N_water)
+                self.assertTrue(np.all(np.isclose(pos_old, pos_new)), "Move is rejected, but the position has been changed")
+                self.assertTrue(np.all(np.isclose(vel_old, vel_new)), "Move is rejected, but the velocity has been changed")
+                f_match = np.isclose(force_old, force_new, rtol=1e-02, atol=1e-03)
+                self.assertTrue(
+                    np.all(f_match),
+                    f"Move is rejected, but the Force has been changed. Diff by {np.sum(f_match)}"
+                )
+            print(accept, acc_prob, protocol_work, n_water, sw_inside)
+
+    def test_delete_GCMC(self):
+        print()
+        print("# Deletion GCMC, with high Adam")
+        ngcmc = sampler.NoneqGrandCanonicalMonteCarloSampler(**self.args_dict4)
+        N_water = 462
+        for i in range(10):
+            ngcmc.Adam_GCMC -= 3
+            ngcmc.simulation.context.setVelocitiesToTemperature(300 * unit.kelvin)
+            state = ngcmc.simulation.context.getState(getPositions=True,
+                                                      getVelocities=True,
+                                                      getForces=True,
+                                                      enforcePeriodicBox=True,)
+            pos_old = state.getPositions(asNumpy=True)
+            vel_old = state.getVelocities(asNumpy=True)
+            force_old = state.getForces(asNumpy=True)
+
+            accept, acc_prob, protocol_work, protocol_work_list, n_water, sw_inside = ngcmc.move_deletion_GCMC(
+                l_vdw[::-1], l_chg[::-1], 20)
+            state = ngcmc.simulation.context.getState(getPositions=True,
+                                                      getVelocities=True,
+                                                      getForces=True,
+                                                      enforcePeriodicBox=True, )
+            pos_new = state.getPositions(asNumpy=True)
+            vel_new = state.getVelocities(asNumpy=True)
+            force_new = state.getForces(asNumpy=True)
+            w_state_dict = ngcmc.get_water_state(pos_new)[0]
+            ngcmc.check_ghost_list()
+            n_re_count = sum([s for res_index, s in w_state_dict.items() if
+                              res_index != ngcmc.switching_water and res_index not in ngcmc.ghost_list])
+            self.assertEqual(n_re_count, n_water)
+            if accept:
+                N_water -= 1
+                self.assertEqual(462 - len(ngcmc.ghost_list), N_water)
+                close_pos = np.sum(np.isclose(pos_old, pos_new))
+                self.assertTrue(close_pos < 80, f"Number of pos_xyz that are very close : {close_pos}")
+                close_vel = np.sum(np.isclose(vel_old, vel_new))
+                self.assertTrue(close_vel < 10, f"Number of vel_xyz that are very close : {close_vel}")
+            else:
+                self.assertEqual(462 - len(ngcmc.ghost_list), N_water)
+                self.assertTrue(np.all(np.isclose(pos_old, pos_new)),
+                                "Move is rejected, but the position has been changed")
+                self.assertTrue(np.all(np.isclose(vel_old, vel_new)),
+                                "Move is rejected, but the velocity has been changed")
+                f_match = np.isclose(force_old, force_new, rtol=1e-02, atol=1e-03)
+                self.assertTrue(
+                    np.all(f_match),
+                    f"Move is rejected, but the Force has been changed. Diff by {np.sum(f_match)}"
+                )
+            print(accept, acc_prob, protocol_work, n_water, sw_inside)
 
 
 if __name__ == '__main__':
