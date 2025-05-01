@@ -257,6 +257,7 @@ class md_params_yml:
         surface_tension (unit.Quantity): Surface tension. Unit in bar*nm
         ex_potential (unit.Quantity): Excess potential in GC. Unit in kcal/mol
         standard_volume (unit.Quantity): Standard volume in GC. Unit in nm^3
+        n_propagation (int): Number of propagation steps bewteen each lambda switching.
         init_lambda_state (int): The lambda state index to simulate
         calc_neighbor_only (bool): Whether to calculate the energy of the nearest neighbor only
             when performing replica exchange.
@@ -316,6 +317,7 @@ class md_params_yml:
         self.surface_tension = 0.0 * unit.bar * unit.nanometer
         self.ex_potential = -6.314 * unit.kilocalorie_per_mole # +- 0.022
         self.standard_volume = 2.96299369e-02 * unit.nanometer**3
+        self.n_propagation = 20
         self.init_lambda_state = 0
         self.calc_neighbor_only = False
         self.md_gc_re_protocol = [("MD", 200),
