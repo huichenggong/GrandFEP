@@ -1,0 +1,7 @@
+05-01 19:30:36 - INFO: Initializing NPT Sampler
+05-01 19:30:36 - INFO: T   = 298.15 K.
+05-01 19:30:36 - INFO: kBT = 2478.957029602388 J/mol.
+05-01 19:30:36 - INFO: Minimize energy
+05-01 19:30:37 - INFO: Set random velocities to 300.0 K
+05-01 19:30:37 - INFO: MD 20000
+05-01 19:31:32 - INFO: Miniization again

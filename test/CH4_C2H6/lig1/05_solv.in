@@ -1,0 +1,10 @@
+source leaprc.water.tip3p
+source leaprc.gaff
+MOL = loadMol2 02-chg.mol2
+
+solv = loadPdb 05_in.pdb
+setBox solv "vdw"
+saveAmberParm solv 05_solv.prmtop 05_solv.inpcrd
+savepdb       solv 05_solv.pdb
+
+quit

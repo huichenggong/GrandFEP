@@ -1,0 +1,24 @@
+dt: 0.002           # in ps
+tau_t: 1.0          # in ps
+ref_t: 298.15       # in K
+
+system_setting:
+  nonbondedMethod: "app.PME"
+  nonbondedCutoff: "1.0 * unit.nanometer"
+  constraints    : "app.HBonds"
+
+# RE
+calc_neighbor_only : true
+
+sphere_radius     : 1.0
+
+lambda_angles                : [0.00,0.12,0.25,0.38,0.50,0.62,0.75,0.88,1.00]
+lambda_bonds                 : [0.00,0.12,0.25,0.38,0.50,0.62,0.75,0.88,1.00]
+lambda_sterics_core          : [0.00,0.12,0.25,0.38,0.50,0.62,0.75,0.88,1.00]
+lambda_electrostatics_core   : [0.00,0.12,0.25,0.38,0.50,0.62,0.75,0.88,1.00]
+lambda_torsions              : [0.00,0.12,0.25,0.38,0.50,0.62,0.75,0.88,1.00]
+lambda_sterics_delete        : [ 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0]
+lambda_electrostatics_delete : [ 0.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+lambda_sterics_insert        : [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0]
+lambda_electrostatics_insert : [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0]
+init_lambda_state  : 5
