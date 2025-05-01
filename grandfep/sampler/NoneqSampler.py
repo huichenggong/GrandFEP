@@ -238,8 +238,8 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         -------
         None
         """
-        self.gc_count["current_move"] += 1
         self.gc_count["move"].append(self.gc_count["current_move"])
+        self.gc_count["current_move"] += 1
         self.gc_count["insert_delete"].append(insert_delete)
         self.gc_count["work"].append(work.value_in_unit(unit.kilocalories_per_mole))
         self.gc_count["box_GCMC"].append(box_GCMC)
@@ -251,7 +251,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         self.gc_count["acc_prob"].append(acc_prob)
 
 
-    def random_place_water(self, state: openmm.State, res_index: int, sphere_center: unit.Quantity=None) -> unit.Quantity:
+    def random_place_water(self, state: openmm.State, res_index: int, sphere_center: unit.Quantity=None) -> tuple[unit.Quantity, unit.Quantity]:
         """
         Shift the coordinate+orientation of a water molecule to a random place. If the center is None, a random position
         in the box will be selected. If the center is not None, a randomed position in the GCMC sphere will be selected.
@@ -446,7 +446,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             A list of ``lambda_gc_coulomb`` value that defines the path of insertion. It should start with 0.0 and end with 1.0.
 
         n_prop : int
-            Number of propergation steps (equilibrium MD) between each lambda switching.
+            Number of propagation steps (equilibrium MD) between each lambda switching.
 
         Returns
         -------
@@ -466,11 +466,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             The number of water molecules in the system after the insertion.
 
         """
-        assert np.isclose(l_vdw_list[0], 0)
-        assert np.isclose(l_chg_list[0], 0)
-        assert np.isclose(l_vdw_list[-1], 1)
-        assert np.isclose(l_chg_list[-1], 1)
-        self.logger.info("Insertion Box")
+        self.logger.info(f"Insertion Box {self.gc_count['current_move']}")
         # save initial (r,p)
         state, pos_old, vel_old, ghost_list_old = self._move_init()
 
@@ -482,7 +478,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             pos_new[[at_ghost,at_switch]] = pos_new[[at_switch,at_ghost]]
             vel_new[[at_ghost,at_switch]] = vel_new[[at_switch,at_ghost]]
         self.simulation.context.setPositions(pos_new)
-        self.simulation.context.setVelocities(vel_new)
+        self.simulation.context.setVelocities(-vel_new)
 
         explosion, protocol_work, protocol_work_list = self.work_process(n_prop, l_vdw_list, l_chg_list)
 
@@ -522,7 +518,6 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
         # update gc_count
         self.update_gc_count(0, protocol_work, 0, n_water, accept, acc_prob)
-
         self.logger.info(f"GC_Insertion_Box Acc_prob={min(1, acc_prob):.3f}, Accept={accept}, N={n_water}")
 
         return accept, acc_prob, protocol_work, protocol_work_list, n_water
@@ -540,7 +535,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             A list of ``lambda_gc_coulomb`` value that defines the path of insertion. It should start with 1.0 and end with 0.0.
 
         n_prop : int
-            Number of propergation steps (equilibrium MD) between each lambda switching.
+            Number of propagation steps (equilibrium MD) between each lambda switching.
 
         Returns
         -------
@@ -560,11 +555,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             The number of water molecules in the system after the insertion.
 
         """
-        assert np.isclose(l_vdw_list[0], 1)
-        assert np.isclose(l_chg_list[0], 1)
-        assert np.isclose(l_vdw_list[-1], 0)
-        assert np.isclose(l_chg_list[-1], 0)
-        self.logger.info("Deletion Box")
+        self.logger.info(f"Deletion Box {self.gc_count['current_move']}")
         # save initial (r,p)
         state, pos_old, vel_old, ghost_list_old = self._move_init()
 
@@ -573,14 +564,14 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         # random a real water to be deleted
         r_wat_set = set(self.water_res_2_atom) - set(ghost_list_old) - {self.switching_water}
         r_wat_index = np.random.choice(list(r_wat_set))
-        self.set_ghost_list(ghost_list_old + [r_wat_index], check_system=False)
+        self.set_ghost_list(ghost_list_old + [int(r_wat_index)], check_system=False)
         for at_real, at_switch in zip(self.water_res_2_atom[r_wat_index],
                                        self.water_res_2_atom[self.switching_water]):
             # swap
             pos_new[[at_real,at_switch]] = pos_new[[at_switch,at_real]]
             vel_new[[at_real,at_switch]] = vel_new[[at_switch,at_real]]
         self.simulation.context.setPositions(pos_new)
-        self.simulation.context.setVelocities(vel_new)
+        self.simulation.context.setVelocities(-vel_new)
 
         explosion, protocol_work, protocol_work_list = self.work_process(n_prop, l_vdw_list, l_chg_list)
 
@@ -606,7 +597,6 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
         # update gc_count
         self.update_gc_count(1, protocol_work, 0, n_water, accept, acc_prob)
-
         self.logger.info(f"GC_Deletion_Box Acc_prob={min(1, acc_prob):.3f}, Accept={accept}, N={n_water}")
 
         return accept, acc_prob, protocol_work, protocol_work_list, n_water
@@ -675,7 +665,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             A list of ``lambda_gc_coulomb`` value that defines the path of insertion. It should start with 0.0 and end with 1.0.
 
         n_prop : int
-            Number of propergation steps (equilibrium MD) between each lambda switching.
+            Number of propagation steps (equilibrium MD) between each lambda switching.
 
         Returns
         -------
@@ -694,12 +684,12 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         n_water : int
             The number of water molecules in the system after the insertion.
 
+        switching_water_inside : bool
+            Whether the swithching water is inside the GCMC sphere in the end point of non-eq process
+
+
         """
-        assert np.isclose(l_vdw_list[0], 0)
-        assert np.isclose(l_chg_list[0], 0)
-        assert np.isclose(l_vdw_list[-1], 1)
-        assert np.isclose(l_chg_list[-1], 1)
-        self.logger.info("Insertion GCMC Sphere")
+        self.logger.info(f"Insertion GCMC Sphere {self.gc_count['current_move']}")
         # save initial (r,p)
         state, pos_old, vel_old, ghost_list_old = self._move_init()
 
@@ -712,7 +702,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             pos_new[[at_ghost, at_switch]] = pos_new[[at_switch, at_ghost]]
             vel_new[[at_ghost, at_switch]] = vel_new[[at_switch, at_ghost]]
         self.simulation.context.setPositions(pos_new)
-        self.simulation.context.setVelocities(vel_new)
+        self.simulation.context.setVelocities(-vel_new)
 
         explosion, protocol_work, protocol_work_list = self.work_process(n_prop, l_vdw_list, l_chg_list)
 
@@ -762,7 +752,6 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
         # update gc_count
         self.update_gc_count(0, protocol_work, 1, n_water, accept, acc_prob)
-
         self.logger.info(f"GC_Insertion_Sphere {min(1, acc_prob):.3f}, Accept={accept}, N={n_water}, Water_in_s={sw_water_inside}")
 
         return accept, acc_prob, protocol_work, protocol_work_list, n_water, sw_water_inside
@@ -780,7 +769,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             A list of ``lambda_gc_coulomb`` value that defines the path of insertion. It should start with 1.0 and end with 0.0.
 
         n_prop : int
-            Number of propergation steps (equilibrium MD) between each lambda switching.
+            Number of propagation steps (equilibrium MD) between each lambda switching.
 
         Returns
         -------
@@ -799,12 +788,11 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         n_water : int
             The number of water molecules in the system after the insertion.
 
+        switching_water_inside : bool
+            Whether the swithching water is inside the GCMC sphere in the end point of non-eq process
+
         """
-        assert np.isclose(l_vdw_list[0], 1)
-        assert np.isclose(l_chg_list[0], 1)
-        assert np.isclose(l_vdw_list[-1], 0)
-        assert np.isclose(l_chg_list[-1], 0)
-        self.logger.info("Deletion GCMC Sphere")
+        self.logger.info(f"Deletion GCMC Sphere {self.gc_count['current_move']}")
         # save initial (r,p)
         state, pos_old, vel_old, ghost_list_old = self._move_init()
 
@@ -821,14 +809,14 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
                 water_inside.append(res_index)
         n_water = len(water_inside)
         r_wat_index = np.random.choice(water_inside)
-        self.set_ghost_list(ghost_list_old + [r_wat_index], check_system=False)
+        self.set_ghost_list(ghost_list_old + [int(r_wat_index)], check_system=False)
         for at_real, at_switch in zip(self.water_res_2_atom[r_wat_index],
                                       self.water_res_2_atom[self.switching_water]):
             # swap
             pos_new[[at_real, at_switch]] = pos_new[[at_switch, at_real]]
             vel_new[[at_real, at_switch]] = vel_new[[at_switch, at_real]]
         self.simulation.context.setPositions(pos_new)
-        self.simulation.context.setVelocities(vel_new)
+        self.simulation.context.setVelocities(-vel_new)
 
         explosion, protocol_work, protocol_work_list = self.work_process(n_prop, l_vdw_list, l_chg_list)
 
@@ -859,7 +847,69 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             ### revert the ghost_list
             self.set_ghost_list(ghost_list_old, check_system=False)
 
+        # update gc_count
+        self.update_gc_count(1, protocol_work, 1, n_water, accept, acc_prob)
+        self.logger.info(
+            f"GC_Deletion_Sphere {min(1, acc_prob):.3f}, Accept={accept}, N={n_water}, Water_in_s={sw_water_inside}")
+
         return accept, acc_prob, protocol_work, protocol_work_list, n_water, sw_water_inside
+
+    def move_insert_delete(self, l_vdw_list: list, l_chg_list: list, n_prop: int, box: bool) -> tuple[bool, float, unit.Quantity, list, int, bool]:
+        """
+        Randomly do insertion or deletion in 1:1 probability
+
+        Parameters
+        ----------
+        l_vdw_list : list
+            A list of ``lambda_gc_vdw`` value that defines the path of insertion. It should start with 0.0 and end with 1.0.
+
+        l_chg_list : list
+            A list of ``lambda_gc_coulomb`` value that defines the path of insertion. It should start with 0.0 and end with 1.0.
+
+        n_prop : int
+            Number of propagation steps (equilibrium MD) between each lambda switching.
+
+        box : bool
+            GC in box or GCMC sphere
+
+        Returns
+        -------
+        accept : bool
+            Whether the insertion is accepted.
+
+        acc_prob : float
+            The acceptance probability of the insertion.
+
+        protocol_work : unit.Quantity
+            The work done during the insertion process, with unit.
+
+        protocol_work_list : list
+            A list of work values during each perturbation step, in kcal/mol. no unit in this list.
+
+        n_water : int
+            The number of water molecules in the system after the insertion.
+
+        switching_water_inside : bool
+            Whether the swithching water is inside reasonable region in the end point of non-eq process
+
+        """
+        assert np.isclose(l_vdw_list[0], 0)
+        assert np.isclose(l_chg_list[0], 0)
+        assert np.isclose(l_vdw_list[-1], 1)
+        assert np.isclose(l_chg_list[-1], 1)
+
+        if box:
+            if np.random.rand() < 0.5:
+                accept, acc_prob, protocol_work, protocol_work_list, n_water = self.move_insertion_box(l_vdw_list, l_chg_list, n_prop)
+            else:
+                accept, acc_prob, protocol_work, protocol_work_list, n_water = self.move_deletion_box(l_vdw_list[::-1], l_chg_list[::-1], n_prop)
+            s_wat_in = True
+        else:
+            if np.random.rand() < 0.5:
+                accept, acc_prob, protocol_work, protocol_work_list, n_water, s_wat_in = self.move_insertion_GCMC(l_vdw_list, l_chg_list, n_prop)
+            else:
+                accept, acc_prob, protocol_work, protocol_work_list, n_water, s_wat_in = self.move_deletion_GCMC(l_vdw_list[::-1], l_chg_list[::-1], n_prop)
+        return accept, acc_prob, protocol_work, protocol_work_list, n_water, s_wat_in
 
     def report_dcd(self, state=None):
         """
@@ -876,7 +926,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         self.dcd_reporter.report(self.simulation, state)
         with open(self.dcd_jsonl, 'a') as f:
             json.dump({"GC_count": self.gc_count["current_move"],
-                       "ghost_list": self.ghost_list}, f)
+                       "ghost_list": self.get_ghost_list()}, f)
             f.write('\n')
         self.report_rst(state)
 
@@ -908,6 +958,28 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         log_dict = json.loads(l)
         self.gc_count["current_move"] = log_dict["GC_count"]
         self.set_ghost_list(log_dict["ghost_list"])
+
+    def load_rst(self, rst_input: Union[str, Path]):
+        """
+        Load positions/velocities from a restart file. boxVector will be checked, if not match, raise an error.
+
+        Parameters
+        ----------
+        rst_input : Union[str, Path]
+            Amber inpcrd file
+
+        Returns
+        -------
+        None
+        """
+        rst = app.AmberInpcrdFile(rst_input)
+        box_vec = rst.getBoxVectors()
+        if not np.all(np.isclose(self.box_vectors.value_in_unit(unit.nanometer), box_vec.value_in_unit(unit.nanometer))):
+            raise ValueError(f"The box vectors in the restart file do not match the current box vectors. {box_vec} {self.box_vectors}")
+        self.simulation.context.setPositions(rst.getPositions())
+        self.simulation.context.setVelocities(rst.getVelocities())
+        self.logger.debug(f"Load boxVectors/positions/velocities from {rst_input}")
+
 
 
 class NoneqGrandCanonicalMonteCarloSamplerMPI(NoneqGrandCanonicalMonteCarloSampler):
