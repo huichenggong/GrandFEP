@@ -14,7 +14,7 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="utils" href="../utils.html" />
+    <link rel="next" title="NPTSampler" href="NPTSampler.html" />
     <link rel="prev" title="NoneqGrandCanonicalMonteCarloSampler" href="NoneqGrandCanonicalMonteCarloSampler.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -73,7 +73,7 @@
   <li><a href="../modules.html">GrandFEP API</a><ul>
   <li><a href="../sampler.html">sampler</a><ul>
       <li>Previous: <a href="NoneqGrandCanonicalMonteCarloSampler.html" title="previous chapter">NoneqGrandCanonicalMonteCarloSampler</a></li>
-      <li>Next: <a href="../utils.html" title="next chapter">utils</a></li>
+      <li>Next: <a href="NPTSampler.html" title="next chapter">NPTSampler</a></li>
   </ul></li>
   </ul></li>
   </ul></li>
@@ -101,7 +101,7 @@
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.sampler.</span></span><span class="sig-name descname"><span class="pre">NoneqGrandCanonicalMonteCarloSamplerMPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_resname='HOH'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_O_name='O'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chemical_potential=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standard_volume=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sphere_radius=Quantity(value=10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit=angstrom)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_atoms=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="NoneqGrandCanonicalMonteCarloSampler.html#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler" title="grandfep.sampler.NoneqSampler.NoneqGrandCanonicalMonteCarloSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NoneqGrandCanonicalMonteCarloSampler</span></code></a></p>
-<p>Nonequilibrium Grand Canonical Monte Carlo (Noneq-GCMC) sampler with MPI support.</p>
+<p>Nonequilibrium Grand Canonical Monte Carlo (Noneq-GCMC) sampler with MPI (replica exchange) support.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.check_ghost_list">
 <span class="sig-name descname"><span class="pre">check_ghost_list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.check_ghost_list" title="Link to this definition">¶</a></dt>
@@ -179,21 +179,6 @@ only one that is switching.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.deletion_move_GCMC">
-<span class="sig-name descname"><span class="pre">deletion_move_GCMC</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.deletion_move_GCMC" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.deletion_move_box">
-<span class="sig-name descname"><span class="pre">deletion_move_box</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.deletion_move_box" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.gcmc_move">
-<span class="sig-name descname"><span class="pre">gcmc_move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.gcmc_move" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.get_ghost_list">
 <span class="sig-name descname"><span class="pre">get_ghost_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">check_system</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.get_ghost_list" title="Link to this definition">¶</a></dt>
 <dd><p>Get a copy of the current ghost water list.</p>
@@ -256,28 +241,192 @@ epsilonScale
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.insertion_move_GCMC">
-<span class="sig-name descname"><span class="pre">insertion_move_GCMC</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.insertion_move_GCMC" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.get_sphere_center">
+<span class="sig-name descname"><span class="pre">get_sphere_center</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.get_sphere_center" title="Link to this definition">¶</a></dt>
+<dd><p>Average the reference atoms positions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sphere_center</strong> – The center of the GCMC sphere, with unit</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>unit.Quantity</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.insertion_move_box">
-<span class="sig-name descname"><span class="pre">insertion_move_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_vdw_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_coulomb_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_prop</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.insertion_move_box" title="Link to this definition">¶</a></dt>
-<dd><p>Perform a non-equilibrium insertion. The vdw will be turned on first, followed by coulomb</p>
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.get_water_state">
+<span class="sig-name descname"><span class="pre">get_water_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.get_water_state" title="Link to this definition">¶</a></dt>
+<dd><p>Check whether the water molecule is inside the box (1) or not (0).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>positions</strong> (<em>unit.Quantity</em>) – The current positions of the system.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.array</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>water_state_dict</strong> (<em>dict</em>) – A dictionary label whether the water molecule is inside the box (1) or not (0).</p></li>
+<li><p><strong>dist_all_o</strong> (<em>np.array</em>) – All the distance bewteen water oxygen and the center of the sphere.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.load_rst">
+<span class="sig-name descname"><span class="pre">load_rst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rst_input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.load_rst" title="Link to this definition">¶</a></dt>
+<dd><p>Load positions/velocities from a restart file. boxVector will be checked, if not match, raise an error.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rst_input</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Path</em><em>]</em>) – Amber inpcrd file</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.move_deletion_GCMC">
+<span class="sig-name descname"><span class="pre">move_deletion_GCMC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_vdw_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_chg_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_prop</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.move_deletion_GCMC" title="Link to this definition">¶</a></dt>
+<dd><p>Perform a non-equilibrium deletion, according the given lambda schedule</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>l_vdw_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code> value that defines the path of insertion</p></li>
-<li><p><strong>l_coulomb_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code> value that defines the path of insertion</p></li>
-<li><p><strong>n_prop</strong> (<em>int</em>) – Number of propergation step (equlibrium MD) between each lambda switching.</p></li>
+<li><p><strong>l_vdw_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code> value that defines the path of insertion. It should start with 1.0 and end with 0.0.</p></li>
+<li><p><strong>l_chg_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code> value that defines the path of insertion. It should start with 1.0 and end with 0.0.</p></li>
+<li><p><strong>n_prop</strong> (<em>int</em>) – Number of propagation steps (equilibrium MD) between each lambda switching.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>positions</strong> (<em>unit.Quantity</em>) – Positions after this GCMC move.</p></li>
-<li><p><strong>velocities</strong> (<em>unit.Quantity</em>) – Velocities after this GCMC move.</p></li>
-<li><p><strong>work</strong> (<em>unit.Quantity</em>) – Work during the insertion process.</p></li>
-<li><p><strong>accept</strong> (<em>bool</em>) – Whether the insertion move was accepted.</p></li>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>accept</strong> (<em>bool</em>) – Whether the insertion is accepted.</p></li>
+<li><p><strong>acc_prob</strong> (<em>float</em>) – The acceptance probability of the insertion.</p></li>
+<li><p><strong>protocol_work</strong> (<em>unit.Quantity</em>) – The work done during the insertion process, with unit.</p></li>
+<li><p><strong>protocol_work_list</strong> (<em>list</em>) – A list of work values during each perturbation step, in kcal/mol. no unit in this list.</p></li>
+<li><p><strong>n_water</strong> (<em>int</em>) – The number of water molecules in the system after the insertion.</p></li>
+<li><p><strong>switching_water_inside</strong> (<em>bool</em>) – Whether the swithching water is inside the GCMC sphere in the end point of non-eq process</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.move_deletion_box">
+<span class="sig-name descname"><span class="pre">move_deletion_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_vdw_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_chg_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_prop</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.move_deletion_box" title="Link to this definition">¶</a></dt>
+<dd><p>Perform a non-equilibrium deletion, according the given lambda schedule</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l_vdw_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code> value that defines the path of insertion. It should start with 1.0 and end with 0.0.</p></li>
+<li><p><strong>l_chg_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code> value that defines the path of insertion. It should start with 1.0 and end with 0.0.</p></li>
+<li><p><strong>n_prop</strong> (<em>int</em>) – Number of propagation steps (equilibrium MD) between each lambda switching.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>accept</strong> (<em>bool</em>) – Whether the insertion is accepted.</p></li>
+<li><p><strong>acc_prob</strong> (<em>float</em>) – The acceptance probability of the insertion.</p></li>
+<li><p><strong>protocol_work</strong> (<em>unit.Quantity</em>) – The work done during the insertion process, with unit.</p></li>
+<li><p><strong>protocol_work_list</strong> (<em>list</em>) – A list of work values during each perturbation step, in kcal/mol. no unit in this list.</p></li>
+<li><p><strong>n_water</strong> (<em>int</em>) – The number of water molecules in the system after the insertion.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.move_insert_delete">
+<span class="sig-name descname"><span class="pre">move_insert_delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_vdw_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_chg_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.move_insert_delete" title="Link to this definition">¶</a></dt>
+<dd><p>Randomly do insertion or deletion in 1:1 probability</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l_vdw_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code> value that defines the path of insertion. It should start with 0.0 and end with 1.0.</p></li>
+<li><p><strong>l_chg_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code> value that defines the path of insertion. It should start with 0.0 and end with 1.0.</p></li>
+<li><p><strong>n_prop</strong> (<em>int</em>) – Number of propagation steps (equilibrium MD) between each lambda switching.</p></li>
+<li><p><strong>box</strong> (<em>bool</em>) – GC in box or GCMC sphere</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>accept</strong> (<em>bool</em>) – Whether the insertion is accepted.</p></li>
+<li><p><strong>acc_prob</strong> (<em>float</em>) – The acceptance probability of the insertion.</p></li>
+<li><p><strong>protocol_work</strong> (<em>unit.Quantity</em>) – The work done during the insertion process, with unit.</p></li>
+<li><p><strong>protocol_work_list</strong> (<em>list</em>) – A list of work values during each perturbation step, in kcal/mol. no unit in this list.</p></li>
+<li><p><strong>n_water</strong> (<em>int</em>) – The number of water molecules in the system after the insertion.</p></li>
+<li><p><strong>switching_water_inside</strong> (<em>bool</em>) – Whether the swithching water is inside reasonable region in the end point of non-eq process</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.move_insertion_GCMC">
+<span class="sig-name descname"><span class="pre">move_insertion_GCMC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_vdw_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_chg_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_prop</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.move_insertion_GCMC" title="Link to this definition">¶</a></dt>
+<dd><p>Perform a non-equilibrium insertion, according the given lambda schedule</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l_vdw_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code> value that defines the path of insertion. It should start with 0.0 and end with 1.0.</p></li>
+<li><p><strong>l_chg_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code> value that defines the path of insertion. It should start with 0.0 and end with 1.0.</p></li>
+<li><p><strong>n_prop</strong> (<em>int</em>) – Number of propagation steps (equilibrium MD) between each lambda switching.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>accept</strong> (<em>bool</em>) – Whether the insertion is accepted.</p></li>
+<li><p><strong>acc_prob</strong> (<em>float</em>) – The acceptance probability of the insertion.</p></li>
+<li><p><strong>protocol_work</strong> (<em>unit.Quantity</em>) – The work done during the insertion process, with unit.</p></li>
+<li><p><strong>protocol_work_list</strong> (<em>list</em>) – A list of work values during each perturbation step, in kcal/mol. no unit in this list.</p></li>
+<li><p><strong>n_water</strong> (<em>int</em>) – The number of water molecules in the system after the insertion.</p></li>
+<li><p><strong>switching_water_inside</strong> (<em>bool</em>) – Whether the swithching water is inside the GCMC sphere in the end point of non-eq process</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.move_insertion_box">
+<span class="sig-name descname"><span class="pre">move_insertion_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_vdw_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_chg_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_prop</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.move_insertion_box" title="Link to this definition">¶</a></dt>
+<dd><p>Perform a non-equilibrium insertion, according the given lambda schedule</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l_vdw_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code> value that defines the path of insertion. It should start with 0.0 and end with 1.0.</p></li>
+<li><p><strong>l_chg_list</strong> (<em>list</em>) – A list of <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code> value that defines the path of insertion. It should start with 0.0 and end with 1.0.</p></li>
+<li><p><strong>n_prop</strong> (<em>int</em>) – Number of propagation steps (equilibrium MD) between each lambda switching.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>accept</strong> (<em>bool</em>) – Whether the insertion is accepted.</p></li>
+<li><p><strong>acc_prob</strong> (<em>float</em>) – The acceptance probability of the insertion.</p></li>
+<li><p><strong>protocol_work</strong> (<em>unit.Quantity</em>) – The work done during the insertion process, with unit.</p></li>
+<li><p><strong>protocol_work_list</strong> (<em>list</em>) – A list of work values during each perturbation step, in kcal/mol. no unit in this list.</p></li>
+<li><p><strong>n_water</strong> (<em>int</em>) – The number of water molecules in the system after the insertion.</p></li>
 </ul>
 </p>
 </dd>
@@ -298,7 +447,7 @@ in the box will be selected. If the center is not None, a randomed position in t
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code></span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code>]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
@@ -311,12 +460,71 @@ in the box will be selected. If the center is not None, a randomed position in t
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.report">
-<span class="sig-name descname"><span class="pre">report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">write_dcd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.report" title="Link to this definition">¶</a></dt>
-<dd><p>Report the GC moves and write trajectory if needed.
-:type write_dcd: 
-:param write_dcd:
-:return:</p>
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.report_dcd">
+<span class="sig-name descname"><span class="pre">report_dcd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.report_dcd" title="Link to this definition">¶</a></dt>
+<dd><p>Append a frame to the DCD trajectory file. rst7, jsonl will be update at the same time. If state is not provided,
+<code class="docutils literal notranslate"><span class="pre">self.simulation.context.getState(getPositions=True,</span> <span class="pre">getVelocities=True)</span></code> will be called to get a new state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.State</span></code></span>) – State, which should have both Positions and Velocities. Default is None.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.report_jsonl">
+<span class="sig-name descname"><span class="pre">report_jsonl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dcd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.report_jsonl" title="Link to this definition">¶</a></dt>
+<dd><p>Append a line to the jsonl file. An example line is like this. <code class="docutils literal notranslate"><span class="pre">GC_count</span></code> is the current number of GC step.
+<code class="docutils literal notranslate"><span class="pre">ghost_list</span></code> is the ghost water residue 0-index. <code class="docutils literal notranslate"><span class="pre">dcd</span></code> tells whether there is a dcd frame saved with this
+line of recording</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;GC_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">50</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;ghost_list&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">11</span><span class="p">,</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="mi">13</span><span class="p">],</span><span class="w"> </span><span class="nt">&quot;dcd&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dcd</strong> – Whether there is a dcd writing in this step for appending a line to jsonl. 1: yes, 0: no</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.report_rst">
+<span class="sig-name descname"><span class="pre">report_rst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.report_rst" title="Link to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Write a rst7 restart file. If state is not provided,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">self.simulation.context.getState(getPositions=True,</span> <span class="pre">getVelocities=True)</span></code> will be called to get a new state.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> – State, which should have both Positions and Velocities. Default is None.</p></li>
+<li><p><strong>dcd</strong> – Whether there is a dcd writing in this step for appending a line to jsonl. 1: yes, 0: no</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.set_ghost_from_jsonl">
+<span class="sig-name descname"><span class="pre">set_ghost_from_jsonl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jsonl_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.set_ghost_from_jsonl" title="Link to this definition">¶</a></dt>
+<dd><p>Read the last line of a jsonl file and set the current ghost_list,gc_count.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>jsonl_file</strong></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -342,7 +550,7 @@ the updated <cite>ghost_list</cite>. Default is True.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.update_gc_count">
-<span class="sig-name descname"><span class="pre">update_gc_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">insert_delete</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">work</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_GCMC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_water</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.update_gc_count" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">update_gc_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">insert_delete</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">work</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_GCMC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_water</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acc_prob</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.update_gc_count" title="Link to this definition">¶</a></dt>
 <dd><p>Update the internal <cite>gc_count</cite> dictionary that tracks GCMC insertion/deletion statistics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -350,14 +558,189 @@ the updated <cite>ghost_list</cite>. Default is True.</p></li>
 <li><p><strong>insert_delete</strong> (<em>int</em>) – Indicator for the type of move: <cite>0</cite> for insertion, <cite>1</cite> for deletion.</p></li>
 <li><p><strong>work</strong> (<em>unit.Quantity</em>) – Work value (e.g., from nonequilibrium switching), with units. The value in kcal/mol will be recorded.</p></li>
 <li><p><strong>box_GCMC</strong> (<em>int</em>) – Region type indicator: <cite>0</cite> for the whole simulation box, <cite>1</cite> for a GCMC sub-volume.</p></li>
-<li><p><strong>n_water</strong> (<em>int</em>) – Number of water molecules in the whole box or in the GCMC sub-volume, depending on <cite>box_GCMC</cite>.</p></li>
-<li><p><strong>accept</strong> (<em>int</em>) – Indicator of whether the move was accepted: <cite>1</cite> for accepted, <cite>0</cite> for rejected.</p></li>
+<li><p><strong>n_water</strong> (<em>int</em>) – Number of water molecules after this move in the whole box or in the GCMC sub-volume, depending on <cite>box_GCMC</cite>.</p></li>
+<li><p><strong>accept</strong> (<em>bool</em>) – Indicator of whether the move was accepted</p></li>
+<li><p><strong>acc_prob</strong> (<em>float</em>) – Acceptance probability.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.work_process">
+<span class="sig-name descname"><span class="pre">work_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_vdw_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_chg_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.work_process" title="Link to this definition">¶</a></dt>
+<dd><p>Perform the work process for insertion/deletion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_prop</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Number of propagation steps (equilibrium MD) between each lambda switching.</p></li>
+<li><p><strong>l_vdw_list</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span>) – A list of value for <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code>.</p></li>
+<li><p><strong>l_chg_list</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span>) – A list of value for <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>explosion</strong> (<em>bool</em>) – Whether the non-equilibrium process get nan.</p></li>
+<li><p><strong>protocol_work</strong> (<em>unit.Quantity</em>) – The work done during the insertion process.</p></li>
+<li><p><strong>protocol_work_list</strong> (<em>list</em>) – A list of work done during each perturbation step, in kcal/mol. no unit in this list.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.Adam_GCMC">
+<span class="sig-name descname"><span class="pre">Adam_GCMC</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">unit.Quantity</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.Adam_GCMC" title="Link to this definition">¶</a></dt>
+<dd><p>Adam value, considering the selected sphere and water molecules in the sphere.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.Adam_box">
+<span class="sig-name descname"><span class="pre">Adam_box</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">unit.Quantity</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.Adam_box" title="Link to this definition">¶</a></dt>
+<dd><p>Adam value, considering the whole simulation box and all water molecules.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.box_vectors">
+<span class="sig-name descname"><span class="pre">box_vectors</span></span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.box_vectors" title="Link to this definition">¶</a></dt>
+<dd><p>The box vectors of the system. The box has to be rectangular.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.chemical_potential">
+<span class="sig-name descname"><span class="pre">chemical_potential</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">unit.Quantity</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.chemical_potential" title="Link to this definition">¶</a></dt>
+<dd><p>Chemical potential of the GC particle.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.compound_integrator">
+<span class="sig-name descname"><span class="pre">compound_integrator</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">openmm.CompoundIntegrator</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.compound_integrator" title="Link to this definition">¶</a></dt>
+<dd><p>2 integrators in this attribute. The 1st one is for Canonical simulation, the 2nd one is for non-equilibirum insertion/deletion.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.custom_nonbonded_force">
+<span class="sig-name descname"><span class="pre">custom_nonbonded_force</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">openmm.CustomNonbondedForce</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.custom_nonbonded_force" title="Link to this definition">¶</a></dt>
+<dd><p>This force handles vdW. It has PerParticleParameter is_real and is_switching to control real/ghost and
+switching/non-switching. It also has a global parameter <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code> to control the switching water.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.dcd_reporter">
+<span class="sig-name descname"><span class="pre">dcd_reporter</span></span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.dcd_reporter" title="Link to this definition">¶</a></dt>
+<dd><p>Call this reporter to write the dcd trajectory file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.ghost_list">
+<span class="sig-name descname"><span class="pre">ghost_list</span></span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.ghost_list" title="Link to this definition">¶</a></dt>
+<dd><p>A list of residue indices of water that are set to ghost. Should only be modified with set_ghost_list(), and get by get_ghost_list().</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.kBT">
+<span class="sig-name descname"><span class="pre">kBT</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">unit.Quantity</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.kBT" title="Link to this definition">¶</a></dt>
+<dd><p>k<sub>B</sub>* T, with unit.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.logger">
+<span class="sig-name descname"><span class="pre">logger</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">logging.Logger</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.logger" title="Link to this definition">¶</a></dt>
+<dd><p>Logger object</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.nonbonded_force">
+<span class="sig-name descname"><span class="pre">nonbonded_force</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">openmm.NonbondedForce</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.nonbonded_force" title="Link to this definition">¶</a></dt>
+<dd><p>This force handles Coulomb. The switching water has ParticleParameterOffset with global parameter
+<code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code> to control the switching water.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.num_of_points_water">
+<span class="sig-name descname"><span class="pre">num_of_points_water</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.num_of_points_water" title="Link to this definition">¶</a></dt>
+<dd><p>The number of points in the water model. 3 for TIP3P, 4 for OPC.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.reference_atoms">
+<span class="sig-name descname"><span class="pre">reference_atoms</span></span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.reference_atoms" title="Link to this definition">¶</a></dt>
+<dd><p>A list of atom indices that will be set as the center of the GCMC sphere.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.rst_reporter">
+<span class="sig-name descname"><span class="pre">rst_reporter</span></span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.rst_reporter" title="Link to this definition">¶</a></dt>
+<dd><p>Call this reporter to write the rst7 restart file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.simulation">
+<span class="sig-name descname"><span class="pre">simulation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">app.Simulation</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.simulation" title="Link to this definition">¶</a></dt>
+<dd><p>Simulation ties together Topology, System, Integrator, and Context in this sampler.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.standard_volume">
+<span class="sig-name descname"><span class="pre">standard_volume</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">unit.Quantity</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.standard_volume" title="Link to this definition">¶</a></dt>
+<dd><p>Standard volume of a water molecule in the reservoir.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.switching_water">
+<span class="sig-name descname"><span class="pre">switching_water</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.switching_water" title="Link to this definition">¶</a></dt>
+<dd><p>The residue index of the switching water. The switching water will be set as the last water during initialization.
+It should not be changed during the simulation, as the ParticleParameterOffset can not be updated in NonbondedForce.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.system">
+<span class="sig-name descname"><span class="pre">system</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">openmm.System</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.system" title="Link to this definition">¶</a></dt>
+<dd><p>The OpenMM System object.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.system_type">
+<span class="sig-name descname"><span class="pre">system_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.system_type" title="Link to this definition">¶</a></dt>
+<dd><p>The type of the system. Can be Amber, Charmm or Hybrid depending on the system and energy expression in the given CustomNonbondedForce.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.temperature">
+<span class="sig-name descname"><span class="pre">temperature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">unit.Quantity</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.temperature" title="Link to this definition">¶</a></dt>
+<dd><p>The reference temperature for the system, with proper units (e.g., kelvin).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.topology">
+<span class="sig-name descname"><span class="pre">topology</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">app.Topology</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.topology" title="Link to this definition">¶</a></dt>
+<dd><p>The OpenMM Topology object. All the res_name, atom_index, atom_name, etc. are in this topology.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.wat_params">
+<span class="sig-name descname"><span class="pre">wat_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.wat_params" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary to track the nonbonded parameter of water. The keys are <code class="docutils literal notranslate"><span class="pre">charge</span></code>, <code class="docutils literal notranslate"><span class="pre">sigma</span></code>, <code class="docutils literal notranslate"><span class="pre">epsilon</span></code>,
+The values are a list of parameters with unit.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.water_res_2_O">
+<span class="sig-name descname"><span class="pre">water_res_2_O</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.water_res_2_O" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of residue index to the atom index of water oxygen.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.water_res_2_atom">
+<span class="sig-name descname"><span class="pre">water_res_2_atom</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSamplerMPI.water_res_2_atom" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of residue index to a list of atom indices of water.</p>
 </dd></dl>
 
 </dd></dl>
