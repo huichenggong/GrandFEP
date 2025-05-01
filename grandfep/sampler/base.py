@@ -213,7 +213,7 @@ class BaseGrandCanonicalMonteCarloSampler:
                         self.water_res_2_O[res.index] = atom.index
                 if self.water_res_2_O[res.index] is None:
                     raise ValueError(f"The water ({resname}) does not have the oxygen atom ({water_O_name}). Please check the topology.")
-        self.logger.info(f"Water {self.switching_water} will be set as the switching water")
+        self.logger.info(f"Water res_index={self.switching_water} will be set as the switching water")
 
         if len(self.water_res_2_atom) == 0:
             raise ValueError(f"The topology does not have any water({resname}). Please check the topology.")
