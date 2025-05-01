@@ -268,6 +268,7 @@ class md_params_yml:
         system_setting (dict): Nonbonded parameters for the OpenMM createSystem. The default is
             ``{"nonbondedMethod": app.PME, "nonbondedCutoff": 1.0 * unit.nanometer, "constraints": app.HBonds}``
 
+        sphere_radius (unit.Quantity): The radius of the GCMC sphere. Unit in nm
         lambda_gc_vdw (list): This is the ghobal parameter for controlling the vdw on the switching water
         lambda_gc_coulomb (list): This is the ghobal parameter for controlling the Coulomb on the switching water
         lambda_angles (list): Lambda
@@ -294,6 +295,7 @@ class md_params_yml:
             "surface_tension": unit.bar * unit.nanometer,
             "ex_potential": unit.kilocalorie_per_mole,
             "standard_volume": unit.nanometer ** 3,
+            "sphere_radius":unit.nanometer,
         }
 
         # Default parameter values
@@ -332,17 +334,18 @@ class md_params_yml:
                                "nonbondedCutoff": "1.0 * unit.nanometer",
                                "constraints"    : "app.HBonds"}
 
+        self.sphere_radius = 0.0 * unit.nanometer
         self.lambda_gc_vdw = None
         self.lambda_gc_coulomb = None
-        self.lambda_angles                = None
-        self.lambda_bonds                 = None
-        self.lambda_electrostatics_core   = None
-        self.lambda_electrostatics_delete = None
-        self.lambda_electrostatics_insert = None
-        self.lambda_sterics_core          = None
-        self.lambda_sterics_delete        = None
-        self.lambda_sterics_insert        = None
-        self.lambda_torsions              = None
+        self.lambda_angles                = [1.0]
+        self.lambda_bonds                 = [1.0]
+        self.lambda_electrostatics_core   = [1.0]
+        self.lambda_electrostatics_delete = [1.0]
+        self.lambda_electrostatics_insert = [1.0]
+        self.lambda_sterics_core          = [1.0]
+        self.lambda_sterics_delete        = [1.0]
+        self.lambda_sterics_insert        = [1.0]
+        self.lambda_torsions              = [1.0]
 
 
         # Override with YAML file if provided
@@ -365,6 +368,21 @@ class md_params_yml:
         for k, v in self.system_setting.items():
             system_setting[k] = eval(v)
         return system_setting
+
+    def get_lambda_dict(self) -> dict:
+        """
+
+        Returns
+        -------
+        lambda_dict :
+            A dictionary of mapping from global parameters to their values in all the sampling states.
+        """
+        lambda_dict = {}
+        for attr in dir(self):
+            if attr.startswith("lambda_") and not attr.startswith("lambda_gc_"):
+                lambda_dict[attr] = getattr(self, attr)
+        return lambda_dict
+
 
     def _convert_unit(self, key, value):
         """Handle unit conversion based on parameter key."""
