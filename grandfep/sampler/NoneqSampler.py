@@ -29,7 +29,9 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
     ----------
     system :
         The OpenMM System object. Must include `CustomNonbondedForce` and `NonbondedForce` with
-        appropriate per-particle parameters and global parameter definitions.
+        appropriate per-particle parameters and global parameter definitions. Call ``system.setDefaultPeriodicBoxVectors()``
+        before passing it to this class, the newly created context will use this box vectors. Only a rectangular box
+        is supported.
 
     topology :
         The OpenMM Topology object. Must contain water molecules with the specified residue and atom names. Must have
@@ -1038,7 +1040,9 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
     ----------
     system :
         The OpenMM System object. Must include `CustomNonbondedForce` and `NonbondedForce` with
-        appropriate per-particle parameters and global parameter definitions.
+        appropriate per-particle parameters and global parameter definitions. Call ``system.setDefaultPeriodicBoxVectors()``
+        before passing it to this class, the newly created context will use this box vectors. Only a rectangular box
+        is supported.
 
     topology :
         The OpenMM Topology object. Must contain water molecules with the specified residue and atom names. Must have
