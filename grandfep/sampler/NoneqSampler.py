@@ -13,7 +13,7 @@ import parmed
 
 from .. import utils
 
-from .base import BaseGrandCanonicalMonteCarloSampler
+from .base import BaseGrandCanonicalMonteCarloSampler, _ReplicaExchangeMixin
 
 
 class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
@@ -1025,10 +1025,81 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         self.logger.debug(f"Load boxVectors/positions/velocities from {rst_input}")
 
 
-
-class NoneqGrandCanonicalMonteCarloSamplerMPI(NoneqGrandCanonicalMonteCarloSampler):
+class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandCanonicalMonteCarloSampler):
     """
-    Nonequilibrium Grand Canonical Monte Carlo (Noneq-GCMC) sampler with MPI (replica exchange) support.
+    Nonequilibrium Grand Canonical Monte Carlo (Noneq-GCMC) sampler.
+
+    In this class, GCMC is achieved by performing insertion/deletion in a nonequilibrium candidate Monte Carlo manner.
+    The work value of the insertion/deletion will be used to evaluate the acceptance ratio. Insertion/deletion can
+    either be performed in the whole box or in a sub-volume (active site) of the box. In an equilibrium sampling, when
+    the water is free to move in/out of the sub-volume, I recommend alternating between GCMC and box.
+
+    Parameters
+    ----------
+    system :
+        The OpenMM System object. Must include `CustomNonbondedForce` and `NonbondedForce` with
+        appropriate per-particle parameters and global parameter definitions.
+
+    topology :
+        The OpenMM Topology object. Must contain water molecules with the specified residue and atom names. Must have
+        the correct boxVector. Only a rectangular box is supported.
+
+    temperature :
+        The reference temperature for the system, with proper units (e.g., kelvin).
+
+    collision_rate :
+        The collision rate (friction) for the Langevin integrator, with time units.
+
+    timestep :
+        The timestep for the integrator, with time units (e.g., femtoseconds).
+
+    log :
+        Path to the log file. This file will be opened in appended mode.
+
+    platform :
+        The OpenMM computational platform to use. Default is CUDA.
+
+    water_resname :
+        The residue name of water in the topology. Default is 'HOH'.
+
+    water_O_name :
+        The atom name of oxygen in water. Default is 'O'.
+
+    position :
+        Initial position of the system. Need to be provided for box Vectors. Default is None.
+
+    chemical_potential :
+        Chemical potential of the system, with units. Default is None.
+
+    standard_volume :
+        Standard volume of a water molecule in the reservoir. with units. Default is None.
+
+    sphere_radius :
+        Radius of the GCMC sphere. Default is 10.0 * unit.angstroms.
+
+    reference_atoms :
+        A list of atom indices in the topology that will be set as the center of the GCMC sphere. Default is None.
+
+    rst_file :
+        File name for the restart file.
+
+    dcd_file :
+        File name for the DCD trajectory file. Default is None, no DCD reporter.
+
+    append_dcd :
+        Whether to append to the DCD file. Default is True.
+
+    jsonl_file :
+        File name for the JSONL file. Default is "md.jsonl". This file saves the ghost_list. rst7 file needs this jsonl
+        to restart the ghost list, and dcd file needs this jsonl to remove the ghost water.
+
+    init_lambda_state : int
+        Lambda state index for this replica, counting from 0
+
+    lambda_dict : dict
+        A dictionary of mapping from global parameters to their values in all the sampling states.
+
+
     """
     def __init__(self,
                  system: openmm.System,
@@ -1044,8 +1115,153 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(NoneqGrandCanonicalMonteCarloSampl
                  chemical_potential=None,
                  standard_volume=None,
                  sphere_radius: unit.Quantity = 10.0*unit.angstroms,
-                 reference_atoms: list =None
+                 reference_atoms: list =None,
+                 rst_file: str = "md.rst7",
+                 dcd_file: str = None,
+                 append_dcd: bool = True,
+                 jsonl_file: str = "md.jsonl",
+                 init_lambda_state: int = None,
+                 lambda_dict: dict = None
                  ):
+        super().__init__(system, topology, temperature, collision_rate, timestep, log, platform,
+                         water_resname, water_O_name, position, chemical_potential, standard_volume,
+                         sphere_radius, reference_atoms, rst_file, dcd_file, append_dcd, jsonl_file)
+
+        # MPI related properties
+        #: MPI communicator
+        self.comm = MPI.COMM_WORLD
+
+        #: Rank of this process
+        self.rank = self.comm.Get_rank()
+
+        #: Size of the communicator (number of processes)
+        self.size = self.comm.Get_size()
+
+        # RE related properties
+        #: Number of replica exchanges performed
+        self.re_step = 0
+        #: Lambda state index for this replica, counting from 0
+        self.init_lambda_state: int = None
+        #: A dictionary of mapping from global parameters to their values in all the sampling states.
+        self.lambda_dict: dict = None
+        #: Index of the Lambda state which is simulated. All the init_lambda_state in this MPI run can be fetched with ``self.lambda_states_list[rank]``
+        self.lambda_states_list: list = None
+        #: Number of Lambda state to be sampled. It should be equal to the length of the values in ``lambda_dict``.
+        self.n_lambda_states: int = None
+
+        self.set_lambda_dict(init_lambda_state, lambda_dict)
+
+        self.logger.info(f"Rank {self.rank} of {self.size} initialized NoneqGrandCanonicalMonteCarloSamplerMPI sampler")
+
+    def replica_exchange(self, calc_neighbor_only: bool = True):
         """
+        Perform one neighbor swap replica exchange. In odd RE steps, attempt exchange between 0-1, 2-3, ...
+        In even RE steps, attempt exchange between 1-2, 3-4, ... If RE is accepted, update the
+        position/boxVector/velocity
+
+        Parameters
+        ----------
+        calc_neighbor_only :
+            If True, only the nearest neighbor will be calculated.
+
+        Returns
+        -------
+        reduced_energy_matrix : np.array
+            A numpy array with the size of (n_lambda_states, n_simulated_states)
+
+        re_decision : dict
+            The exchange decision between all the pairs. e.g., ``{(0,1):(True, ratio_0_1), (2,3):(True, ratio_2_3)}``.
+            The key is the MPI rank pairs, and the value is the decision and the acceptance ratio.
+
         """
-        pass
+        # re_step has to be the same across all replicas. If not, raise an error.
+        re_step_all = self.comm.allgather(self.re_step)
+        if len(set(re_step_all)) != 1:
+            raise ValueError(f"RE step is not the same across all replicas: {re_step_all}")
+
+        self.logger.info(f"RE Step {self.re_step}")
+
+        # calculate reduced energy
+        if calc_neighbor_only:
+            reduced_energy = self._calc_neighbor_reduced_energy()
+        else:
+            reduced_energy = self._calc_full_reduced_energy()  # kBT unit
+
+        reduced_energy_matrix = np.empty((len(self.lambda_states_list), self.n_lambda_states),
+                                         dtype=np.float64)
+        self.comm.Allgather([reduced_energy, MPI.DOUBLE],  # send buffer
+                            [reduced_energy_matrix, MPI.DOUBLE])  # receive buffer
+
+        # rank 0 decides the exchange
+        if self.rank == 0:
+            re_decision = {}
+            for rank_i in range(self.re_step % 2, self.size - 1, 2):
+                i = self.lambda_states_list[rank_i]
+                delta_energy = (reduced_energy_matrix[rank_i, i + 1] + reduced_energy_matrix[rank_i + 1, i]
+                                - reduced_energy_matrix[rank_i, i] - reduced_energy_matrix[rank_i + 1, i + 1])
+                accept_prob = math.exp(-delta_energy)
+                if np.random.rand() < accept_prob:
+                    re_decision[(rank_i, rank_i + 1)] = (True, min(1, accept_prob))
+                else:
+                    re_decision[(rank_i, rank_i + 1)] = (False, min(1, accept_prob))
+        else:
+            re_decision = None  # placeholder on other ranks
+
+        re_decision = self.comm.bcast(re_decision, root=0)
+
+        # exchange position/velocity/ghost_list
+        for (rank_i, rank_j), (decision, ratio) in re_decision.items():
+            # exchange boxVector/positions/velocities
+            if decision:
+                if self.rank == rank_i:
+                    neighbor = rank_j
+                elif self.rank == rank_j:
+                    neighbor = rank_i
+                else:
+                    continue
+
+                state = self.simulation.context.getState(getPositions=True, getVelocities=True)
+
+                # Exchange with the neighbor
+                vel = state.getVelocities(asNumpy=True).value_in_unit(unit.nanometer / unit.picosecond)
+                vel = np.ascontiguousarray(vel, dtype='float64')
+                recv_vel = np.empty_like(vel, dtype='float64')
+                self.comm.Sendrecv(sendbuf=vel, dest=neighbor, sendtag=0, recvbuf=recv_vel, source=neighbor, recvtag=0)
+
+                pos = state.getPositions(asNumpy=True).value_in_unit(unit.nanometer)
+                pos = np.ascontiguousarray(pos, dtype='float64')
+                recv_pos = np.empty_like(pos, dtype='float64')
+                self.comm.Sendrecv(sendbuf=pos, dest=neighbor, sendtag=1, recvbuf=recv_pos, source=neighbor, recvtag=1)
+
+                g_list = self.get_ghost_list()
+                recv_g_list = self.comm.sendrecv(g_list, dest=neighbor, sendtag=2, source=neighbor, recvtag=2)
+                self.set_ghost_list(recv_g_list, check_system=False)
+
+                # set the new ghost_list/boxVector/velocities
+                self.set_ghost_list(recv_g_list)
+                self.simulation.context.setPositions(recv_pos * unit.nanometer)
+                self.simulation.context.setVelocities(recv_vel * (unit.nanometer / unit.picosecond))
+
+        # log results
+        msg = ",".join([f"{i:13}" for i in reduced_energy])
+        self.logger.info("Reduced Energy U_i(x): " + msg)
+
+        if self.rank == 0:
+            # log the exchange decision
+            x_dict = {True: "x", False: " "}
+            msg_ex = "Repl ex :"
+            msg_pr = "Repl pr :"
+            if not (0,1) in re_decision:
+                msg_ex += f"{self.lambda_states_list[0]:2}   "
+                msg_pr +=  "     "
+            msg_ex += "   ".join([f"{self.lambda_states_list[j]:2} {x_dict[re_decision[(j, j+1)][0]]} {self.lambda_states_list[j+1]:2}" for j in range(0, self.size) if (j, j+1) in re_decision])
+            msg_pr += "   ".join([f"{re_decision[(j, j+1)][1]:7.3f}" for j in range(0, self.size) if (j, j+1) in re_decision])
+            if not (self.size-2, self.size-1) in re_decision:
+                msg_ex += f"   {self.lambda_states_list[self.size - 1]:2}"
+            self.logger.info(msg_ex)
+            self.logger.info(msg_pr)
+
+
+        self.re_step += 1
+        return reduced_energy_matrix, re_decision
+
