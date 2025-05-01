@@ -75,14 +75,14 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         File name for the restart file.
 
     dcd_file :
-        File name for the DCD trajectory file.
+        File name for the DCD trajectory file. Default is None, no DCD reporter.
 
     append_dcd :
         Whether to append to the DCD file. Default is True.
 
     jsonl_file :
-        File name for the JSONL file. Default is "md.jsonl". This file saves the ghost_list. dcd trajectory need this
-        jsonl to remove the ghost water molecules.
+        File name for the JSONL file. Default is "md.jsonl". This file saves the ghost_list. rst7 file needs this jsonl
+        to restart the ghost list, and dcd file needs this jsonl to remove the ghost water.
 
 
     """
@@ -104,7 +104,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
                  rst_file: str = "md.rst7",
                  dcd_file: str = None,
                  append_dcd: bool = True,
-                 jsonl_file: str = None,
+                 jsonl_file: str = "md.jsonl",
                  ):
         """
         """
@@ -911,34 +911,78 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
                 accept, acc_prob, protocol_work, protocol_work_list, n_water, s_wat_in = self.move_deletion_GCMC(l_vdw_list[::-1], l_chg_list[::-1], n_prop)
         return accept, acc_prob, protocol_work, protocol_work_list, n_water, s_wat_in
 
-    def report_dcd(self, state=None):
+    def report_dcd(self, state: openmm.State=None):
         """
-        Append a frame to the DCD trajectory file.
+        Append a frame to the DCD trajectory file. rst7, jsonl will be update at the same time. If state is not provided,
+        ``self.simulation.context.getState(getPositions=True, getVelocities=True)`` will be called to get a new state.
 
-        :return: None
+        Parameters
+        ----------
+        state :
+            State, which should have both Positions and Velocities. Default is None.
+
+        Returns
+        -------
+        None
         """
         if not state:
             state = self.simulation.context.getState(getPositions=True, getVelocities=True)
         if not self.dcd_reporter:
             raise ValueError("DCD reporter is not set")
-        if not self.dcd_jsonl:
-            raise ValueError("JSONL is not set")
         self.dcd_reporter.report(self.simulation, state)
-        with open(self.dcd_jsonl, 'a') as f:
-            json.dump({"GC_count": self.gc_count["current_move"],
-                       "ghost_list": self.get_ghost_list()}, f)
-            f.write('\n')
-        self.report_rst(state)
+        self.report_rst(state, dcd=1)
 
-    def report_rst(self, state=None):
+    def report_rst(self, state=None, dcd=0):
         """
-        Write an Amber rst7 restart file.
+        Write a rst7 restart file. If state is not provided,
+            ``self.simulation.context.getState(getPositions=True, getVelocities=True)`` will be called to get a new state.
 
-        :return: None
+        Parameters
+        ----------
+        state :
+            State, which should have both Positions and Velocities. Default is None.
+
+        dcd :
+            Whether there is a dcd writing in this step for appending a line to jsonl. 1: yes, 0: no
+
+
+        Returns
+        -------
+        None
         """
         if not state:
             state = self.simulation.context.getState(getPositions=True, getVelocities=True)
         self.rst_reporter.report(self.simulation, state)
+        self.report_jsonl(dcd)
+
+    def report_jsonl(self, dcd):
+        """
+        Append a line to the jsonl file. An example line is like this. ``GC_count`` is the current number of GC step.
+        ``ghost_list`` is the ghost water residue 0-index. ``dcd`` tells whether there is a dcd frame saved with this
+        line of recording
+
+        .. code-block:: json
+
+            {"GC_count": 50, "ghost_list": [11, 12, 13], "dcd": 0}
+
+
+        Parameters
+        ----------
+        dcd :
+            Whether there is a dcd writing in this step for appending a line to jsonl. 1: yes, 0: no
+
+        Returns
+        -------
+        None
+        """
+        with open(self.dcd_jsonl, 'a') as f:
+            json.dump(
+                {
+                    "GC_count": self.gc_count["current_move"],
+                    "ghost_list": self.get_ghost_list(),
+                    "dcd":dcd
+                }, f)
+            f.write('\n')
 
     def set_ghost_from_jsonl(self, jsonl_file):
         """

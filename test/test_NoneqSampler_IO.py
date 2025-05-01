@@ -52,9 +52,11 @@ class MyTestCase(unittest.TestCase):
         ngcmc.report_dcd()
         ngcmc.set_ghost_from_jsonl(self.base / "CH4_C2H6/lig0/05_solv_init.jsonl")
         ngcmc.report_dcd()
+        ngcmc.report_rst()
 
-        line_list = ['{"GC_count": 0, "ghost_list": []}\n',
-                     '{"GC_count": 50, "ghost_list": [11, 12, 13]}\n'
+        line_list = ['{"GC_count": 0, "ghost_list": [], "dcd": 1}\n',
+                     '{"GC_count": 50, "ghost_list": [11, 12, 13], "dcd": 1}\n',
+                     '{"GC_count": 50, "ghost_list": [11, 12, 13], "dcd": 0}\n'
                      ]
         with open(self.base / "CH4_C2H6/lig0/test_IO.jsonl") as f:
             lines = f.readlines()
