@@ -1238,10 +1238,9 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
 
                 g_list = self.get_ghost_list()
                 recv_g_list = self.comm.sendrecv(g_list, dest=neighbor, sendtag=2, source=neighbor, recvtag=2)
-                self.set_ghost_list(recv_g_list, check_system=False)
 
                 # set the new ghost_list/boxVector/velocities
-                self.set_ghost_list(recv_g_list)
+                self.set_ghost_list(recv_g_list, check_system=False)
                 self.simulation.context.setPositions(recv_pos * unit.nanometer)
                 self.simulation.context.setVelocities(recv_vel * (unit.nanometer / unit.picosecond))
 
