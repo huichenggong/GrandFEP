@@ -323,7 +323,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             The system to be converted.
         :return: None
         """
-        self.system = deepcopy(system)
+        self.system = system
         # check if the system is Amber
         if self.system_type != "Amber":
             raise ValueError("The system is not Amber. Please check the system.")
@@ -408,7 +408,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             The system to be converted.
         :return: None
         """
-        self.system = deepcopy(system)
+        self.system = system
         # check if the system is Charmm
         if self.system_type != "Charmm":
             raise ValueError("The system is not Charmm. Please check the system.")
@@ -486,7 +486,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             The system to be converted.
         :return: None
         """
-        self.system = deepcopy(system)
+        self.system = system
         # check if the system is Hybrid
         if self.system_type != "Hybrid":
             raise ValueError("The system is not Hybrid. Please check the system.")
