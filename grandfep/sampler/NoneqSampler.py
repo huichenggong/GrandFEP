@@ -190,10 +190,9 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         self.rst_reporter = parmed.openmm.reporters.RestartReporter(rst_file, 0, netcdf=True)
         #: Call this reporter to write the dcd trajectory file.
         self.dcd_reporter = None
-        self.dcd_jsonl = None
+        self.dcd_jsonl = jsonl_file
         if dcd_file is not None:
-            self.dcd_reporter = app.DCDReporter(dcd_file, 0, append_dcd)
-            self.dcd_jsonl = jsonl_file
+            self.dcd_reporter = app.DCDReporter(dcd_file, 0, append_dcd, enforcePeriodicBox=True)
             if not append_dcd:
                 # clean self.dcd_jsonl
                 if os.path.exists(self.dcd_jsonl):
@@ -928,7 +927,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         None
         """
         if not state:
-            state = self.simulation.context.getState(getPositions=True, getVelocities=True)
+            state = self.simulation.context.getState(getPositions=True, getVelocities=True, enforcePeriodicBox=True)
         if not self.dcd_reporter:
             raise ValueError("DCD reporter is not set")
         self.dcd_reporter.report(self.simulation, state)
@@ -953,7 +952,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         None
         """
         if not state:
-            state = self.simulation.context.getState(getPositions=True, getVelocities=True)
+            state = self.simulation.context.getState(getPositions=True, getVelocities=True, enforcePeriodicBox=True)
         self.rst_reporter.report(self.simulation, state)
         self.report_jsonl(dcd)
 
