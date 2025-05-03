@@ -224,6 +224,122 @@ def random_rotation_matrix_protoms():
 
     return rot_matrix
 
+def seconds_to_hms(seconds: float) -> tuple[int, int, float]:
+    """
+    Convert seconds to hours, minutes, and seconds.
+
+    Parameters
+    ----------
+    seconds
+        Time in seconds.
+
+    Returns
+    -------
+    hours
+
+    minutes
+
+    seconds
+    """
+    n_hours, remainder   = divmod(seconds, 3600)
+    n_minutes, n_seconds = divmod(remainder, 60)
+    return int(n_hours), int(n_minutes), n_seconds
+
+
+def find_mapping(map_list: list, resA: app.topology.Residue, resB: app.topology.Residue) -> tuple[bool, dict]:
+    """
+    Check if residues A and B match with a mapping in the mapping list.
+
+    Parameter
+    ---------
+    map_list :
+        A list of mapping. For example
+
+        .. code-block:: python
+
+            [{'res_nameA': 'MOL', 'res_nameB': 'MOL',
+              'index_map': {1: 1, 0: 2, 2: 0}
+    resA :
+        residue from state A
+
+    resB :
+        residue from state B
+
+    Returns
+    -------
+    match_flag :
+        resA and resB can be matched
+
+    index_map :
+        A dictionay mapping the atoms from state A to state B with their 0-index
+
+    """
+    for mapping in map_list:
+        match_flag = True
+        if "res_nameA" in mapping and "res_nameB" in mapping:
+            if not (resA.name == mapping["res_nameA"] and resB.name == mapping["res_nameB"]):
+                match_flag = False
+        if "res_indexA" in mapping and "res_indexB" in mapping:
+            if not (resA.index == mapping["res_indexA"] and resB.index == mapping["res_indexB"]):
+                match_flag = False
+        if match_flag:
+            return match_flag, mapping['index_map']
+    return False, None
+
+
+def prepare_atom_map(topologyA: app.Topology, topologyB: app.Topology, map_list: list) -> tuple[dict, dict]:
+    """
+    With given topology A and B, prepare the atom mapping.
+
+    Parameters
+    ----------
+    topologyA :
+        topology for state A
+
+    topologyB :
+        topology for state B
+
+    map_list :
+        A list of mapping. For example
+
+        .. code-block:: python
+
+            [{'res_nameA': 'MOL', 'res_nameB': 'MOL',
+              'index_map': {1: 1, 0: 2, 2: 0, 25: 26, 22: 29, 23: 28, 24: 27}
+
+    Returns
+    -------
+    old_to_new_all :
+        A dictionay for all the atoms that should map from old (state A) to new (state B)
+
+    old_to_new_core :
+        A dictionay for Alchemical (core) atoms that should map from old (state A) to new (state B)
+    """
+    old_to_new_all = {}  # all the atoms that should map from A to B
+    old_to_new_core = {}  # Alchemical atoms that should map from A to B
+
+    res_listA = [res for res in topologyA.residues()]
+    res_listB = [res for res in topologyB.residues()]
+    for resA, resB in zip(res_listA, res_listB):
+        at_listA = [at for at in resA.atoms()]
+        at_listB = [at for at in resB.atoms()]
+
+        alchem_map_flag, index_map = find_mapping(map_list, resA, resB)
+        if alchem_map_flag:
+            for atA_mol_index, atB_mol_index in index_map.items():
+                atA_sys_index = at_listA[atA_mol_index].index
+                atB_sys_index = at_listB[atB_mol_index].index
+                old_to_new_core[atA_sys_index] = atB_sys_index
+                old_to_new_all[atA_sys_index] = atB_sys_index
+        elif resA.name == resB.name and len(at_listA) == len(at_listB):
+            for atA, atB in zip(at_listA, at_listB):
+                if not atA.name == atB.name:
+                    raise ValueError(f"{atA.name} in {resA.name} cannot map to {atB.name} in {resB.name}")
+                old_to_new_all[atA.index] = atB.index
+        else:
+            raise ValueError(f"{resA} - {resB} Cannot be Mapped")
+    return old_to_new_all, old_to_new_core
+
 class md_params_yml:
     """
     Class to manage MD parameters with default values and YAML overrides. This class reads whatever in the yml file, and
@@ -243,8 +359,8 @@ class md_params_yml:
         nsteps (int): Number of steps.
         nst_dcd (int): Number of steps per dcd trajectory output.
         nst_csv (int): Number of steps per csv energy file output.
-        ncycle_dcd (int): Number of cycle per dcd trajectory output.
-        ncycle_csv (int): Number of cycle per csv energy file output.
+        ncycle_dcd (int): Number of cycles per dcd trajectory output.
+        ncycle_csv (int): Number of cycles per csv energy file output.
         tau_t (unit.Quantity): Temperature coupling time constant. Unit in ps
         ref_t (unit.Quantity): Reference temperature. Unit in K
         gen_vel (bool): Generate velocities.
@@ -266,11 +382,16 @@ class md_params_yml:
             ``[("MD", 200),("GC", 1),("MD", 200),("RE", 1),("MD", 200),("RE", 1),("MD", 200),("RE", 1)]``
 
         system_setting (dict): Nonbonded parameters for the OpenMM createSystem. The default is
-            ``{"nonbondedMethod": app.PME, "nonbondedCutoff": 1.0 * unit.nanometer, "constraints": app.HBonds}``
+            ``{"nonbondedMethod": app.PME, "nonbondedCutoff": 1.0 * unit.nanometer, "constraints": app.HBonds}``.
+            openmm has to be imported in the way the the value string can be evaluated.
+
+            >>> from openmm import app, openmm, unit
 
         sphere_radius (unit.Quantity): The radius of the GCMC sphere. Unit in nm
-        lambda_gc_vdw (list): This is the ghobal parameter for controlling the vdw on the switching water
-        lambda_gc_coulomb (list): This is the ghobal parameter for controlling the Coulomb on the switching water
+        lambda_gc_vdw (list): This is the ghobal parameter for controlling the vdw on the switching water. You
+            can give a list of lambda values for the path of GC insertion.
+        lambda_gc_coulomb (list): This is the ghobal parameter for controlling the Coulomb on the switching water. You
+            can give a list of lambda values for the path of GC insertion.
         lambda_angles (list): Lambda
         lambda_bonds (list): Lambda
         lambda_sterics_core (list): Lambda
@@ -510,7 +631,7 @@ class FreeEAnalysis:
         """
         max_width = max(len(str(fname)) for fname in self.file_list)
         max_width = max(max_width, 9)
-        print(f"{'File Name':<{max_width}} |  N/N_all  | Equil")
+        print(f"{'File Name':<{max_width}} |  N/N_all   | Equil")
         print("-" * (max_width + 20))  # Add a separator line
         N = [len(u) for u in self.U_all]
         for fname, n, n_all, eq0 in zip(self.file_list, self.N_k, N, self.eq_time):
