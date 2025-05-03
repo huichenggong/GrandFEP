@@ -46,6 +46,9 @@ class NPTSampler:
     dcd_file : str
         DCD file path for the simulation. Default is None, which means no dcd output.
 
+    append : bool
+        If True, append to the existing dcd file. Default is False, which means overwrite the existing dcd file.
+
     """
     def __init__(self,
                  system: openmm.System,
@@ -56,7 +59,8 @@ class NPTSampler:
                  log: Union[str, Path],
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  rst_file: str = "md.rst7",
-                 dcd_file: str = None
+                 dcd_file: str = None,
+                 append: bool = False
                  ):
         """
         Initialize the NPT sampler
@@ -92,7 +96,10 @@ class NPTSampler:
         #: Call this reporter to write the dcd trajectory file.
         self.dcd_reporter = None
         if dcd_file is not None:
-            self.dcd_reporter = app.DCDReporter(dcd_file, 0)
+            if append and Path(dcd_file).is_file():
+                self.dcd_reporter = app.DCDReporter(dcd_file, 0, True, enforcePeriodicBox=True)
+            else:
+                self.dcd_reporter = app.DCDReporter(dcd_file, 0, False, enforcePeriodicBox=True)
 
         self.logger.info(f"T   = {temperature}.")
         self.logger.info(f"kBT = {self.kBT}.")
@@ -125,7 +132,7 @@ class NPTSampler:
         :return: None
         """
         if not state:
-            state = self.simulation.context.getState(getPositions=True, getVelocities=True)
+            state = self.simulation.context.getState(getPositions=True, getVelocities=True, enforcePeriodicBox=True)
         self.rst_reporter.report(self.simulation, state)
 
     def load_rst(self, rst_input: Union[str, Path]):
@@ -154,7 +161,7 @@ class NPTSampler:
         :return: None
         """
         if not state:
-            state = self.simulation.context.getState(getPositions=True)
+            state = self.simulation.context.getState(getPositions=True, enforcePeriodicBox=True)
         if not self.dcd_reporter:
             raise ValueError("DCD reporter is not set")
         self.dcd_reporter.report(self.simulation, state)
