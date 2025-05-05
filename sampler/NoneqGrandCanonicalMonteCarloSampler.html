@@ -110,7 +110,9 @@ the water is free to move in/out of the sub-volume, I recommend alternating betw
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>system</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.System</span></code></span>) – The OpenMM System object. Must include <cite>CustomNonbondedForce</cite> and <cite>NonbondedForce</cite> with
-appropriate per-particle parameters and global parameter definitions.</p></li>
+appropriate per-particle parameters and global parameter definitions. Call <code class="docutils literal notranslate"><span class="pre">system.setDefaultPeriodicBoxVectors()</span></code>
+before passing it to this class, the newly created context will use this box vectors. Only a rectangular box
+is supported.</p></li>
 <li><p><strong>topology</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.app.topology.Topology</span></code></span>) – The OpenMM Topology object. Must contain water molecules with the specified residue and atom names. Must have
 the correct boxVector. Only a rectangular box is supported.</p></li>
 <li><p><strong>temperature</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code></span>) – The reference temperature for the system, with proper units (e.g., kelvin).</p></li>

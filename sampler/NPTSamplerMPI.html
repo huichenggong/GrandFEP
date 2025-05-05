@@ -100,7 +100,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.sampler.</span></span><span class="sig-name descname"><span class="pre">NPTSamplerMPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_lambda_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_dict=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="NPTSampler.html#grandfep.sampler.NPTSampler" title="grandfep.sampler.NPT.NPTSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NPTSampler</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_ReplicaExchangeMixin</span></code>, <a class="reference internal" href="NPTSampler.html#grandfep.sampler.NPTSampler" title="grandfep.sampler.NPT.NPTSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NPTSampler</span></code></a></p>
 <p>NPT Sampler class with MPI (replica exchange) support. Only Hamiltonian is allowed to be different.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -161,7 +161,7 @@ position/boxVector/velocity</p>
 <dd class="field-even"><p><ul class="simple">
 <li><p><strong>reduced_energy_matrix</strong> (<em>np.array</em>) – A numpy array with the size of (n_lambda_states, n_simulated_states)</p></li>
 <li><p><strong>re_decision</strong> (<em>dict</em>) – The exchange decision between all the pairs. e.g., <code class="docutils literal notranslate"><span class="pre">{(0,1):(True,</span> <span class="pre">ratio_0_1),</span> <span class="pre">(2,3):(True,</span> <span class="pre">ratio_2_3)}</span></code>.
-The key is the MPI rank pairs, and the value is the dicision and the acceptance ratio.</p></li>
+The key is the MPI rank pairs, and the value is the decision and the acceptance ratio.</p></li>
 </ul>
 </p>
 </dd>
