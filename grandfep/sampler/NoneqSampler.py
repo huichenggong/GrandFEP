@@ -123,7 +123,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
 
         super().__init__(system, topology, temperature, collision_rate,
-                         timestep, log, platform, water_resname, water_O_name)
+                         timestep, log, platform, water_resname, water_O_name, create_simulation=True)
 
         self.logger.info("Initializing NoneqGrandCanonicalMonteCarloSampler")
 

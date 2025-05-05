@@ -65,6 +65,10 @@ class BaseGrandCanonicalMonteCarloSampler:
     water_O_name :
         The atom name of oxygen in water. Default is 'O'.
 
+    create_simulation :
+        Whether to create a system inside this class. When you only want to customize the system using this class,
+        you can set this to False, to avoid unecessary memory usage.
+
     """
     def __init__(self,
                  system: openmm.System,
@@ -76,18 +80,9 @@ class BaseGrandCanonicalMonteCarloSampler:
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  water_resname: str = "HOH",
                  water_O_name: str = "O",
+                 create_simulation: bool = True,
                  ):
         """
-        Initialize the BaseGrandCanonicalMonteCarloSampler.
-        :param system:
-        :param topology:
-        :param temperature:
-        :param collision_rate:
-        :param timestep:
-        :param log:
-        :param platform:
-        :param water_resname:
-        :param water_O_name:
         """
 
         # prepare logger
@@ -167,20 +162,20 @@ class BaseGrandCanonicalMonteCarloSampler:
         else:
             raise ValueError(f"The system ({self.system_type}) cannot be customized. Please check the system.")
 
-        # preparation of integrator, simulation
-        self.logger.info("Prepare integrator and simulation")
-        self.compound_integrator = openmm.CompoundIntegrator()
-        integrator = BAOABIntegrator(temperature, collision_rate, timestep)
-        self.compound_integrator.addIntegrator(integrator) # for EQ run
-        self.ncmc_integrator = BAOABIntegrator(temperature, collision_rate, timestep)
-        self.compound_integrator.addIntegrator(self.ncmc_integrator) # for NCMC run
+        if create_simulation:
+            # preparation of integrator, simulation
+            self.logger.info("Prepare integrator and simulation")
+            self.compound_integrator = openmm.CompoundIntegrator()
+            integrator = BAOABIntegrator(temperature, collision_rate, timestep)
+            self.compound_integrator.addIntegrator(integrator) # for EQ run
+            self.ncmc_integrator = BAOABIntegrator(temperature, collision_rate, timestep)
+            self.compound_integrator.addIntegrator(self.ncmc_integrator) # for NCMC run
 
-        self.simulation = app.Simulation(self.topology, self.system, self.compound_integrator, platform)
-        self.compound_integrator.setCurrentIntegrator(0)
+            self.simulation = app.Simulation(self.topology, self.system, self.compound_integrator, platform)
+            self.compound_integrator.setCurrentIntegrator(0)
 
-
-        self.logger.info(f"T   = {temperature}.")
-        self.logger.info(f"kBT = {self.kBT}.")
+            self.logger.info(f"T   = {temperature}.")
+            self.logger.info(f"kBT = {self.kBT}.")
 
     def _find_all_water(self, resname, water_O_name):
         """
