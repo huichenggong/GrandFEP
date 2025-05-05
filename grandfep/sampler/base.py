@@ -664,7 +664,10 @@ class BaseGrandCanonicalMonteCarloSampler:
         for res_index in self.ghost_list:
             if res_index not in self.water_res_2_atom:
                 raise ValueError(f"The residue {res_index} is water.")
-            for at_index in self.water_res_2_atom[res_index]:
+        for res_index, at_list in self.water_res_2_atom.items():
+            if res_index == self.switching_water:
+                continue
+            for at_index in at_list:
                 parameters = list(self.custom_nonbonded_force.getParticleParameters(at_index))
                 parameters[is_real_index] = 1.0
                 self.custom_nonbonded_force.setParticleParameters(at_index, parameters)
@@ -678,10 +681,13 @@ class BaseGrandCanonicalMonteCarloSampler:
                 self.custom_nonbonded_force.setParticleParameters(at_index, parameters)
 
         # set self.nonbonded_force for coulomb
-        for res_index in self.ghost_list:
+        for res_index, at_list in self.water_res_2_atom.items():
+            if res_index == self.switching_water:
+                continue
             for at_index, wat_chg in zip(self.water_res_2_atom[res_index], self.wat_params['charge']):
                 charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
                 self.nonbonded_force.setParticleParameters(at_index, wat_chg, sigma, epsilon)
+
         for res_index in ghost_list:
             for at_index in self.water_res_2_atom[res_index]:
                 charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
