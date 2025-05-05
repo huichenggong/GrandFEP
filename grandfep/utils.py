@@ -526,7 +526,7 @@ class FreeEAnalysis:
     ----------
 
     """
-    def __init__(self, file_list: list, keyword: str, separator: str, begin: int=0):
+    def __init__(self, file_list: list, keyword: str, separator: str, drop_equil: bool=True, begin: int=0):
         self.file_list = file_list
         data_T_all = [self.read_energy(f, keyword=keyword, separator=separator, begin=begin) for f in self.file_list]
 
@@ -546,7 +546,7 @@ class FreeEAnalysis:
         self.u_unco = None
         self.N_k = None
         self.eq_time = None
-        self.sub_sample()
+        self.sub_sample(drop_equil)
 
     def set_temperature(self, temperature: unit.Quantity):
         """
@@ -608,7 +608,7 @@ class FreeEAnalysis:
 
         return e_array, temperature
 
-    def sub_sample(self):
+    def sub_sample(self, drop_equil: bool = True):
 
         n_sample, n_ham = self.U_all[0].shape
         N_k = np.zeros(n_ham, dtype=np.int64)
@@ -616,10 +616,11 @@ class FreeEAnalysis:
         u_unco = []
         for i, U_series in enumerate(self.U_all):
             n_equil, g, neff_max = pymbar.timeseries.detect_equilibration(U_series[:, i])
+            if not drop_equil:
+                n_equil = 0
             U_equil = U_series[n_equil:, :]
             indices = pymbar.timeseries.subsample_correlated_data(U_equil[:, i], g=g)
             u_unco.append(U_equil[indices, :])
-            # u_unco.append(U_series[:, :])
             N_k[i] = len(indices)
             eq_time[i] = n_equil
         self.u_unco, self.N_k, self.eq_time = u_unco, N_k, eq_time
