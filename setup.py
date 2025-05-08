@@ -33,10 +33,5 @@ setup(
                       "mdtraj", "mdanalysis",
                       ],
     python_requires='>=3.11',
-      entry_points={
-          'console_scripts': [
-          'grand_RE_MPI=grandfep.grand_RE_MPI:main',
-          ],
-      },
     classifiers=['Programming Language :: Python :: 3',],
 )
