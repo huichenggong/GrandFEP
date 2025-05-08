@@ -173,7 +173,7 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-/IGNORE_LOG.md
+
 
 # unit test output
 /test/output/*
