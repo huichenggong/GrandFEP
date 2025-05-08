@@ -1,10 +1,20 @@
 # 0.1.1 Performance update in RE and GC
+## Create a new branch
+```bash
+# create a new branch and switch to it
+git checkout -b 0.1.1_dev
+
+# push the branch to github
+git push -u origin 0.1.1_dev
+```
+
+## Problem to be Solved
 In the `0.1.0`, `updateParametersInContext` cost ~1 min. This means if a RE/GCMC is accepted, the particular replica will spend 1 min  waiting. There are two possible way to speed this up.  
 
 ## Solution Part 1: no configuration exchange in RE
 In RE, if a move is accepted, the global parameter(s) in the MPI rank changes while the coordinate and velocity stay in the MPI rank. Each rank has to figure out which file to append during the `report_rst` and `report_dcd`. Rank 0 write the reduced energy to a csv file.  
 
-By applying this, RE will only change the ghobal parameter and will not call `set_ghost_list` nor `updateParametersInContext`.
+By applying this, RE will only change the global parameter and will not call `set_ghost_list` nor `updateParametersInContext`.
 
 ## Solution Part 2: split water-water into new CustomNonbondedForce
 |      | old  | core | new  | fix  | wat  |

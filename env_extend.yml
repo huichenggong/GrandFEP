@@ -1,4 +1,4 @@
-name: grandfep_env
+name: grandfep_dev
 channels:
   - conda-forge
 dependencies:

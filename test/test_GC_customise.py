@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+import time
 
 import numpy as np
 
@@ -655,6 +656,15 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(len(force_ref), 26640)
         all_close_flag, mis_match_list, error_msg = match_force(force_ref, force)
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+    def test_hybridFF_speed(self):
+        print()
+        print("# What is the time of updateParametersInContext")
+        tick = time.time()
+        print(f"## Time of updating a lig-wat system {time.time() - tick:.3f} s")
+
+        tick = time.time()
+        print(f"## Time of updating a lig-pro system {time.time() - tick:.3f} s")
 
 
 if __name__ == '__main__':
