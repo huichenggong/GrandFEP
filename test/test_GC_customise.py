@@ -124,14 +124,14 @@ class MyTestCase(unittest.TestCase):
 
         # All Particles should be real, last water molecule should be switching
         self.assertEqual(baseGC.ghost_list, [])
-        is_real_ind, is_switching_ind = baseGC.get_particle_parameter_index_cust_nb_force()
+        is_real_ind, is_switching_ind, custom_nb_force = baseGC.custom_nonbonded_force_list[0]
         self.assertEqual((2,3), (is_real_ind, is_switching_ind))
         for i in range(14):
-            self.assertEqual(1.0, baseGC.custom_nonbonded_force.getParticleParameters(i)[is_real_ind])
-            self.assertEqual(0.0, baseGC.custom_nonbonded_force.getParticleParameters(i)[is_switching_ind])
+            self.assertEqual(1.0, custom_nb_force.getParticleParameters(i)[is_real_ind])
+            self.assertEqual(0.0, custom_nb_force.getParticleParameters(i)[is_switching_ind])
         for i in range(14,17):
-            self.assertEqual(1.0, baseGC.custom_nonbonded_force.getParticleParameters(i)[is_real_ind])
-            self.assertEqual(1.0, baseGC.custom_nonbonded_force.getParticleParameters(i)[is_switching_ind])
+            self.assertEqual(1.0, custom_nb_force.getParticleParameters(i)[is_real_ind])
+            self.assertEqual(1.0, custom_nb_force.getParticleParameters(i)[is_switching_ind])
 
 
         print("## Set lambda_gc=0.0 for the switching water. Force should be the same as a 3-water system")
