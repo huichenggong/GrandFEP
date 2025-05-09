@@ -131,8 +131,9 @@ class BaseGrandCanonicalMonteCarloSampler:
 
         # system and force field related attributes
 
-        #: This force handles vdW. It has PerParticleParameter is_real and is_switching to control real/ghost and
-        #: switching/non-switching. It also has a global parameter ``lambda_gc_vdw`` to control the switching water.
+        #: These force(s) handles vdW. They have PerParticleParameter is_real and is_switching to control real/ghost and
+        #: switching/non-switching to identify the only switching water. It also has a global parameter
+        # ``lambda_gc_vdw`` to control the intraction of the switching water.
         self.custom_nonbonded_force_list: list[openmm.CustomNonbondedForce] = []
         #: This force handles Coulomb. The switching water has ParticleParameterOffset with global parameter
         #: ``lambda_gc_coulomb`` to control the switching water.
@@ -154,11 +155,11 @@ class BaseGrandCanonicalMonteCarloSampler:
         self._get_water_parameters(water_resname, system)
 
         if self.system_type == "Amber":
-            self._customise_force_amber(system)
+            self.customise_force_amber(system)
         elif self.system_type == "Charmm":
-            self._customise_force_charmm(system)
+            self.customise_force_charmm(system)
         elif self.system_type == "Hybrid":
-            self._customise_force_hybrid(system)
+            self.customise_force_hybrid(system)
         else:
             raise ValueError(f"The system ({self.system_type}) cannot be customized. Please check the system.")
 
@@ -234,8 +235,8 @@ class BaseGrandCanonicalMonteCarloSampler:
             The type of the system. Can be Amber, Charmm or Hybrid
             Amber should have NonbondedForce without CustomNonbondedForce
             Charmm should have NonbondedForce and CustomNonbondedForce. The EnergyFunction that is allowed in
-            CustomNonbondedForce is '(a/r6)^2-b/r6; r6=r^6;a=acoef(type1, type2);b=bcoef(type1, type2)' or
-            'acoef(type1, type2)/r^12 - bcoef(type1, type2)/r^6;'
+            CustomNonbondedForce is `(a/r6)^2-b/r6; r6=r^6;a=acoef(type1, type2);b=bcoef(type1, type2)` or
+            `acoef(type1, type2)/r^12 - bcoef(type1, type2)/r^6;`
 
             Hybrid should have
                 CustomBondForce            For perturbed bonds
@@ -337,7 +338,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         c2.setSwitchingDistance(c1.getSwitchingDistance())
         c2.setUseLongRangeCorrection(c1.getUseLongRangeCorrection())
 
-    def _customise_force_amber(self, system):
+    def customise_force_amber(self, system: openmm.System) -> None:
         """
         In Amber, NonbondedForce handles both electrostatics and vdW. This function will remove vdW from NonbondedForce
         and create a list of CustomNonbondedForce (in this case, only 1 in the list) to handle vdW, so that the
@@ -370,40 +371,40 @@ class BaseGrandCanonicalMonteCarloSampler:
                              "switch_indicator = max(is_switching1, is_switching2);"
                              "epsilon = sqrt(epsilon1*epsilon2);"
                              "sigma = 0.5*(sigma1 + sigma2);")
-        custom_nonbonded_force = openmm.CustomNonbondedForce(energy_expression)
+        custom_nb_force = openmm.CustomNonbondedForce(energy_expression)
         # Add per particle parameters
-        custom_nonbonded_force.addPerParticleParameter("sigma")
-        custom_nonbonded_force.addPerParticleParameter("epsilon")
-        custom_nonbonded_force.addPerParticleParameter("is_real")
-        custom_nonbonded_force.addPerParticleParameter("is_switching")
+        custom_nb_force.addPerParticleParameter("sigma")
+        custom_nb_force.addPerParticleParameter("epsilon")
+        custom_nb_force.addPerParticleParameter("is_real")
+        custom_nb_force.addPerParticleParameter("is_switching")
         # Add global parameters
-        custom_nonbonded_force.addGlobalParameter('softcore_alpha', 0.5)
-        custom_nonbonded_force.addGlobalParameter('lambda_gc_vdw', 0.0) # lambda for vdw part of TI insertion/deletion
+        custom_nb_force.addGlobalParameter('softcore_alpha', 0.5)
+        custom_nb_force.addGlobalParameter('lambda_gc_vdw', 0.0) # lambda for vdw part of TI insertion/deletion
         # Transfer properties from the original force
-        self._copy_nonbonded_setting_n2c(self.nonbonded_force, custom_nonbonded_force)
+        self._copy_nonbonded_setting_n2c(self.nonbonded_force, custom_nb_force)
         self.nonbonded_force.setUseDispersionCorrection(False)  # Turn off dispersion correction in NonbondedForce as it will only be used for Coulomb
 
         # remove vdw from NonbondedForce, and add particles to CustomNonbondedForce
         for at_index in range(self.nonbonded_force.getNumParticles()):
             charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
-            custom_nonbonded_force.addParticle([sigma, epsilon, 1.0, 0.0]) # add
+            custom_nb_force.addParticle([sigma, epsilon, 1.0, 0.0]) # add
             self.nonbonded_force.setParticleParameters(at_index, charge, sigma, 0.0 * epsilon) # remove
 
         # Exceptions will not be changed in NonbondedForce, but will the corresponding pairs need to be excluded in CustomNonbondedForce
         for exception_idx in range(self.nonbonded_force.getNumExceptions()):
             [i, j, charge_product, sigma, epsilon] = self.nonbonded_force.getExceptionParameters(exception_idx)
             # Add vdw exclusion to CustomNonbondedForce
-            custom_nonbonded_force.addExclusion(i, j)
+            custom_nb_force.addExclusion(i, j)
 
-        self.system.addForce(custom_nonbonded_force)
+        self.system.addForce(custom_nb_force)
         self.nonbonded_force.addGlobalParameter('lambda_gc_coulomb', 0.0) # lambda for coulomb part of TI insertion/deletion
 
         # set is_switching to 1.0 for the switching water
-        is_real_index, is_switching_index = self.get_particle_parameter_index_cust_nb_force(custom_nonbonded_force)
+        is_real_index, is_switching_index = self.get_particle_parameter_index_cust_nb_force(custom_nb_force)
         for at_index in self.water_res_2_atom[self.switching_water]:
-            parameters = list(custom_nonbonded_force.getParticleParameters(at_index))
+            parameters = list(custom_nb_force.getParticleParameters(at_index))
             parameters[is_switching_index] = 1.0
-            custom_nonbonded_force.setParticleParameters(at_index, parameters)
+            custom_nb_force.setParticleParameters(at_index, parameters)
 
         # set ParticleParameters and add ParticleParameterOffset for the switching water
         for at_index in self.water_res_2_atom[self.switching_water]:
@@ -411,9 +412,9 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.nonbonded_force.addParticleParameterOffset("lambda_gc_coulomb", at_index, charge, 0.0, 0.0)
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
 
-        self.custom_nonbonded_force_list = [(is_real_index, is_switching_index, custom_nonbonded_force)]
+        self.custom_nonbonded_force_list = [(is_real_index, is_switching_index, custom_nb_force)]
 
-    def _customise_force_charmm(self, system):
+    def customise_force_charmm(self, system: openmm.System) -> None:
         """
         In Charmm, NonbondedForce handles electrostatics, and CustomNonbondedForce handles vdW. For vdW, this function will add
         perParticle parameters 'is_real', 'is_switching', global parameter ``lambda_gc_vdw`` to the CustomNonbondedForce.
@@ -436,17 +437,16 @@ class BaseGrandCanonicalMonteCarloSampler:
 
         self.logger.info("Try to customise a native Charmm system")
         self.nonbonded_force = None
-        self.custom_nonbonded_force = None
         for i in range(self.system.getNumForces()):
             force = self.system.getForce(i)
             if force.getName() == "NonbondedForce":
                 self.nonbonded_force = force
             elif force.getName() == "CustomNonbondedForce":
-                self.custom_nonbonded_force = force
-        if self.custom_nonbonded_force.getNumGlobalParameters() != 0:
+                custom_nb_force = force
+        if custom_nb_force.getNumGlobalParameters() != 0:
             raise ValueError("The CustomNonbondedForce should not have any global parameters. Please check the system.")
 
-        energy_old = self.custom_nonbonded_force.getEnergyFunction()
+        energy_old = custom_nb_force.getEnergyFunction()
         if energy_old == '(a/r6)^2-b/r6; r6=r^6;a=acoef(type1, type2);b=bcoef(type1, type2)':
             energy_expression = (
                 "U;"
@@ -474,24 +474,25 @@ class BaseGrandCanonicalMonteCarloSampler:
         else:
             raise ValueError(f"{energy_old} This energy expression in CustonNonbondedForce can not be converted. "
                              f"Currently, grandfep only supports the system that is prepared by CharmmPsfFile.CreateSystem() or ForceField.createSystem()")
-        self.custom_nonbonded_force.setEnergyFunction(energy_expression)
+        custom_nb_force.setEnergyFunction(energy_expression)
         # Add per particle parameters
-        self.custom_nonbonded_force.addPerParticleParameter("is_real")
-        self.custom_nonbonded_force.addPerParticleParameter("is_switching")
-        for atom_idx in range(self.custom_nonbonded_force.getNumParticles()):
-            typ = self.custom_nonbonded_force.getParticleParameters(atom_idx)
-            self.custom_nonbonded_force.setParticleParameters(atom_idx, [*typ, 1, 0])
+        custom_nb_force.addPerParticleParameter("is_real")
+        custom_nb_force.addPerParticleParameter("is_switching")
+        for atom_idx in range(custom_nb_force.getNumParticles()):
+            typ = custom_nb_force.getParticleParameters(atom_idx)
+            custom_nb_force.setParticleParameters(atom_idx, [*typ, 1, 0])
         # Add global parameters
-        self.custom_nonbonded_force.addGlobalParameter('softcore_alpha', 0.5)
-        self.custom_nonbonded_force.addGlobalParameter('lambda_gc_vdw', 0.0) # lambda for vdw part of TI insertion/deletion
+        custom_nb_force.addGlobalParameter('softcore_alpha', 0.5)
+        custom_nb_force.addGlobalParameter('lambda_gc_vdw', 0.0) # lambda for vdw part of TI insertion/deletion
         self.nonbonded_force.addGlobalParameter('lambda_gc_coulomb', 0.0)  # lambda for coulomb part of TI insertion/deletion
 
         # set is_switching to 1.0 for the switching water
-        is_real_index, is_switching_index = self.get_particle_parameter_index_cust_nb_force()
+        is_real_index, is_switching_index = self.get_particle_parameter_index_cust_nb_force(custom_nb_force)
         for at_index in self.water_res_2_atom[self.switching_water]:
-            parameters = list(self.custom_nonbonded_force.getParticleParameters(at_index))
+            parameters = list(custom_nb_force.getParticleParameters(at_index))
             parameters[is_switching_index] = 1.0
-            self.custom_nonbonded_force.setParticleParameters(at_index, parameters)
+            custom_nb_force.setParticleParameters(at_index, parameters)
+        self.custom_nonbonded_force_list = [(is_real_index, is_switching_index, custom_nb_force)]
 
         # set ParticleParameters and add ParticleParameterOffset for the switching water
         for at_index in self.water_res_2_atom[self.switching_water]:
@@ -499,29 +500,49 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.nonbonded_force.addParticleParameterOffset("lambda_gc_coulomb", at_index, charge, 0.0, 0.0)
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
 
-    def _customise_force_hybrid(self, system):
+    def customise_force_hybrid(self, system: openmm.System) -> None:
         """
-        If the system is Hybrid, this function will add perParticleParameters **is_real** and **is_switching**
-        to the self.custom_nonbonded_force (openmm.openmm.CustomNonbondedForce) for vdw.
-        :param system: openmm.System
+        If the system is Hybrid, this function will add perParticleParameters ``is_real`` and ``is_switching``
+        to the custom_nonbonded_force (openmm.openmm.CustomNonbondedForce) for vdw.
+
+        +--------+------+------+------+------+------+
+        | Groups | old  | core | new  | fix  | wat  |
+        +========+======+======+======+======+======+
+        | old    |  C1  |      |      |      |      |
+        +--------+------+------+------+------+------+
+        | core   |  C1  |  C1  |      |      |      |
+        +--------+------+------+------+------+------+
+        | new    | None |  C1  |  C1  |      |      |
+        +--------+------+------+------+------+------+
+        | fix    |  C1  |  C1  |  C1  |  C3  |      |
+        +--------+------+------+------+------+------+
+        | wat    |  C1  |  C1  |  C1  |  C2  |  C2  |
+        +--------+------+------+------+------+------+
+
+
+        Parameters
+        ----------
+        system :
             The system to be converted.
-        :return: None
+
+        Returns
+        -------
+        None
         """
         self.system = system
         # check if the system is Hybrid
         if self.system_type != "Hybrid":
             raise ValueError("The system is not Hybrid. Please check the system.")
         self.logger.info("Try to customise a native Hybrid system")
-        self.custom_nonbonded_force = None
         self.nonbonded_force = None
         for i in range(self.system.getNumForces()):
             force = self.system.getForce(i)
             if force.getName() == "NonbondedForce":
                 self.nonbonded_force = force
             elif force.getName() == "CustomNonbondedForce":
-                self.custom_nonbonded_force = force
+                custom_nb_force1 = force
 
-        energy_old = self.custom_nonbonded_force.getEnergyFunction()
+        energy_old = custom_nb_force1.getEnergyFunction()
         if energy_old != 'U_sterics;U_sterics = 4*epsilon*x*(x-1.0); x = (sigma/reff_sterics)^6;epsilon = (1-lambda_sterics)*epsilonA + lambda_sterics*epsilonB;reff_sterics = sigma*((softcore_alpha*lambda_alpha + (r/sigma)^6))^(1/6);sigma = (1-lambda_sterics)*sigmaA + lambda_sterics*sigmaB;lambda_alpha = new_interaction*(1-lambda_sterics_insert) + old_interaction*lambda_sterics_delete;lambda_sterics = core_interaction*lambda_sterics_core + new_interaction*lambda_sterics_insert + old_interaction*lambda_sterics_delete;core_interaction = delta(unique_old1+unique_old2+unique_new1+unique_new2);new_interaction = max(unique_new1, unique_new2);old_interaction = max(unique_old1, unique_old2);epsilonA = sqrt(epsilonA1*epsilonA2);epsilonB = sqrt(epsilonB1*epsilonB2);sigmaA = 0.5*(sigmaA1 + sigmaA2);sigmaB = 0.5*(sigmaB1 + sigmaB2);':
             raise ValueError(
                 f"{energy_old} This energy expression in CustonNonbondedForce can not be converted. "
@@ -584,57 +605,128 @@ class BaseGrandCanonicalMonteCarloSampler:
             "sigmaB = 0.5*(sigmaB1 + sigmaB2);"
         )
         # Add per particle parameters
-        self.custom_nonbonded_force.setEnergyFunction(energy_expression)
-        self.custom_nonbonded_force.addPerParticleParameter("is_real")
-        self.custom_nonbonded_force.addPerParticleParameter("is_switching")
-        for atom_idx in range(self.custom_nonbonded_force.getNumParticles()):
-            params = self.custom_nonbonded_force.getParticleParameters(atom_idx)
-            self.custom_nonbonded_force.setParticleParameters(atom_idx, [*params, 1, 0]) # add is_real=1, is_switching=0
+        custom_nb_force1.setEnergyFunction(energy_expression)
+        custom_nb_force1.addPerParticleParameter("is_real")
+        custom_nb_force1.addPerParticleParameter("is_switching")
+        for atom_idx in range(custom_nb_force1.getNumParticles()):
+            params = custom_nb_force1.getParticleParameters(atom_idx)
+            custom_nb_force1.setParticleParameters(atom_idx, [*params, 1, 0]) # add is_real=1, is_switching=0
 
         # find env atoms in interaction groups in CustomNonbondedForce
-        n_groups = self.custom_nonbonded_force.getNumInteractionGroups()
+        n_groups = custom_nb_force1.getNumInteractionGroups()
         if n_groups != 8:
             raise ValueError("The number of interaction groups is not 8")
 
-        #TODO: Create C2 to handle env-water and water-water
-        env_index_list = [self.custom_nonbonded_force.getInteractionGroupParameters(i)[1] for i in [1, 3, 4]]
+        # Double check the interaction group
+        env_index_list = [custom_nb_force1.getInteractionGroupParameters(i)[1] for i in [1, 3, 4]]
         flag_1 = env_index_list[0] == env_index_list[1]
         flag_2 = env_index_list[1] == env_index_list[2]
         if not flag_1 or not flag_2:
             raise ValueError(f"{env_index_list}\nThe selected interaction groups (1,3,4) are not the same.")
-
-        at_list = [at for at in self.topology.atoms()]
-        for at_index in env_index_list[0]:
-            at = at_list[at_index]
-            chg, sig, eps = self.nonbonded_force.getParticleParameters(at_index)
-            if at.element is not None and at.element.symbol != "H" and eps.value_in_unit(unit.kilojoules_per_mole) < 1e-6:
-                raise ValueError(f"The atom {at.name} in residue {at.residue.index} is a env atom and it has a zero epsilon {eps} in NonbondedForce. Please check the system.")
-
+        # All water should be found in nv_index_list[0]
+        water_at_list = []
         for res_index, at_list in self.water_res_2_atom.items():
+            water_at_list.extend(at_list)
             for at_index in at_list:
-                if not at_index in env_index_list[0]:
-                    raise ValueError(f"Water res_index={res_index} atom_index={at_index} is not found in the env group. Please check your atom mapping in HybridTopologyFactory")
-        # add env-env interaction group
-        self.custom_nonbonded_force.addInteractionGroup(env_index_list[0], env_index_list[0])
+                if at_index not in env_index_list[0]:
+                    raise ValueError(f"water ({res_index=}) ({at_index=}) is not found in env group")
+        water_group_set = set(water_at_list)
+        fix_group_set = set(env_index_list[0]) - water_group_set
+        # Add global parameters
+        custom_nb_force1.addGlobalParameter('lambda_gc_vdw', 0.0)  # lambda for vdw part of TI insertion/deletion
 
-        #TODO: move all the env-env vdw interaction from NonbondedForce to C3. no updateParametersInContext anymore
+        # set is_switching to 1.0 for the switching water
+        is_real_index, is_switching_index = self.get_particle_parameter_index_cust_nb_force(custom_nb_force1)
+        for at_index in self.water_res_2_atom[self.switching_water]:
+            parameters = list(custom_nb_force1.getParticleParameters(at_index))
+            parameters[is_switching_index] = 1.0
+            custom_nb_force1.setParticleParameters(at_index, parameters)
+
+        # C1 Done
+        self.custom_nonbonded_force_list = [(is_real_index, is_switching_index, custom_nb_force1)]
+
+        # Create C2 for water-water and water-fix
+        energy_expression = (
+            "U_sterics;"
+            "U_sterics = scale_gc*4*epsilon*x*(x-1.0);"
+            "x = (1/reff_sterics)^6;"
+            "reff_sterics = ((softcore_alpha*lambda_alpha + (r/sigma)^6))^(1/6);"
+            "epsilon = sqrt(epsilon1*epsilon2);"
+            "sigma = 0.5*(sigma1 + sigma2);"
+            "lambda_alpha = switch_interaction*(1-lambda_gc_vdw);"
+            "scale_gc = is_real1 * is_real2 * lambda_pair;"
+            "lambda_pair = (1 - switch_interaction) + lambda_gc_vdw * switch_interaction;"
+            "switch_interaction = max(is_switching1, is_switching2);"
+        )
+        custom_nb_force2 = openmm.CustomNonbondedForce(energy_expression)
+        self._copy_nonbonded_setting_n2c(self.nonbonded_force, custom_nb_force2)
+        custom_nb_force2.addPerParticleParameter("sigma")
+        custom_nb_force2.addPerParticleParameter("epsilon")
+        custom_nb_force2.addPerParticleParameter("is_real")
+        custom_nb_force2.addPerParticleParameter("is_switching")
+        custom_nb_force2.addGlobalParameter('softcore_alpha', 0.5)
+        custom_nb_force2.addGlobalParameter('lambda_gc_vdw', 0.0)  # lambda for vdw part of TI insertion/deletion
+        # Copy all the sigma, epsilon from NonbondedForce to C2
+        for at in self.topology.atoms():
+            at_index = at.index
+            charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
+            custom_nb_force2.addParticle([sigma, epsilon, 1.0, 0.0])
+        # Copy all the exclusion from C1 to C2
+        for exc_index in range(custom_nb_force1.getNumExclusions()):
+            at1_index, at2_index = custom_nb_force1.getExclusionParticles(exc_index)
+            custom_nb_force2.addExclusion(at1_index, at2_index)
+        # Add fix-wat and wat-wat interaction group
+        custom_nb_force2.addInteractionGroup(fix_group_set, fix_group_set)
+        custom_nb_force2.addInteractionGroup(fix_group_set, water_group_set)
+        custom_nb_force2.addInteractionGroup(water_group_set, water_group_set)
+
+        is_real_index, is_switching_index = self.get_particle_parameter_index_cust_nb_force(custom_nb_force2)
+        for at_index in self.water_res_2_atom[self.switching_water]:
+            parameters = list(custom_nb_force2.getParticleParameters(at_index))
+            parameters[is_switching_index] = 1.0
+            custom_nb_force2.setParticleParameters(at_index, parameters)
+
+        # C2 Done
+        self.custom_nonbonded_force_list.append(
+            (is_real_index, is_switching_index, custom_nb_force2)
+        )
+        self.system.addForce(custom_nb_force2)
+
+
+        # Create C3 for fix-fix interaction
+        energy_expression = (
+            "U;"
+            "U = 4*epsilon*x*(x-1.0);"
+            "x = (sigma/r)^6;"
+            "epsilon = sqrt(epsilon1*epsilon2);"
+            "sigma = 0.5*(sigma1 + sigma2);"
+        )
+        custom_nb_force3 = openmm.CustomNonbondedForce(energy_expression)
+        self._copy_nonbonded_setting_n2c(self.nonbonded_force, custom_nb_force3)
+        custom_nb_force3.addPerParticleParameter("sigma")
+        custom_nb_force3.addPerParticleParameter("epsilon")
+        # Copy all the sigma, epsilon from NonbondedForce to C3
+        for at in self.topology.atoms():
+            at_index = at.index
+            charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
+            custom_nb_force3.addParticle([sigma, epsilon])
+        # Copy all the exclusion from C1 to C3
+        for exc_index in range(custom_nb_force1.getNumExclusions()):
+            at1_index, at2_index = custom_nb_force1.getExclusionParticles(exc_index)
+            custom_nb_force3.addExclusion(at1_index, at2_index)
+        # Add fix-fix interaction group
+        custom_nb_force3.addInteractionGroup(fix_group_set, fix_group_set)
+        self.system.addForce(custom_nb_force3)
+        # C3 no longer need updateParametersInContext anymore. It will not be appended to self.custom_nonbonded_force_list
+
+
+        # Remove a vdw from nonbonded_force
         for at in self.topology.atoms():
             at_index = at.index
             charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
             self.nonbonded_force.setParticleParameters(at_index, charge, sigma, 0.0*epsilon)
 
-
-        # Add global parameters
-        self.custom_nonbonded_force.addGlobalParameter('lambda_gc_vdw', 0.0)  # lambda for vdw part of TI insertion/deletion
         self.nonbonded_force.addGlobalParameter('lambda_gc_coulomb', 0.0)  # lambda for coulomb part of TI insertion/deletion
-
-        # set is_switching to 1.0 for the switching water
-        is_real_index, is_switching_index = self.get_particle_parameter_index_cust_nb_force()
-        for at_index in self.water_res_2_atom[self.switching_water]:
-            parameters = list(self.custom_nonbonded_force.getParticleParameters(at_index))
-            parameters[is_switching_index] = 1.0
-            self.custom_nonbonded_force.setParticleParameters(at_index, parameters)
-
         # set ParticleParameters and add ParticleParameterOffset for the switching water
         for at_index in self.water_res_2_atom[self.switching_water]:
             charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
@@ -643,25 +735,26 @@ class BaseGrandCanonicalMonteCarloSampler:
 
     def _turn_off_vdw(self):
         """
-        Turn off all vdw in self.custom_nonbonded_force.
+        Turn off all vdw in self.custom_nonbonded_force_list.
 
         This function is only used for debugging purpose.
 
         :return: None
         """
         # All epsilon to 0.0
-        for atom in self.topology.atoms():
-            at_ind = atom.index
-            sigmaA, epsilonA, sigmaB, epsilonB, unique_old, unique_new, is_real, is_switching = self.custom_nonbonded_force.getParticleParameters(at_ind)
-            self.custom_nonbonded_force.setParticleParameters(at_ind, [sigmaA, 0.0*epsilonA, sigmaB, 0.0*epsilonB, unique_old, unique_new, is_real*0.0, is_switching])
-        self.custom_nonbonded_force.updateParametersInContext(self.simulation.context)
+        for _r, _s, custom_nb_force in self.custom_nonbonded_force_list:
+            for atom in self.topology.atoms():
+                at_ind = atom.index
+                sigmaA, epsilonA, sigmaB, epsilonB, unique_old, unique_new, is_real, is_switching = custom_nb_force.getParticleParameters(at_ind)
+                custom_nb_force.setParticleParameters(at_ind, [sigmaA, 0.0*epsilonA, sigmaB, 0.0*epsilonB, unique_old, unique_new, is_real*0.0, is_switching])
+            custom_nb_force.updateParametersInContext(self.simulation.context)
 
     def set_ghost_list(self, ghost_list: list, check_system: bool = True) -> None:
         """
         Update the water residues in `ghost_list` to ghost.
 
         If `check_system` is True, `self.check_ghost_list` will be called to validate the consistency of self.ghost_list
-        with `self.custom_nonbonded_force` and `self.nonbonded_force`. If the validation fails,
+        with `self.custom_nonbonded_force_list` and `self.nonbonded_force`. If the validation fails,
         a ValueError will be raised.
 
         Parameters

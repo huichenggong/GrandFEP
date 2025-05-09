@@ -228,7 +228,7 @@ class MyTestCase(unittest.TestCase):
             platform=platform,
         )
         self.assertEqual(baseGC.system_type, "Hybrid")
-        is_r, is_s = baseGC.get_particle_parameter_index_cust_nb_force()
+        is_r, is_s,  custom_nb_force2= baseGC.custom_nonbonded_force_list[0]
         self.assertListEqual([is_r, is_s], [6,7])
         self.assertListEqual([], baseGC.get_ghost_list())
         baseGC.check_ghost_list()
@@ -659,12 +659,67 @@ class MyTestCase(unittest.TestCase):
 
     def test_hybridFF_speed(self):
         print()
-        print("# What is the time of updateParametersInContext")
+        nonbonded_settings = nonbonded_Amber
+        base = Path(__file__).resolve().parent
+        print("# How long does it take to run updateParametersInContext()")
+
+        # Ligand in water system
+        inpcrdA, prmtopA, sysA = load_amber_sys(
+            base / "HSP90/water_leg/bcc_gaff2/2xab/06_solv.inpcrd",
+            base / "HSP90/water_leg/bcc_gaff2/2xab/06_solv.prmtop", nonbonded_settings)
+        inpcrdB, prmtopB, sysB = load_amber_sys(
+            base / "HSP90/water_leg/bcc_gaff2/2xjg/06_solv.inpcrd",
+            base / "HSP90/water_leg/bcc_gaff2/2xjg/06_solv.prmtop", nonbonded_settings)
+        # Hybrid A and B
+        mdp = utils.md_params_yml(base / "HSP90/water_leg/bcc_gaff2/mapping.yml")
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtopA.topology, prmtopB.topology,
+                                                                               mdp.mapping_list)
+        h_factory = utils.HybridTopologyFactory(
+            sysA, inpcrdA.getPositions(), prmtopA.topology, sysB, inpcrdB.getPositions(), prmtopB.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            softcore_LJ_v2=False)
+        system = h_factory.hybrid_system
+        topology = h_factory.omm_hybrid_topology
+        topology.setPeriodicBoxVectors(inpcrdA.boxVectors)
+        system.setDefaultPeriodicBoxVectors(*inpcrdA.boxVectors)
+        baseGC = sampler.BaseGrandCanonicalMonteCarloSampler(
+            system,
+            topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_base_Hybrid.log",
+        )
         tick = time.time()
-        print(f"## Time of updating a lig-wat system {time.time() - tick:.3f} s")
+        baseGC.set_ghost_list([10, 11, 12], check_system=False)
+        print(f"## Time for updating a lig-wat system {time.time() - tick:.3f} s")
+
+        # Ligand protein water system
+        system = utils.load_sys(base / "HSP90/protein_leg/system.xml.gz")
+        topology = app.PDBFile(str(base / "HSP90/protein_leg/system.pdb")).topology
+        baseGC_big = sampler.BaseGrandCanonicalMonteCarloSampler(
+            system,
+            topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_base_Hybrid.log",
+        )
+        tick = time.time()
+        baseGC_big.set_ghost_list([271, 272, 273], check_system=False)
+        print(f"## Time for updating a lig-pro system {time.time() - tick:.3f} s")
 
         tick = time.time()
-        print(f"## Time of updating a lig-pro system {time.time() - tick:.3f} s")
+        is_r, is_j, custom_nb_force = baseGC_big.custom_nonbonded_force_list[0]
+        custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
+        print(f"## Time for updating C1 {time.time() - tick:.3f} s")
+
+        tick = time.time()
+        is_r, is_j, custom_nb_force = baseGC_big.custom_nonbonded_force_list[1]
+        custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
+        print(f"## Time for updating C2 {time.time() - tick:.3f} s")
 
 
 if __name__ == '__main__':
