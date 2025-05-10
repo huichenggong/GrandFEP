@@ -1240,6 +1240,25 @@ class _ReplicaExchangeMixin:
         if len(set(re_step_all)) != 1:
             raise ValueError(f"RE step is not the same across all replicas: {re_step_all}")
 
+    def set_lambda_state(self, i: int) -> None:
+        """
+        Set the lambda state index for this replica.
+
+        Parameters
+        ----------
+        i : int
+            The lambda state index for this replica, counting from 0
+
+        Returns
+        -------
+        None
+        """
+        if i >= self.n_lambda_states:
+            raise ValueError(f"The lambda state index {i} is larger than the number of lambda states {self.n_lambda_states}")
+        self.lambda_state_index = i
+        for lam, val_list in self.lambda_dict.items():
+            self.simulation.context.setParameter(lam, val_list[self.lambda_state_index])
+
     def _calc_neighbor_reduced_energy(self) -> np.array:
         """
         Use the current configuration and compute the energy of the neighboring sampling state. Later BAR can be performed on this data.
@@ -1249,29 +1268,27 @@ class _ReplicaExchangeMixin:
         reduced_energy :
             reduced energy in kBT, no unit
         """
+        lambda_state_index_old = self.lambda_state_index
         reduced_energy = np.zeros(self.n_lambda_states, dtype=np.float64)
         state = self.simulation.context.getState(getEnergy=True)
-        reduced_energy[self.lambda_state_index] = state.getPotentialEnergy() / self.kBT
+        reduced_energy[lambda_state_index_old] = state.getPotentialEnergy() / self.kBT
 
         # when there is left neighbor
-        if self.lambda_state_index >=1:
-            i = self.lambda_state_index - 1
-            for lam, val_list in self.lambda_dict.items():
-                self.simulation.context.setParameter(lam, val_list[i])
+        if lambda_state_index_old >=1:
+            i = lambda_state_index_old - 1
+            self.set_lambda_state(i)
             state = self.simulation.context.getState(getEnergy=True)
             reduced_energy[i] = state.getPotentialEnergy() / self.kBT
 
         # when there is right neighbor
-        if self.lambda_state_index < self.n_lambda_states-1:
-            i = self.lambda_state_index + 1
-            for lam, val_list in self.lambda_dict.items():
-                self.simulation.context.setParameter(lam, val_list[i])
+        if lambda_state_index_old < self.n_lambda_states-1:
+            i = lambda_state_index_old + 1
+            self.set_lambda_state(i)
             state = self.simulation.context.getState(getEnergy=True)
             reduced_energy[i] = state.getPotentialEnergy() / self.kBT
 
         # back to the current state
-        for lam, val_list in self.lambda_dict.items():
-            self.simulation.context.setParameter(lam, val_list[self.lambda_state_index])
+        self.set_lambda_state(lambda_state_index_old)
         return reduced_energy
 
     def _calc_full_reduced_energy(self) -> np.array:
@@ -1283,20 +1300,19 @@ class _ReplicaExchangeMixin:
         reduced_energy :
             reduced energy in kBT, no unit
         """
+        lambda_state_index_old = self.lambda_state_index
         reduced_energy = np.zeros(self.n_lambda_states, dtype=np.float64)
         state = self.simulation.context.getState(getEnergy=True)
-        reduced_energy[self.lambda_state_index] = state.getPotentialEnergy() / self.kBT
+        reduced_energy[lambda_state_index_old] = state.getPotentialEnergy() / self.kBT
 
         for i in range(self.n_lambda_states):
-            if i != self.lambda_state_index:
+            if i != lambda_state_index_old:
                 # set global parameters
-                for lam, val_list in self.lambda_dict.items():
-                    self.simulation.context.setParameter(lam, val_list[i])
+                self.set_lambda_state(i)
                 state = self.simulation.context.getState(getEnergy=True)
                 reduced_energy[i] = state.getPotentialEnergy() / self.kBT
 
         # back to the current state
-        for lam, val_list in self.lambda_dict.items():
-            self.simulation.context.setParameter(lam, val_list[self.lambda_state_index])
+        self.set_lambda_state(lambda_state_index_old)
         return reduced_energy
 

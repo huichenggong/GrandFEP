@@ -70,7 +70,7 @@ conda install pytest-mpi
 
 #### 2.1 Run NPT RE test
 ```bash
-mpirun -n 4 python -m pytest --with-mpi test_NPT_MPI.py
+mpirun -n 4 python -m pytest --with-mpi test/test_NPT_MPI.py
 ```
 
 #### 2.2 Run GC RE test
