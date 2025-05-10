@@ -1144,7 +1144,7 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
         #: Number of replica exchanges performed
         self.re_step = 0
         #: Lambda state index for this replica, counting from 0
-        self.init_lambda_state: int = None
+        self.lambda_state_index: int = None
         #: A dictionary of mapping from global parameters to their values in all the sampling states.
         self.lambda_dict: dict = None
         #: Index of the Lambda state which is simulated. All the init_lambda_state in this MPI run can be fetched with ``self.lambda_states_list[rank]``
