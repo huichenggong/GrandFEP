@@ -21,6 +21,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx_autodoc_typehints',
+    'sphinx_mdinclude'
 ]
 typehints_fully_qualified = True       # <─ add this line
 # Napoleon settings
