@@ -257,8 +257,10 @@ def find_mapping(map_list: list, resA: app.topology.Residue, resB: app.topology.
 
         .. code-block:: python
 
-            [{'res_nameA': 'MOL', 'res_nameB': 'MOL',
+            [{'res_nameA': 'MOL',
+              'res_nameB': 'MOL',
               'index_map': {1: 1, 0: 2, 2: 0}
+             }]
     resA :
         residue from state A
 

@@ -657,11 +657,80 @@ class MyTestCase(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force_ref, force)
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
+    def test_hybridFF_protein(self):
+        print()
+        print("# Test Hybrid Protein System")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+        base = Path(__file__).resolve().parent
+        pdb = app.PDBFile(str(base / "CH4_C2H6/protein/system_hybrid.pdb"))
+        system_h = utils.load_sys(base / "CH4_C2H6/protein/system_hybrid.xml.gz")
+        baseGC = sampler.BaseGrandCanonicalMonteCarloSampler(
+            system_h,
+            pdb.topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_base_Hybrid.log",
+            platform = platform
+        )
+        baseGC.simulation.context.setPositions(pdb.positions)
+        self.assertTrue(209 in baseGC.water_res_2_atom)
+        self.assertTrue(290 in baseGC.water_res_2_atom)
+        self.assertTrue(291 not in baseGC.water_res_2_atom)
+
+        print("## 1. Force should be the same before and after adding hybrid/customization")
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "CH4_C2H6/protein/05-stateA.rst7",
+            base / "CH4_C2H6/protein/05-stateA.prmtop", nonbonded_settings)
+        energy_86, force_86 = calc_energy_force(sys0, prmtop0.topology, inpcrd0.positions)
+
+        baseGC.simulation.context.setParameter("lambda_gc_coulomb", 1.0)
+        baseGC.simulation.context.setParameter("lambda_gc_vdw", 1.0)
+        state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
+        pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
+
+        self.assertEqual(len(force_86), 3532)
+        self.assertEqual(len(force), 3539)
+        map = [i for i in range(3532) if i!=3281]
+        all_close_flag, mis_match_list, error_msg = match_force(force_86[map], force[map])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        print("## 2. lambda_gc to 0.0, Force should be the same as a -1 water system")
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "CH4_C2H6/protein/05-stateA-1.rst7",
+            base / "CH4_C2H6/protein/05-stateA-1.prmtop", nonbonded_settings)
+        energy_85, force_85 = calc_energy_force(sys0, prmtop0.topology, inpcrd0.positions)
+        baseGC.simulation.context.setParameter("lambda_gc_coulomb", 0.0)
+        baseGC.simulation.context.setParameter("lambda_gc_vdw", 0.0)
+        state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
+        pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
+        self.assertEqual(len(force_85), 3529)
+        self.assertEqual(len(force), 3539)
+        map = [i for i in range(3529) if i != 3281]
+        all_close_flag, mis_match_list, error_msg = match_force(force_85[map], force[map])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        print("## 2. Add one water to the ghost_list, Force should be the same as a -2 water system")
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "CH4_C2H6/protein/05-stateA-2.rst7",
+            base / "CH4_C2H6/protein/05-stateA-2.prmtop", nonbonded_settings)
+        energy_84, force_84 = calc_energy_force(sys0, prmtop0.topology, inpcrd0.positions)
+
+        baseGC.set_ghost_list([289])
+        state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
+        pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
+        self.assertEqual(len(force_84), 3526)
+        self.assertEqual(len(force), 3539)
+        map = [i for i in range(3526) if i != 3281]
+        all_close_flag, mis_match_list, error_msg = match_force(force_84[map], force[map])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
     def test_hybridFF_speed(self):
         print()
+        print("# How long does it take to run updateParametersInContext()")
         nonbonded_settings = nonbonded_Amber
         base = Path(__file__).resolve().parent
-        print("# How long does it take to run updateParametersInContext()")
 
         # Ligand in water system
         inpcrdA, prmtopA, sysA = load_amber_sys(
@@ -720,6 +789,13 @@ class MyTestCase(unittest.TestCase):
         is_r, is_j, custom_nb_force = baseGC_big.custom_nonbonded_force_list[1]
         custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
         print(f"## Time for updating C2 {time.time() - tick:.3f} s")
+
+        tick = time.time()
+        is_r, is_j, custom_nb_force = baseGC_big.custom_nonbonded_force_list[2]
+        custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
+        print(f"## Time for updating C3 {time.time() - tick:.3f} s")
+
+        baseGC_big.check_ghost_list()
 
 
 if __name__ == '__main__':

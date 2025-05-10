@@ -1,0 +1,14 @@
+source leaprc.protein.ff14SB
+source leaprc.water.tip3p
+source leaprc.gaff2
+
+MOL = loadMol2 02-chg.mol2
+loadamberparams 03-missing.frcmod
+
+com = loadpdb 06-in.pdb
+setBox com "vdw"
+
+saveAmberParm com 06_solv.prmtop 06_solv.inpcrd
+savepdb       com 06_solv.pdb
+
+quit

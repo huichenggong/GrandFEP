@@ -1,0 +1,25 @@
+REMARK   1 CREATED WITH OPENMM 8.2, 2025-05-10
+CRYST1   30.000   30.000   30.000  90.00  90.00  90.00 P 1           1 
+HETATM    1  C   MOL A   1       1.925  -2.459  -1.726  1.00  0.00           C  
+HETATM    2  H   MOL A   1       1.332  -3.299  -1.435  1.00  0.00           H  
+HETATM    3  H1  MOL A   1       2.759  -2.795  -2.308  1.00  0.00           H  
+HETATM    4  H2  MOL A   1       1.332  -1.786  -2.309  1.00  0.00           H  
+HETATM    5  C1  MOL A   1       2.438  -1.733  -0.469  1.00  0.00           C  
+HETATM    6  H3  MOL A   1       1.606  -1.398   0.114  1.00  0.00           H  
+HETATM    7  H4  MOL A   1       3.034  -2.405   0.113  1.00  0.00           H  
+HETATM    8  H5  MOL A   1       3.033  -0.892  -0.760  1.00  0.00           H  
+TER       9      MOL A   1
+HETATM   10  O   HOH B   1       3.524  -1.202   2.304  1.00  0.00           O  
+HETATM   11  H1  HOH B   1       4.281  -1.089   1.730  1.00  0.00           H  
+HETATM   12  H2  HOH B   1       3.062  -0.365   2.258  1.00  0.00           H  
+HETATM   13  O   HOH B   2      -0.706  -4.996   0.561  1.00  0.00           O  
+HETATM   14  H1  HOH B   2      -0.991  -5.410  -0.254  1.00  0.00           H  
+HETATM   15  H2  HOH B   2      -0.904  -4.068   0.441  1.00  0.00           H  
+HETATM   16  O   HOH B   3       2.479  -0.492  -5.070  1.00  0.00           O  
+HETATM   17  H1  HOH B   3       1.765  -0.293  -4.464  1.00  0.00           H  
+HETATM   18  H2  HOH B   3       2.897  -1.269  -4.698  1.00  0.00           H  
+HETATM   19  O   HOH B   4       4.213  -2.308  -4.144  1.00  0.00           O  
+HETATM   20  H1  HOH B   4       4.762  -2.489  -4.908  1.00  0.00           H  
+HETATM   21  H2  HOH B   4       4.278  -3.098  -3.609  1.00  0.00           H  
+TER      22      HOH B   4
+END

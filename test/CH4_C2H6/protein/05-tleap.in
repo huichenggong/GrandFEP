@@ -1,0 +1,51 @@
+source leaprc.protein.ff14SB
+source leaprc.water.tip3p
+source leaprc.gaff2
+
+MOL = loadMol2  ../lig0/02-chg.mol2
+
+# load the coordinates and create the complex
+wat     = loadpdb wat.pdb
+ligands = loadpdb 04-A-CH4.pdb
+complex = loadpdb 04-pro.pdb
+complex = combine {complex wat ligands}
+
+setbox complex vdw
+saveamberparm complex 05-stateA.prmtop 05-stateA.rst7
+savepdb       complex 05-stateA.pdb
+
+wat     = loadpdb wat-1.pdb
+ligands = loadpdb 04-A-CH4.pdb
+complex = loadpdb 04-pro.pdb
+complex = combine {complex wat ligands}
+
+setbox complex vdw
+saveamberparm complex 05-stateA-1.prmtop 05-stateA-1.rst7
+savepdb       complex 05-stateA-1.pdb
+
+wat     = loadpdb wat-2.pdb
+ligands = loadpdb 04-A-CH4.pdb
+complex = loadpdb 04-pro.pdb
+complex = combine {complex wat ligands}
+
+setbox complex vdw
+saveamberparm complex 05-stateA-2.prmtop 05-stateA-2.rst7
+savepdb       complex 05-stateA-2.pdb
+
+
+
+
+
+MOL = loadMol2  ../lig1/02-chg.mol2
+
+# load the coordinates and create the complex
+wat     = loadpdb wat.pdb
+ligands = loadpdb 04-B-C2H6.pdb
+complex = loadpdb 04-pro.pdb
+complex = combine {complex wat ligands}
+
+setbox complex vdw
+saveamberparm complex 05-stateB.prmtop 05-stateB.rst7
+savepdb       complex 05-stateB.pdb
+
+quit
