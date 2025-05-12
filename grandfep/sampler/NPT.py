@@ -90,19 +90,45 @@ class NPTSampler:
         #: Simulation ties together Topology, System, Integrator, and Context in this sampler.
         self.simulation: app.Simulation = app.Simulation(self.topology, self.system, integrator, platform)
 
+        #: Lambda state index for this replica, counting from 0
+        self.lambda_state_index: int = None
+
         # IO related
-        #: Call this reporter to write the rst7 restart file.
-        self.rst_reporter = parmed.openmm.reporters.RestartReporter(rst_file, 0, netcdf=True)
-        #: Call this reporter to write the dcd trajectory file.
-        self.dcd_reporter = None
-        if dcd_file is not None:
-            if append and Path(dcd_file).is_file():
-                self.dcd_reporter = app.DCDReporter(dcd_file, 0, True, enforcePeriodicBox=True)
-            else:
-                self.dcd_reporter = app.DCDReporter(dcd_file, 0, False, enforcePeriodicBox=True)
+        #: A dictionary of all the rst7 reporter. Call the reporter inside to write the rst7 restart file.
+        self.rst_reporter_dict = None
+        #: A dictionary of all the dcd reporter. Call the reporter inside to write the dcd trajectory file.
+        self.dcd_reporter_dict = None
+        self._set_reporters(rst_file, dcd_file, append)
 
         self.logger.info(f"T   = {temperature}.")
         self.logger.info(f"kBT = {self.kBT}.")
+
+    def _set_reporters(self, rst_file: Union[str,Path], dcd_file: Union[str,Path], append: bool) -> None:
+        """
+        Set the reporters for the simulation. This is used to set the reporters after the simulation is created.
+
+        Parameters
+        ----------
+        rst_file : str
+            Restart file path for the simulation.
+
+        dcd_file : str
+            DCD file path for the simulation.
+
+        append : bool
+            If True, append to the existing dcd file.
+
+        Returns
+        -------
+        None
+        """
+        self.rst_reporter_dict = {0:parmed.openmm.reporters.RestartReporter(rst_file, 0, netcdf=True)}
+        if dcd_file is not None:
+            if append and Path(dcd_file).is_file():
+                self.dcd_reporter_dict = {0:app.DCDReporter(dcd_file, 0, True, enforcePeriodicBox=True)}
+            else:
+                self.dcd_reporter_dict = {0:app.DCDReporter(dcd_file, 0, False, enforcePeriodicBox=True)}
+
 
     def check_temperature(self) -> unit.Quantity:
         """
@@ -133,7 +159,7 @@ class NPTSampler:
         """
         if not state:
             state = self.simulation.context.getState(getPositions=True, getVelocities=True, enforcePeriodicBox=True)
-        self.rst_reporter.report(self.simulation, state)
+        self.rst_reporter_dict[0].report(self.simulation, state)
 
     def load_rst(self, rst_input: Union[str, Path]):
         """
@@ -162,9 +188,9 @@ class NPTSampler:
         """
         if not state:
             state = self.simulation.context.getState(getPositions=True, enforcePeriodicBox=True)
-        if not self.dcd_reporter:
+        if not self.dcd_reporter_dict:
             raise ValueError("DCD reporter is not set")
-        self.dcd_reporter.report(self.simulation, state)
+        self.dcd_reporter_dict[0].report(self.simulation, state)
 
 class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
     """
@@ -238,8 +264,6 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
         # RE related properties
         #: Number of replica exchanges performed
         self.re_step = 0
-        #: Lambda state index for this replica, counting from 0
-        self.lambda_state_index: int = None
         #: A dictionary of mapping from global parameters to their values in all the sampling states.
         self.lambda_dict: dict = None
         #: Index of the Lambda state which is simulated. All the init_lambda_state in this MPI run can be fetched with ``self.lambda_states_list[rank]``
