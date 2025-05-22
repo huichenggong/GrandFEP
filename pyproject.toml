@@ -1,3 +1,33 @@
 [build-system]
-requires      = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "grandfep"
+description = "GCMC/MD with free energy perturbation"
+authors = [
+  { name = "Chenggong Hui", email = "chenggong.hui@mpinat.mpg.de" }
+]
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+dynamic = ["version"]          # <- setuptools_scm will fill this field
+
+dependencies = [
+  'pymbar >=4, <5',
+  'numpy',
+  'pandas',
+  'scipy  >=1.7.0',
+  'openmm >=8.2.0',
+  'openmmtools',
+  'parmed',
+  'mpi4py',
+  'mdtraj',
+  'mdanalysis'
+]
+
+[tool.setuptools]
+packages = ["grandfep"]
+
+[tool.setuptools.dynamic]
+version = { attr = "grandfep._version.__version__" }

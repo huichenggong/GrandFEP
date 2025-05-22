@@ -1,5 +1,4 @@
 
-__version__ = "0.1.1_dev"
-
+from ._version import __version__
 from . import utils
 from . import sampler
