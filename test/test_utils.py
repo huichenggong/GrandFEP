@@ -64,5 +64,13 @@ class MyTestCase(unittest.TestCase):
         print(mdp.get_system_setting())
         print(mdp)
 
+    def test_reporters(self):
+        print()
+        print("# Test dcdReporter")
+
+        print()
+        print("# Test rst7Reporter")
+
+
 if __name__ == '__main__':
     unittest.main()

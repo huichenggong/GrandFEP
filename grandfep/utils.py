@@ -2,6 +2,7 @@ import gzip
 import warnings
 from pathlib import Path
 from typing import Union
+import math
 
 import yaml
 import numpy as np
@@ -9,6 +10,7 @@ import pandas as pd
 
 from openmm import app, openmm, unit
 import pymbar
+import parmed
 
 from .relative import HybridTopologyFactory
 
@@ -245,7 +247,6 @@ def seconds_to_hms(seconds: float) -> tuple[int, int, float]:
     n_minutes, n_seconds = divmod(remainder, 60)
     return int(n_hours), int(n_minutes), n_seconds
 
-
 def find_mapping(map_list: list, resA: app.topology.Residue, resB: app.topology.Residue) -> tuple[bool, dict]:
     """
     Check if residues A and B match with a mapping in the mapping list.
@@ -287,7 +288,6 @@ def find_mapping(map_list: list, resA: app.topology.Residue, resB: app.topology.
         if match_flag:
             return match_flag, mapping['index_map']
     return False, None
-
 
 def prepare_atom_map(topologyA: app.Topology, topologyB: app.Topology, map_list: list) -> tuple[dict, dict]:
     """
@@ -711,3 +711,128 @@ class FreeEAnalysis:
         for k, (dG, dG_err, v) in res_all.items():
             print(f" {dG[0, -1]:7.3f} +- {dG_err[0, -1]:6.3f}     ", end="")
         print()
+
+class dcd_reporter(app.DCDReporter):
+    """
+    A custom DCD reporter that can report from coordinate np.array.
+
+    Parameters
+    ----------
+    file : string
+        The file to write to
+    reportInterval : int
+        The interval (in time steps) at which to write frames
+    append : bool=False
+        If True, open an existing DCD file to append to.  If False, create a new file.
+    enforcePeriodicBox: bool
+        Specifies whether particle positions should be translated so the center of every molecule
+        lies in the same periodic box.  If None (the default), it will automatically decide whether
+        to translate molecules based on whether the system being simulated uses periodic boundary
+        conditions.
+    """
+    def report_positions(self, simulation: app.Simulation,
+                         periodicBoxVectors: Union[openmm.Vec3, np.array],
+                         positions_nm: Union[unit.Quantity, np.ndarray]):
+        """
+        Write one frame to the DCD file.
+
+        Parameters
+        ----------
+        simulation :
+            The Simulation to generate a report for
+        periodicBoxVectors :
+            You can prepare this np.array with ``state.getPeriodicBoxVectors()``
+        positions_nm :
+            You can prepare this np.array with ``state.getPositions(asNumpy=True).value_in_unit(unit.nanometers)``.
+            It should either be ``unit.Quantity`` or value in nm.
+        """
+
+        if self._dcd is None:
+            self._dcd = app.DCDFile(
+                self._out, simulation.topology, simulation.integrator.getStepSize(),
+                simulation.currentStep, self._reportInterval, self._append
+            )
+
+        self._dcd.writeModel(positions_nm, periodicBoxVectors=periodicBoxVectors)
+
+class rst7_reporter(parmed.openmm.reporters.RestartReporter):
+    """
+    A reporter to handle writing Amber rst7 restart files.
+
+    Parameters
+    ----------
+    file : str
+        Name of the file to write the restart to.
+    reportInterval : int
+        Number of steps between writing restart files
+    write_multiple : bool=False
+        Either write a separate restart each time (appending the step number in
+        the format .# to the file name given above) if True, or overwrite the
+        same file each time if False
+    netcdf : bool=False
+        Use the Amber NetCDF restart file format
+    write_velocities : bool=True
+        Write velocities to the restart file. You can turn this off for passing
+        in, for instance, a minimized structure.
+    """
+    def report_positions_velocities(self, sim: app.Simulation, state: openmm.State,
+                                    periodicBoxVectors: Union[openmm.Vec3, np.array],
+                                    positions_A: Union[unit.Quantity, np.ndarray],
+                                    velocities: Union[unit.Quantity, np.ndarray]):
+        """Generate a report.
+
+        Parameters
+        ----------
+        sim :
+            The Simulation to generate a report for
+        state :
+            The current state of the simulation. Only the time will be read from this state.
+        periodicBoxVectors :
+            You can prepare this np.array with ``state.getPeriodicBoxVectors()``
+        positions_A :
+            You can prepare this np.array with ``state.getPositions(asNumpy=True).value_in_unit(unit.angstrom)``.
+            It should either be ``unit.Quantity`` or value in Angstrom.
+        velocities :
+            You can prepare this np.array with ``state.getVelocities(asNumpy=True).value_in_unit(unit.angstrom/unit.picosecond)``.
+            It should either be ``unit.Quantity`` or value in Angstrom/ps.
+        """
+        if unit.is_quantity(positions_A):
+            crds = positions_A.value_in_unit(unit.angstrom)
+        else:
+            crds = positions_A
+        if self.rst7 is None:
+            self.uses_pbc = sim.topology.getUnitCellDimensions() is not None
+            self.atom = len(crds)
+            # First time written
+            self.rst7 = parmed.amber.Rst7(natom=self.atom, title='Restart file written by ParmEd with OpenMM')
+        self.rst7.time = state.getTime().value_in_unit(parmed.unit.picosecond)
+        flatcrd = [0.0 for i in range(self.atom*3)]
+        for i in range(self.atom):
+            i3 = i*3
+            flatcrd[i3], flatcrd[i3+1], flatcrd[i3+2] = crds[i]
+        self.rst7.coordinates = flatcrd
+
+        if self.write_velocities:
+            if unit.is_quantity(velocities):
+                vels = velocities.value_in_unit(unit.angstrom / unit.picosecond)
+            else:
+                vels = velocities
+            flatvel = [0.0 for i in range(self.atom*3)]
+            for i in range(self.atom):
+                i3 = i*3
+                flatvel[i3], flatvel[i3+1], flatvel[i3+2] = vels[i]
+            self.rst7.vels = flatvel
+
+        if self.uses_pbc:
+            boxvecs = periodicBoxVectors
+            lengths, angles = parmed.geometry.box_vectors_to_lengths_and_angles(*boxvecs)
+            lengths = lengths.value_in_unit(parmed.unit.angstrom)
+            angles = angles.value_in_unit(parmed.unit.degree)
+            self.rst7.box = [lengths[0], lengths[1], lengths[2], angles[0], angles[1], angles[2]]
+
+        if self.write_multiple:
+            fname = self.fname + '.%d' % sim.currentStep
+        else:
+            fname = self.fname
+
+        self.rst7.write(fname, self.netcdf)

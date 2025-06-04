@@ -69,53 +69,63 @@ def test_RE():
     npt.load_rst(str(base / "Water_Chemical_Potential/OPC/eq.rst7"))
     assert npt.size == 4
 
-    reduced_e = npt._calc_full_reduced_energy()
-    reduced_e_matrix, re_res = npt.replica_exchange(calc_neighbor_only=False)
-    assert reduced_e_matrix.shape == (4, 6)
-
-    # all replicas have been given the same configuration, reduced energy should be the same
-    for i in range(0,4):
-        print(i)
-        assert np.all(np.isclose(reduced_e_matrix[i, :], reduced_e))
+    re_res = npt.replica_exchange_global_param(calc_neighbor_only=True)
+    npt.logger.info(re_res)
+    l_list = npt.comm.allgather(npt.lambda_state_index)
+    assert l_list == [3, 2, 5, 4]
+    re_res = npt.replica_exchange_global_param(calc_neighbor_only=True)
+    npt.logger.info(re_res)
+    l_list = npt.comm.allgather(npt.lambda_state_index)
+    assert l_list == [4, 2, 5, 3]
+    re_res = npt.replica_exchange_global_param(calc_neighbor_only=False)
+    l_list = npt.comm.allgather(npt.lambda_state_index)
+    assert l_list == [5, 3, 4, 2]
 
     npt.simulation.context.setVelocitiesToTemperature(mdp.ref_t)
-    npt.logger.info("MD 5000")
-    npt.simulation.step(5000)
-    for i in range(10):
+    npt.logger.info("MD 1000")
+    npt.simulation.step(1000)
+
+    calc_neighbor = False
+    for i in range(20):
         npt.logger.info("MD 200")
         npt.simulation.step(200)
-        state_old = npt.simulation.context.getState(getPositions=True, getVelocities=True)
-        reduced_e_matrix, re_res = npt.replica_exchange(calc_neighbor_only=True)
+        l_vdw_old = npt.simulation.context.getParameter("lambda_gc_vdw")
+        l_chg_old = npt.simulation.context.getParameter("lambda_gc_coulomb")
+        calc_neighbor = not calc_neighbor
+        re_decision, exchange = npt.replica_exchange_global_param(calc_neighbor_only=calc_neighbor)
+        l_vdw_new = npt.simulation.context.getParameter("lambda_gc_vdw")
+        l_chg_new = npt.simulation.context.getParameter("lambda_gc_coulomb")
+        state = npt.simulation.context.getState(getForces=True, enforcePeriodicBox=True)
+        force_new = state.getForces(asNumpy=True).value_in_unit(unit.kilojoule_per_mole/unit.nanometer)
 
-        state_new = npt.simulation.context.getState(getPositions=True, getVelocities=True)
-        flag_right = (npt.rank, npt.rank+1) in re_res and re_res[(npt.rank, npt.rank+1)][0]
-        flag_left  = (npt.rank-1, npt.rank) in re_res and re_res[(npt.rank-1, npt.rank)][0]
-
-        box_old = state_old.getPeriodicBoxVectors(asNumpy=True).value_in_unit(unit.nanometer)
-        box_new = state_new.getPeriodicBoxVectors(asNumpy=True).value_in_unit(unit.nanometer)
-        pos_old = state_old.getPositions(asNumpy=True).value_in_unit(unit.nanometer)
-        pos_new = state_new.getPositions(asNumpy=True).value_in_unit(unit.nanometer)
-        vel_old = state_old.getVelocities(asNumpy=True).value_in_unit(unit.nanometer / unit.picosecond)
-        vel_new = state_new.getVelocities(asNumpy=True).value_in_unit(unit.nanometer / unit.picosecond)
-        if flag_right or flag_left:
-            # boxVector/positions/velocities should be changed
-            assert not np.any(np.isclose( np.diag(box_old), np.diag(box_new) ))
-            close_pos = np.sum(np.isclose( pos_old, pos_new ))
-            close_vel = np.sum(np.isclose( vel_old, vel_new ))
-            assert  close_pos < 50
-            assert  close_vel < 10
-            npt.logger.info(f"re accept test pass close_pos={close_pos}, close_vel={close_vel}")
+        if exchange:
+            assert (l_vdw_old, l_chg_old) != (l_vdw_new, l_chg_new)
+            npt.logger.info(f"re accept test pass")
 
         else:
-            assert np.all(np.isclose( box_old, box_new))
-            assert np.all(np.isclose( pos_old, pos_new ))
-            assert np.all(np.isclose( vel_old, vel_new))
+            assert (l_vdw_old, l_chg_old) == (l_vdw_new, l_chg_new)
             npt.logger.info("re reject test pass")
 
-        # there should be no force on Dummy atoms
+        if npt.lambda_state_index == 5:
+            # The total force on the last 4 atoms should be zero
+            assert np.abs(np.sum(force_new[-4:, :])) < 0.3
+            assert np.isclose(l_vdw_new, 0.0)
+            assert np.isclose(l_chg_new, 0.0)
+            npt.logger.info("Dummy atoms force test pass")
+        elif npt.lambda_state_index == 4:
+            assert np.abs(np.sum(force_new[-4:, :])) > 0.02
+            assert np.isclose(l_vdw_new, 0.2)
+            assert np.isclose(l_chg_new, 0.0)
+            npt.logger.info("Alchem atoms force test pass")
+        else:
+            # There should be force on the last 4 atoms
+            assert np.abs(np.sum(force_new[-4:, :])) > 0.3
+            assert l_vdw_new > 0.2
+            assert np.isclose(l_chg_new, 0.0)
+            npt.logger.info("Alchem atoms force test pass")
 
-    npt.report_rst()
-    npt.report_dcd()
+
+
 
 
 

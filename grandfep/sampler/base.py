@@ -2,6 +2,7 @@ from copy import deepcopy
 import logging
 from typing import Union
 from pathlib import Path
+import math
 
 import numpy as np
 
@@ -1265,7 +1266,7 @@ class _ReplicaExchangeMixin:
         for lam, val_list in self.lambda_dict.items():
             self.simulation.context.setParameter(lam, val_list[self.lambda_state_index])
 
-    def _calc_neighbor_reduced_energy(self) -> np.array:
+    def _calc_neighbor_reduced_energy(self, set_lam_back: bool=True) -> np.array:
         """
         Use the current configuration and compute the energy of the neighboring sampling state. Later BAR can be performed on this data.
 
@@ -1273,6 +1274,9 @@ class _ReplicaExchangeMixin:
         -------
         reduced_energy :
             reduced energy in kBT, no unit
+        set_lam_back :
+            If True, set the lambda state back to the original state after calculation.
+            Default is True.
         """
         lambda_state_index_old = self.lambda_state_index
         reduced_energy = np.zeros(self.n_lambda_states, dtype=np.float64)
@@ -1293,11 +1297,12 @@ class _ReplicaExchangeMixin:
             state = self.simulation.context.getState(getEnergy=True)
             reduced_energy[i] = state.getPotentialEnergy() / self.kBT
 
-        # back to the current state
-        self.set_lambda_state(lambda_state_index_old)
+        # back to the original state
+        if set_lam_back:
+            self.set_lambda_state(lambda_state_index_old)
         return reduced_energy
 
-    def _calc_full_reduced_energy(self) -> np.array:
+    def _calc_full_reduced_energy(self, set_lam_back: bool=True) -> np.array:
         """
         Use the current configuration and compute the energy of all the sampling states. Later MBAR can be performed on this data.
 
@@ -1305,6 +1310,9 @@ class _ReplicaExchangeMixin:
         -------
         reduced_energy :
             reduced energy in kBT, no unit
+        set_lam_back :
+            If True, set the lambda state back to the original state after calculation.
+            Default is True.
         """
         lambda_state_index_old = self.lambda_state_index
         reduced_energy = np.zeros(self.n_lambda_states, dtype=np.float64)
@@ -1318,7 +1326,114 @@ class _ReplicaExchangeMixin:
                 state = self.simulation.context.getState(getEnergy=True)
                 reduced_energy[i] = state.getPotentialEnergy() / self.kBT
 
-        # back to the current state
-        self.set_lambda_state(lambda_state_index_old)
+        # back to the original state
+        if set_lam_back:
+            self.set_lambda_state(lambda_state_index_old)
         return reduced_energy
+
+    def replica_exchange_global_param(self, calc_neighbor_only: bool = True):
+        """
+        Perform one neighbor swap replica exchange. In odd RE steps, attempt exchange between 0-1, 2-3, ...
+        In even RE steps, attempt exchange between 1-2, 3-4, ... If RE is accepted, update the
+        position/boxVector/velocity
+
+        Parameters
+        ----------
+        calc_neighbor_only :
+            If True, only the nearest neighbor will be calculated.
+
+        Returns
+        -------
+        reduced_energy_matrix : np.array
+            A numpy array with the size of (n_lambda_states, n_simulated_states)
+
+        re_decision : dict
+            The exchange decision between all the pairs. e.g., ``{(0,1):(True, ratio_0_1), (2,3):(True, ratio_2_3)}``.
+            The key is the MPI rank pairs, and the value is the decision and the acceptance ratio.
+
+        """
+        # re_step has to be the same across all replicas. If not, raise an error.
+        re_step_all = self.comm.allgather(self.re_step)
+        if len(set(re_step_all)) != 1:
+            raise ValueError(f"RE step is not the same across all replicas: {re_step_all}")
+
+        self.logger.info(f"RE Step {self.re_step}")
+
+        lambda_state_index_old = self.lambda_state_index
+        self.lambda_states_list = self.comm.gather(self.lambda_state_index, root=0) # map from rank to lambda_state_index
+
+        # calculate reduced energy
+        if calc_neighbor_only:
+            reduced_energy = self._calc_neighbor_reduced_energy(False)
+        else:
+            reduced_energy = self._calc_full_reduced_energy(False)  # kBT unit
+
+        reduced_energy_all = self.comm.gather(reduced_energy, root=0)
+
+        # rank 0 log the reduced energy matrix in order
+        re_decision = None  # placeholder on other ranks
+        if self.rank == 0:
+
+            r_energy_list = [[l_index, re_e] for l_index, re_e in zip(self.lambda_states_list, reduced_energy_all)]
+            r_energy_list_order = sorted(r_energy_list, key=lambda x: x[0])
+            for l_index, re_e in r_energy_list_order:
+                e_str = ",".join([f"{i:14f}" for i in re_e])
+                self.logger.info(f"{l_index}: " + e_str)
+
+
+            reduced_energy_matrix = np.array(reduced_energy_all)
+            # rank 0 decides the exchange
+
+            re_decision = {}
+            re_dec_state = {}
+            lambda_states_list_order = sorted(self.lambda_states_list)
+            map_l_index_2_rank = {l_index: rank for rank, l_index in enumerate(self.lambda_states_list)}
+            for rep_i in range(self.re_step % 2, self.size - 1, 2):
+                state_i = lambda_states_list_order[rep_i]
+                state_j = lambda_states_list_order[rep_i+1]
+                rank_i = map_l_index_2_rank[state_i]
+                rank_j = map_l_index_2_rank[state_j]
+
+                delta_energy = (reduced_energy_matrix[  rank_i, state_j] + reduced_energy_matrix[rank_j, state_i]
+                                - reduced_energy_matrix[rank_i, state_i] - reduced_energy_matrix[rank_j, state_j])
+                accept_prob = math.exp(-delta_energy)
+                acc = min(1.0, accept_prob)
+                if np.random.rand() < accept_prob:
+                    re_decision[rank_i] = (True, state_j)
+                    re_decision[rank_j] = (True, state_i)
+                    re_dec_state[(min(state_i, state_j), max(state_i, state_j))] = (True,  acc)
+                else:
+                    re_decision[rank_i] = (False, state_i)
+                    re_decision[rank_j] = (False, state_j)
+                    re_dec_state[(min(state_i, state_j), max(state_i, state_j))] = (False, acc)
+            # log re_decision
+            msg_ex = "Repl ex :"
+            msg_pr = "Repl pr :"
+            x_dict = {True: "x", False: " "}
+            if self.re_step % 2 == 1:
+                msg_ex += f"{lambda_states_list_order[0]:2}   "
+                msg_pr +=  "     "
+            state_pair_list = sorted(re_dec_state.keys())
+            msg_ex += "   ".join([f"{i[0]:2} {x_dict[re_dec_state[i][0]]} {i[1]:2}" for i in state_pair_list])
+            msg_pr += "   ".join([f"{re_dec_state[i][1]:7.3f}" for i in state_pair_list])
+            if not (self.size-2, self.size-1) in re_dec_state:
+                msg_ex += f"   {lambda_states_list_order[self.size - 1]:2}"
+            self.logger.info(msg_ex)
+            self.logger.info(msg_pr)
+
+        re_decision = self.comm.bcast(re_decision, root=0)
+
+        # set state for each rank
+        exchange = False
+        new_state = lambda_state_index_old
+        if self.rank in re_decision:
+            exchange, new_state_tmp = re_decision[self.rank]
+            if exchange:
+                new_state = new_state_tmp
+        self.set_lambda_state(new_state)
+
+        self.re_step += 1
+        return re_decision, exchange
+
+
 

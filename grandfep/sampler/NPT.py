@@ -12,6 +12,7 @@ import parmed
 
 from .base import _ReplicaExchangeMixin
 
+from .. import utils
 
 class NPTSampler:
     """
@@ -60,21 +61,28 @@ class NPTSampler:
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  rst_file: str = "md.rst7",
                  dcd_file: str = None,
-                 append: bool = False
+                 append: bool = False,
+                 set_reporter: bool =True,
                  ):
         """
         Initialize the NPT sampler
         """
         # prepare logger
+        #: Logger for the Sampler
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
+        if self.logger.handlers:  # Avoid adding multiple handlers
+            # remove the existing handlers
+            for handler in self.logger.handlers:
+                self.logger.removeHandler(handler)
+                # close the handler
+                handler.close()
         file_handler = logging.FileHandler(log)
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s: %(message)s',
                                                     "%m-%d %H:%M:%S"))
         self.logger.addHandler(file_handler)
         self.logger.info("Initializing NPT Sampler")
-
         # constants and simulation configuration
         #: k\ :sub:`B`\ * T, with unit.
         self.kBT = unit.BOLTZMANN_CONSTANT_kB * unit.AVOGADRO_CONSTANT_NA * temperature
@@ -90,15 +98,13 @@ class NPTSampler:
         #: Simulation ties together Topology, System, Integrator, and Context in this sampler.
         self.simulation: app.Simulation = app.Simulation(self.topology, self.system, integrator, platform)
 
-        #: Lambda state index for this replica, counting from 0
-        self.lambda_state_index: int = None
-
         # IO related
         #: A dictionary of all the rst7 reporter. Call the reporter inside to write the rst7 restart file.
         self.rst_reporter_dict = None
         #: A dictionary of all the dcd reporter. Call the reporter inside to write the dcd trajectory file.
         self.dcd_reporter_dict = None
-        self._set_reporters(rst_file, dcd_file, append)
+        if set_reporter:
+            self._set_reporters(rst_file, dcd_file, append)
 
         self.logger.info(f"T   = {temperature}.")
         self.logger.info(f"kBT = {self.kBT}.")
@@ -128,7 +134,6 @@ class NPTSampler:
                 self.dcd_reporter_dict = {0:app.DCDReporter(dcd_file, 0, True, enforcePeriodicBox=True)}
             else:
                 self.dcd_reporter_dict = {0:app.DCDReporter(dcd_file, 0, False, enforcePeriodicBox=True)}
-
 
     def check_temperature(self) -> unit.Quantity:
         """
@@ -243,13 +248,14 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  rst_file: str = "md.rst7",
                  dcd_file: str = None,
+                 append: bool = False,
                  init_lambda_state: int = None,
                  lambda_dict: dict = None
                  ):
         """
         Initialize the NPT sampler with MPI support
         """
-        super().__init__(system, topology, temperature, collision_rate, timestep, log, platform, rst_file, dcd_file)
+        super().__init__(system, topology, temperature, collision_rate, timestep, log, platform, rst_file, dcd_file, append, False)
 
         # MPI related properties
         #: MPI communicator
@@ -264,6 +270,8 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
         # RE related properties
         #: Number of replica exchanges performed
         self.re_step = 0
+        #: Lambda state index for this replica, counting from 0
+        self.lambda_state_index: int = None
         #: A dictionary of mapping from global parameters to their values in all the sampling states.
         self.lambda_dict: dict = None
         #: Index of the Lambda state which is simulated. All the init_lambda_state in this MPI run can be fetched with ``self.lambda_states_list[rank]``
@@ -272,8 +280,103 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
         self.n_lambda_states: int = None
 
         self.set_lambda_dict(init_lambda_state, lambda_dict)
+        self._set_reporters_MPI(rst_file, dcd_file, append)
 
         self.logger.info(f"Rank {self.rank} of {self.size} initialized NPT sampler")
+
+    def _set_reporters(self, rst_file: Union[str, Path], dcd_file: Union[str, Path], append: bool) -> None:
+        """
+        Overwrite this method, it should do nothing in this class.
+        """
+        pass
+
+    def _set_reporters_MPI(self, rst_file: Union[str,Path], dcd_file: Union[str,Path], append: bool) -> None:
+        """
+        Reset the reporters for the simulation. This is used to set the reporters when the sampler is created.
+        Only rank 0 will have the actual reporters.
+
+        Parameters
+        ----------
+        rst_file : str
+            Restart file path for the simulation.
+
+        dcd_file : str
+            DCD file path for the simulation.
+
+        append : bool
+            If True, append to the existing dcd file.
+
+        Returns
+        -------
+        None
+        """
+        # gather all the self.lambda_state_index
+        self.lambda_states_list = self.comm.gather(self.lambda_state_index, root=0)
+        rst_file_list = self.comm.gather(rst_file, root=0)
+        dcd_file_list = self.comm.gather(dcd_file)
+
+
+        # rst_reporter_dict, mapping from lambda_state_index to reporter
+        # dcd_reporter_dict, mapping from lambda_state_index to reporter
+        self.rst_reporter_dict = {}
+        self.dcd_reporter_dict = {}
+        if self.rank == 0:
+            for lam_state_i, rst_i, dcd_i in zip(self.lambda_states_list, rst_file_list, dcd_file_list):
+                self.rst_reporter_dict[lam_state_i] = utils.rst7_reporter(rst_i, 0, netcdf=True)
+                self.dcd_reporter_dict[lam_state_i] = utils.dcd_reporter(dcd_i, 0, append)
+
+    def report_dcd(self, state: openmm.State = None):
+        """
+        gather the coordinates from all MPI rank, only rank 0 writes the file.
+
+        Parameters
+        ----------
+        state :
+            State of the simulation. If None, it will get the current state from the simulation context.
+        """
+        if not state:
+            state = self.simulation.context.getState(getPositions=True, enforcePeriodicBox=True)
+        positions = state.getPositions(asNumpy=True)
+        box_vec = state.getPeriodicBoxVectors(asNumpy=True)
+
+        positions_all = self.comm.gather(positions, root=0)
+        box_vec_all = self.comm.gather(box_vec, root=0)
+        self.lambda_states_list = self.comm.gather(self.lambda_state_index, root=0)
+
+        if self.rank == 0:
+            for lam_state_i, box_v, pos in zip(self.lambda_states_list, box_vec_all, positions_all):
+                self.dcd_reporter_dict[lam_state_i].report_positions(self.simulation, box_v, pos)
+                self.logger.info(f"Write dcd file for lambda state {lam_state_i}")
+        else:
+            self.logger.info(f"No dcd file to write on rank {self.rank} with lambda state {self.lambda_state_index}")
+
+
+    def report_rst(self, state=None):
+        """
+        gather the coordinates from all MPI rank, only rank 0 write the file.
+
+        Parameters
+        ----------
+        state :
+            XXX
+        """
+        if not state:
+            state = self.simulation.context.getState(getPositions=True, getVelocities=True, enforcePeriodicBox=True)
+        positions = state.getPositions(asNumpy=True)
+        velocities = state.getVelocities(asNumpy=True)
+        box_vec = state.getPeriodicBoxVectors(asNumpy=True)
+
+        self.lambda_states_list = self.comm.gather(self.lambda_state_index, root=0)
+        positions_all = self.comm.gather(positions, root=0)
+        velocities_all = self.comm.gather(velocities, root=0)
+        box_vec_all = self.comm.gather(box_vec, root=0)
+
+        if self.rank == 0:
+            for lam_state_i, box_v, pos, vel in zip(self.lambda_states_list, box_vec_all, positions_all, velocities_all):
+                self.rst_reporter_dict[lam_state_i].report_positions_velocities(self.simulation, state, box_v, pos, vel)
+                self.logger.info(f"Write restart file for lambda state {lam_state_i}")
+        else:
+            self.logger.info(f"No restart file to write on rank {self.rank} with lambda state {self.lambda_state_index}")
 
     def replica_exchange(self, calc_neighbor_only: bool = True):
         """
@@ -324,9 +427,9 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
                                 - reduced_energy_matrix[rank_i, i]   - reduced_energy_matrix[rank_i + 1, i+1])
                 accept_prob = math.exp(-delta_energy)
                 if np.random.rand() < accept_prob:
-                    re_decision[(rank_i, rank_i + 1)] = (True, min(1, accept_prob))
+                    re_decision[(rank_i, rank_i + 1)] = (True, min(1.0, accept_prob))
                 else:
-                    re_decision[(rank_i, rank_i + 1)] = (False, min(1, accept_prob))
+                    re_decision[(rank_i, rank_i + 1)] = (False, min(1.0, accept_prob))
         else:
             re_decision = None  # placeholder on other ranks
 
@@ -388,4 +491,6 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
 
         self.re_step += 1
         return reduced_energy_matrix, re_decision
+
+
 

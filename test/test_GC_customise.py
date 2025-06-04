@@ -776,26 +776,31 @@ class MyTestCase(unittest.TestCase):
             2.0 * unit.femtosecond,
             "test_base_Hybrid.log",
         )
-        tick = time.time()
-        baseGC_big.set_ghost_list([271, 272, 273], check_system=False)
-        print(f"## Time for updating a lig-pro system {time.time() - tick:.3f} s")
 
-        tick = time.time()
-        is_r, is_j, custom_nb_force = baseGC_big.custom_nonbonded_force_list[0]
-        custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
-        print(f"## Time for updating C1 {time.time() - tick:.3f} s")
+        for disp_corr in [False, True]:
+            for is_r, is_s, custom_nb_force in baseGC_big.custom_nonbonded_force_list:
+                custom_nb_force.setUseLongRangeCorrection(disp_corr)
 
-        tick = time.time()
-        is_r, is_j, custom_nb_force = baseGC_big.custom_nonbonded_force_list[1]
-        custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
-        print(f"## Time for updating C2 {time.time() - tick:.3f} s")
+            tick = time.time()
+            baseGC_big.set_ghost_list([271, 272, 273], check_system=False)
+            print(f"## Time for updating a lig-pro system with disp_corr {disp_corr} {time.time() - tick:.3f} s")
 
-        tick = time.time()
-        is_r, is_j, custom_nb_force = baseGC_big.custom_nonbonded_force_list[2]
-        custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
-        print(f"## Time for updating C3 {time.time() - tick:.3f} s")
+            tick = time.time()
+            is_r, is_s, custom_nb_force = baseGC_big.custom_nonbonded_force_list[0]
+            custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
+            print(f"## Time for updating C1 with disp_corr {disp_corr} {time.time() - tick:.3f} s")
 
-        baseGC_big.check_ghost_list()
+            tick = time.time()
+            is_r, is_s, custom_nb_force = baseGC_big.custom_nonbonded_force_list[1]
+            custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
+            print(f"## Time for updating C2 with disp_corr {disp_corr} {time.time() - tick:.3f} s")
+
+            tick = time.time()
+            is_r, is_s, custom_nb_force = baseGC_big.custom_nonbonded_force_list[2]
+            custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
+            print(f"## Time for updating C3 with disp_corr {disp_corr} {time.time() - tick:.3f} s")
+
+            baseGC_big.check_ghost_list()
 
 
 if __name__ == '__main__':
