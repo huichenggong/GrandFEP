@@ -2,7 +2,7 @@
 ## 1. Quick Installation
 ### 1.1 Prepare Env
 ```bash
-mamba env create -f env.yml # edit cuda and MPI according to cluster
+mamba env create -f env.yml # edit cuda and MPI according to your cluster
 mamba activate grandfep_env
 pip install .
 ```
