@@ -109,11 +109,9 @@ def test_GC_RE():
 
     ngcmc.logger.info("MD Parameters:\n" + str(mdp))
     assert mdp.init_lambda_state == ngcmc.rank
-
+    assert ngcmc.lambda_state_index == ngcmc.rank
 
     ngcmc.load_rst(base / "CH4_C2H6/multidir/eq.rst7")
-
-
     reduced_e = ngcmc._calc_full_reduced_energy()
     reduced_e_matrix, re_res = ngcmc.replica_exchange(calc_neighbor_only=False)
     assert reduced_e_matrix.shape == (ngcmc.size, 9)
@@ -128,46 +126,42 @@ def test_GC_RE():
 
     ngcmc.set_ghost_list([10+i for i in range(ngcmc.rank)]) # set different ghost_list
 
+    re_res = ngcmc.replica_exchange_global_param(calc_neighbor_only=True)
+    l_list = ngcmc.comm.allgather(ngcmc.lambda_state_index)
+    assert l_list == [0, 2, 1, 3]
+    re_res = ngcmc.replica_exchange_global_param(calc_neighbor_only=True)
+    l_list = ngcmc.comm.allgather(ngcmc.lambda_state_index)
+    assert l_list == [1, 3, 0, 2]
+    re_res = ngcmc.replica_exchange_global_param(calc_neighbor_only=False)
+    l_list = ngcmc.comm.allgather(ngcmc.lambda_state_index)
+    assert l_list == [2, 3, 0, 1]
+
     ngcmc.load_rst(str(sim_dir / "md.rst7"))
     ngcmc.simulation.minimizeEnergy()
     ngcmc.simulation.context.setVelocitiesToTemperature(mdp.ref_t)
     ngcmc.logger.info("MD 1000")
     ngcmc.simulation.step(1000)
 
-    for calc_neighbor_only in [True, False]:
-        for i in range(10):
-            ngcmc.logger.info("MD 200")
-            ngcmc.simulation.step(200)
+    for i in range(30):
+        ngcmc.logger.info("MD 50")
+        ngcmc.simulation.step(50)
+        l_angle_old = ngcmc.simulation.context.getParameter("lambda_angles")
+        l_bonds_old = ngcmc.simulation.context.getParameter("lambda_bonds")
+        re_decision, exchange = ngcmc.replica_exchange_global_param(calc_neighbor_only=i % 3 == 0)
+        l_angle_new = ngcmc.simulation.context.getParameter("lambda_angles")
+        l_bonds_new = ngcmc.simulation.context.getParameter("lambda_bonds")
+        state = ngcmc.simulation.context.getState(getForces=True, enforcePeriodicBox=True)
+        # force_new = state.getForces(asNumpy=True).value_in_unit(unit.kilojoule_per_mole / unit.nanometer)
 
-            state_old = ngcmc.simulation.context.getState(getPositions=True, getVelocities=True)
-            glist_old = ngcmc.get_ghost_list()
-            pos_old = state_old.getPositions(asNumpy=True).value_in_unit(unit.nanometer)
-            vel_old = state_old.getVelocities(asNumpy=True).value_in_unit(unit.nanometer / unit.picosecond)
+        if exchange:
+            assert (l_angle_old, l_bonds_old) != (l_angle_new, l_bonds_new)
+            ngcmc.logger.info(f"re accept test pass")
 
-            reduced_e_matrix, re_res = ngcmc.replica_exchange(calc_neighbor_only=calc_neighbor_only)
-            ngcmc.check_ghost_list()
+        else:
+            assert (l_angle_old, l_bonds_old) == (l_angle_new, l_bonds_new)
+            ngcmc.logger.info("re reject test pass")
 
-            state_new = ngcmc.simulation.context.getState(getPositions=True, getVelocities=True)
-            glist_new = ngcmc.get_ghost_list()
-            pos_new = state_new.getPositions(asNumpy=True).value_in_unit(unit.nanometer)
-            vel_new = state_new.getVelocities(asNumpy=True).value_in_unit(unit.nanometer / unit.picosecond)
 
-            flag_right = (ngcmc.rank, ngcmc.rank + 1) in re_res and re_res[(ngcmc.rank, ngcmc.rank + 1)][0]
-            flag_left = (ngcmc.rank - 1, ngcmc.rank) in re_res and re_res[(ngcmc.rank - 1, ngcmc.rank)][0]
-            if flag_right or flag_left:
-                # ghost_list/positions/velocities should be changed
-                assert glist_old != glist_new
-                close_pos = np.sum(np.isclose( pos_old, pos_new ))
-                close_vel = np.sum(np.isclose( vel_old, vel_new ))
-                assert  close_pos < 50
-                assert  close_vel < 10
-                ngcmc.logger.info(f"re accept test pass close_pos={close_pos}, close_vel={close_vel}")
-
-            else:
-                assert glist_old == glist_new
-                assert np.all(np.isclose( pos_old, pos_new ))
-                assert np.all(np.isclose( vel_old, vel_new))
-                ngcmc.logger.info("re reject test pass")
 
 
 

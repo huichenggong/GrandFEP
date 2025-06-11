@@ -1192,12 +1192,12 @@ class _ReplicaExchangeMixin:
                 raise ValueError(f"The lambda states are not continuously increasing: {self.lambda_states_list}")
             l_0 = l_i
 
-        msg = "MPI rank              :" + "".join([f" {i:6d}" for i in range(self.size)])
+        msg = "MPI rank                      :" + "".join([f" {i:6d}" for i in range(self.size)])
         self.logger.info(msg)
-        msg = "lambda_states         :" + "".join([f" {i:6d}" for i in self.lambda_states_list])
+        msg = "lambda_states                 :" + "".join([f" {i:6d}" for i in self.lambda_states_list])
         self.logger.info(msg)
         for lambda_key, lambda_val_list in self.lambda_dict.items():
-            msg = f"{lambda_key:<22}:" + "".join([f" {lambda_val_list[i]:6.3f}" for i in self.lambda_states_list])
+            msg = f"{lambda_key:<30}:" + "".join([f" {lambda_val_list[i]:6.3f}" for i in self.lambda_states_list])
             self.logger.info(msg)
 
         # set the current state
@@ -1287,7 +1287,7 @@ class _ReplicaExchangeMixin:
         None
         """
         # gather all the self.lambda_state_index
-        self.lambda_states_list = self.comm.gather(self.lambda_state_index, root=0)
+        self.lambda_states_list = self.comm.allgather(self.lambda_state_index)
         rst_file_list = self.comm.gather(rst_file, root=0)
         dcd_file_list = self.comm.gather(dcd_file)
 
@@ -1301,7 +1301,7 @@ class _ReplicaExchangeMixin:
                 self.rst_reporter_dict[lam_state_i] = utils.rst7_reporter(rst_i, 0, netcdf=True)
                 self.dcd_reporter_dict[lam_state_i] = utils.dcd_reporter(dcd_i, 0, append)
 
-    def report_dcd(self, state: openmm.State = None):
+    def report_dcd_rank0(self, state: openmm.State = None):
         """
         gather the coordinates from all MPI rank, only rank 0 writes the file.
 
@@ -1326,7 +1326,7 @@ class _ReplicaExchangeMixin:
         else:
             self.logger.info(f"No dcd file to write on rank {self.rank} with lambda state {self.lambda_state_index}")
 
-    def report_rst(self, state: openmm.State = None):
+    def report_rst_rank0(self, state: openmm.State = None):
         """
         gather the coordinates from all MPI rank, only rank 0 write the file.
 

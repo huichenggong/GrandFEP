@@ -128,8 +128,8 @@ def test_RE():
             assert np.isclose(l_chg_new, 0.0)
             npt.logger.info("Alchem atoms force test pass")
 
-        npt.report_rst()
-        npt.report_dcd()
+        npt.report_rst_rank0()
+        npt.report_dcd_rank0()
 
 
 

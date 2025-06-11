@@ -114,8 +114,8 @@ def test_RE():
 
         # there should be no force on Dummy atoms
 
-    npt.report_rst()
-    npt.report_dcd()
+    npt.report_rst_rank0()
+    npt.report_dcd_rank0()
 
 
 
