@@ -136,7 +136,7 @@ def test_GC_RE():
     l_list = ngcmc.comm.allgather(ngcmc.lambda_state_index)
     assert l_list == [2, 3, 0, 1]
 
-    ngcmc.load_rst(str(sim_dir / "md.rst7"))
+    ngcmc.load_rst(base / "CH4_C2H6/multidir/eq.rst7")
     ngcmc.simulation.minimizeEnergy()
     ngcmc.simulation.context.setVelocitiesToTemperature(mdp.ref_t)
     ngcmc.logger.info("MD 1000")
@@ -161,7 +161,11 @@ def test_GC_RE():
             assert (l_angle_old, l_bonds_old) == (l_angle_new, l_bonds_new)
             ngcmc.logger.info("re reject test pass")
 
-
+        state = ngcmc.simulation.context.getState(getPositions=True, enforcePeriodicBox=True, getVelocities=True)
+        if i%2 == 1:
+            ngcmc.report_dcd(state)
+        else:
+            ngcmc.report_rst(state)
 
 
 

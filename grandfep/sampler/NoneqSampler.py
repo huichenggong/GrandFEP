@@ -1157,6 +1157,16 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
 
         self._set_reporters_MPI(rst_file, dcd_file, append_dcd)
 
+        jsonl_file_list = self.comm.gather(jsonl_file, root=0)
+        self.jsonl_dict = {}
+        if self.rank == 0:
+            for lam_state_i, jsonl_i in zip(self.lambda_states_list, jsonl_file_list):
+                self.jsonl_dict[lam_state_i] = jsonl_i
+        if not append_dcd:
+            # clean jsonl_file
+            if os.path.exists(jsonl_file):
+                os.remove(jsonl_file)
+
         self.logger.info(f"Rank {self.rank} of {self.size} initialized NoneqGrandCanonicalMonteCarloSamplerMPI sampler")
 
     def _set_reporters(self, rst_file: Union[str,Path], dcd_file: Union[str,Path], jsonl_file: Union[str,Path], append_dcd: bool) -> None:
@@ -1273,3 +1283,52 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
         self.re_step += 1
         return reduced_energy_matrix, re_decision
 
+    def _report_jsonl_rank0(self, dcd):
+        """
+        gather the ghost list from all MPI rank, only rank 0 writes the file.
+
+        Parameters
+        ----------
+        dcd :
+            Whether there is a dcd writing in this step for appending a line to jsonl. 1: yes, 0: no
+        """
+        self.lambda_states_list = self.comm.gather(self.lambda_state_index, root=0)
+        ghost_list = self.get_ghost_list()
+        ghost_list_all = self.comm.gather(ghost_list, root=0)
+        if self.rank == 0:
+            # for dcd_jsonl in self.jsonl_dict:
+            for lam_state_i, ghost_list in zip(self.lambda_states_list, ghost_list_all):
+                dcd_jsonl = self.jsonl_dict[lam_state_i]
+                with open(dcd_jsonl, 'a') as f:
+                    json.dump(
+                        {
+                            "GC_count": self.gc_count["current_move"],
+                            "ghost_list": ghost_list,
+                            "dcd": dcd
+                        }, f)
+                    f.write('\n')
+
+    def report_rst(self, state: openmm.State = None):
+        """
+        gather the coordinates from all MPI rank, only rank 0 write the file.
+
+        Parameters
+        ----------
+        state :
+            XXX
+        """
+        super().report_rst_rank0(state)
+        self._report_jsonl_rank0(dcd=0)
+
+    def report_dcd(self, state: openmm.State = None):
+        """
+        gather the coordinates from all MPI rank, only rank 0 writes the file. Report both dcd and rst7 files.
+
+        Parameters
+        ----------
+        state :
+            State of the simulation. If None, it will get the current state from the simulation context.
+        """
+        super().report_rst_rank0(state)
+        super().report_dcd_rank0(state)
+        self._report_jsonl_rank0(dcd=1)

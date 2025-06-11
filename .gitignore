@@ -189,3 +189,6 @@ cython_debug/
 
 /test/Water_Chemical_Potential/OPC/multidir/?/opc_npt_output.xtc
 /test/Water_Chemical_Potential/TIP3P/out.*
+/test/CH4_C2H6/multidir/?/md.log
+/test/CH4_C2H6/multidir/?/md.rst7
+/test/CH4_C2H6/multidir/?/md.jsonl
