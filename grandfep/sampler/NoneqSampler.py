@@ -185,6 +185,13 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         for at_index in self.reference_atoms:
             self.logger.info(f"    {at_list[at_index]}")
 
+        self._set_reporters(rst_file, dcd_file, jsonl_file, append_dcd)
+
+
+        self.logger.info(f"T   = {temperature}.")
+        self.logger.info(f"kBT = {self.kBT}.")
+
+    def _set_reporters(self, rst_file: Union[str,Path], dcd_file: Union[str,Path], jsonl_file: Union[str,Path], append_dcd: bool) -> None:
         # IO related
         #: Call this reporter to write the rst7 restart file.
         self.rst_reporter = parmed.openmm.reporters.RestartReporter(rst_file, 0, netcdf=True)
@@ -197,12 +204,6 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
                 # clean self.dcd_jsonl
                 if os.path.exists(self.dcd_jsonl):
                     os.remove(self.dcd_jsonl)
-
-
-
-        self.logger.info(f"T   = {temperature}.")
-        self.logger.info(f"kBT = {self.kBT}.")
-
 
     def update_gc_count(self,
                         insert_delete: int,
@@ -1121,7 +1122,7 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
                  reference_atoms: list =None,
                  rst_file: str = "md.rst7",
                  dcd_file: str = None,
-                 append_dcd: bool = True,
+                 append_dcd: bool = False,
                  jsonl_file: str = "md.jsonl",
                  init_lambda_state: int = None,
                  lambda_dict: dict = None
@@ -1154,7 +1155,12 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
 
         self.set_lambda_dict(init_lambda_state, lambda_dict)
 
+        self._set_reporters_MPI(rst_file, dcd_file, append_dcd)
+
         self.logger.info(f"Rank {self.rank} of {self.size} initialized NoneqGrandCanonicalMonteCarloSamplerMPI sampler")
+
+    def _set_reporters(self, rst_file: Union[str,Path], dcd_file: Union[str,Path], jsonl_file: Union[str,Path], append_dcd: bool) -> None:
+        pass
 
     def replica_exchange(self, calc_neighbor_only: bool = True):
         """

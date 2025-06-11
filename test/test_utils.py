@@ -66,10 +66,40 @@ class MyTestCase(unittest.TestCase):
 
     def test_reporters(self):
         print()
-        print("# Test dcdReporter")
+        print("# Test Reporter")
 
+
+        pdb = app.PDBFile(str(self.base_path / "Water_Chemical_Potential/TIP3P/water.pdb"))
+        forcefield = app.ForceField('amber14-all.xml', 'amber14/tip3pfb.xml')
+        system = forcefield.createSystem(pdb.topology, nonbondedMethod=app.PME,
+                                         nonbondedCutoff=1 * unit.nanometer, constraints=app.HBonds)
+        integrator = openmm.LangevinMiddleIntegrator(300*unit.kelvin, 1/unit.picosecond, 0.004*unit.picoseconds)
+        simulation = app.Simulation(pdb.topology, system, integrator)
+        simulation.context.setPositions(pdb.positions)
+        print()
+        print("# Test dcdReporter")
+        dcd_rep = utils.dcd_reporter(str(self.base_path / "Water_Chemical_Potential/TIP3P/out.rst7"),
+                                   1, False
+                                   )
+        state = simulation.context.getState(getPositions=True, enforcePeriodicBox=True)
+        pos = state.getPositions(asNumpy=True)
+        boxv = state.getPeriodicBoxVectors(asNumpy=True)
+        dcd_rep.report_positions(simulation, boxv, pos)
+        # move the first water to [6.5, 6.5, 6.5] and report again
+        for i in range(5):
+            pos[0:3] += np.array([6.5 + 0.1*i, 6.5 + 0.1*i, 6.5 + 0.1*i])*unit.nanometer - pos[0]
+            dcd_rep.report_positions(simulation, boxv, pos)
         print()
         print("# Test rst7Reporter")
+        rst7_rep = utils.rst7_reporter(str(self.base_path / "Water_Chemical_Potential/TIP3P/out.rst7"),
+                                       0, False, False
+                                       )
+        state = simulation.context.getState(getPositions=True, getVelocities=True,)
+        pos = state.getPositions(asNumpy=True)
+        vel = state.getVelocities(asNumpy=True)
+        boxv = state.getPeriodicBoxVectors(asNumpy=True)
+        rst7_rep.report_positions_velocities(simulation, state,
+                                             boxv, pos, vel)
 
 
 if __name__ == '__main__':

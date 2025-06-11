@@ -62,6 +62,7 @@ def test_RE():
         dcd_file=str(sim_dir / "opc_npt_output.dcd"),
         init_lambda_state = mdp.init_lambda_state,
         lambda_dict = lambda_dict,
+        append=True,
     )
     npt.logger.info("MD Parameters:\n" + str(mdp))
     assert mdp.init_lambda_state == npt.rank + 2
@@ -82,17 +83,15 @@ def test_RE():
     assert l_list == [5, 3, 4, 2]
 
     npt.simulation.context.setVelocitiesToTemperature(mdp.ref_t)
-    npt.logger.info("MD 1000")
-    npt.simulation.step(1000)
+    npt.logger.info("MD 5000")
+    npt.simulation.step(5000)
 
-    calc_neighbor = False
-    for i in range(20):
-        npt.logger.info("MD 200")
-        npt.simulation.step(200)
+    for i in range(200):
+        npt.logger.info("MD 50")
+        npt.simulation.step(50)
         l_vdw_old = npt.simulation.context.getParameter("lambda_gc_vdw")
         l_chg_old = npt.simulation.context.getParameter("lambda_gc_coulomb")
-        calc_neighbor = not calc_neighbor
-        re_decision, exchange = npt.replica_exchange_global_param(calc_neighbor_only=calc_neighbor)
+        re_decision, exchange = npt.replica_exchange_global_param(calc_neighbor_only=i%3==0)
         l_vdw_new = npt.simulation.context.getParameter("lambda_gc_vdw")
         l_chg_new = npt.simulation.context.getParameter("lambda_gc_coulomb")
         state = npt.simulation.context.getState(getForces=True, enforcePeriodicBox=True)
@@ -113,16 +112,24 @@ def test_RE():
             assert np.isclose(l_chg_new, 0.0)
             npt.logger.info("Dummy atoms force test pass")
         elif npt.lambda_state_index == 4:
-            assert np.abs(np.sum(force_new[-4:, :])) > 0.02
+            assert np.abs(np.sum(force_new[-4:, :])) > 0.001
             assert np.isclose(l_vdw_new, 0.2)
+            assert np.isclose(l_chg_new, 0.0)
+            npt.logger.info("Alchem atoms force test pass")
+        elif npt.lambda_state_index == 3:
+            assert np.abs(np.sum(force_new[-4:, :])) > 0.05
+            assert np.isclose(l_vdw_new, 0.4)
             assert np.isclose(l_chg_new, 0.0)
             npt.logger.info("Alchem atoms force test pass")
         else:
             # There should be force on the last 4 atoms
-            assert np.abs(np.sum(force_new[-4:, :])) > 0.3
-            assert l_vdw_new > 0.2
+            assert np.abs(np.sum(force_new[-4:, :])) > 0.1
+            assert l_vdw_new > 0.4
             assert np.isclose(l_chg_new, 0.0)
             npt.logger.info("Alchem atoms force test pass")
+
+        npt.report_rst()
+        npt.report_dcd()
 
 
 

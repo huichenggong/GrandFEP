@@ -750,7 +750,7 @@ class dcd_reporter(app.DCDReporter):
         if self._dcd is None:
             self._dcd = app.DCDFile(
                 self._out, simulation.topology, simulation.integrator.getStepSize(),
-                simulation.currentStep, self._reportInterval, self._append
+                simulation.currentStep, 1, self._append
             )
 
         self._dcd.writeModel(positions_nm, periodicBoxVectors=periodicBoxVectors)
