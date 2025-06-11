@@ -1317,6 +1317,8 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
         state :
             XXX
         """
+        if not state:
+            state = self.simulation.context.getState(getPositions=True, getVelocities=True, enforcePeriodicBox=True)
         super().report_rst_rank0(state)
         self._report_jsonl_rank0(dcd=0)
 
@@ -1329,6 +1331,8 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
         state :
             State of the simulation. If None, it will get the current state from the simulation context.
         """
+        if not state:
+            state = self.simulation.context.getState(getPositions=True, getVelocities=True, enforcePeriodicBox=True)
         super().report_rst_rank0(state)
         super().report_dcd_rank0(state)
         self._report_jsonl_rank0(dcd=1)

@@ -290,8 +290,6 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
         """
         pass
 
-
-
     def replica_exchange(self, calc_neighbor_only: bool = True):
         """
         Perform one neighbor swap replica exchange. In odd RE steps, attempt exchange between 0-1, 2-3, ...
@@ -406,5 +404,31 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
         self.re_step += 1
         return reduced_energy_matrix, re_decision
 
+    def report_rst(self, state: openmm.State = None):
+        """
+        gather the coordinates from all MPI rank, only rank 0 write the file.
+
+        Parameters
+        ----------
+        state :
+            XXX
+        """
+        if not state:
+            state = self.simulation.context.getState(getPositions=True, getVelocities=True, enforcePeriodicBox=True)
+        super().report_rst_rank0(state)
+
+    def report_dcd(self, state: openmm.State = None):
+        """
+        gather the coordinates from all MPI rank, only rank 0 writes the file. Report both dcd and rst7 files.
+
+        Parameters
+        ----------
+        state :
+            State of the simulation. If None, it will get the current state from the simulation context.
+        """
+        if not state:
+            state = self.simulation.context.getState(getPositions=True, getVelocities=True, enforcePeriodicBox=True)
+        super().report_rst_rank0(state)
+        super().report_dcd_rank0(state)
 
 
