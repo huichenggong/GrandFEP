@@ -93,7 +93,7 @@ class MyTestCase(unittest.TestCase):
         print("# Test rst7Reporter")
         rst7_rep = utils.rst7_reporter(str(self.base_path / "Water_Chemical_Potential/TIP3P/out.rst7"),
                                        0, False, False
-                                       )
+                                       ) # netcdf=True is more useful in production
         state = simulation.context.getState(getPositions=True, getVelocities=True,)
         pos = state.getPositions(asNumpy=True)
         vel = state.getVelocities(asNumpy=True)
