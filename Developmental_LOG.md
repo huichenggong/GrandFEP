@@ -6,6 +6,11 @@ git checkout -b 0.1.1_dev
 
 # push the branch to github
 git push -u origin 0.1.1_dev
+
+# merge to master
+git checkout master
+git pull origin master
+git merge 0.1.1_dev
 ```
 
 ### Problem to be Solved
