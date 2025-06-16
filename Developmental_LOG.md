@@ -11,6 +11,7 @@ git push -u origin 0.1.1_dev
 git checkout master
 git pull origin master
 git merge 0.1.1_dev
+git push origin master
 ```
 
 ### Problem to be Solved
