@@ -122,7 +122,8 @@ git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </
 </section>
 <section id="solution-part-1-no-configuration-exchange-in-re">
 <h3>Solution Part 1: no configuration exchange in RE<a class="headerlink" href="#solution-part-1-no-configuration-exchange-in-re" title="Link to this heading">¶</a></h3>
-<p>In RE, if a move is accepted, the global parameter(s) in the MPI rank changes while the coordinate and velocity stay in the MPI rank. Each rank has to figure out which file to append during the <code class="docutils literal notranslate"><span class="pre">report_rst</span></code> and <code class="docutils literal notranslate"><span class="pre">report_dcd</span></code>. Rank 0 write the reduced energy to a csv file.</p>
+<p>In RE, if a move is accepted, the global parameter(s) in the MPI rank changes while the coordinate and velocity
+stay in the MPI rank. Only rank 0 collects and writes the trajectory/rst/energy.</p>
 <p>By applying this, RE will only change the global parameter and will neither call <code class="docutils literal notranslate"><span class="pre">set_ghost_list</span></code> nor call <code class="docutils literal notranslate"><span class="pre">updateParametersInContext</span></code>.</p>
 </section>
 <section id="solution-part-2-split-water-water-into-new-customnonbondedforce">
