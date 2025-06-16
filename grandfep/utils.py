@@ -342,6 +342,42 @@ def prepare_atom_map(topologyA: app.Topology, topologyB: app.Topology, map_list:
             raise ValueError(f"{resA} - {resB} Cannot be Mapped")
     return old_to_new_all, old_to_new_core
 
+def prepare_restraints_force(topology: app.Topology, positions: unit.Quantity, fc: unit.Quantity, water_resname: str ="HOH"):
+    """
+    Prepare a force to add position restraints to heavy atoms. 1/2 * k * (x - x0)^2
+
+    Parameters
+    ----------
+    topology : openmm.app.Topology
+        The OpenMM topology object.
+
+    positions : openmm.unit.Quantity
+        The reference positions of the atoms in the system.
+
+    fc : openmm.unit.Quantity
+        The force constant for the position restraints. Unit in kJ/mol/nm^2.
+
+    water_resname : str
+        The residue name of water molecules to be excluded from the restraints. Default is "HOH".
+
+    """
+    posres = openmm.CustomExternalForce('0.5*k*periodicdistance(x, y, z, x0, y0, z0)^2;')
+    posres.addPerParticleParameter('k')
+    posres.addPerParticleParameter('x0')
+    posres.addPerParticleParameter('y0')
+    posres.addPerParticleParameter('z0')
+    res_atom_count = 0
+    for res in topology.residues():
+        if res.name == water_resname:
+            continue
+        for at in res.atoms():
+            if at.element.symbol == "H" or at.element.symbol is None:
+                continue
+            pos = positions[at.index]
+            posres.addParticle(at.index, [fc, pos[0], pos[1], pos[2]])
+            res_atom_count += 1
+    return posres, res_atom_count
+
 class md_params_yml:
     """
     Class to manage MD parameters with default values and YAML overrides. This class reads whatever in the yml file, and
