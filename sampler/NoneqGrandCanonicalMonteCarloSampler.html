@@ -136,6 +136,25 @@ to restart the ghost list, and dcd file needs this jsonl to remove the ghost wat
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_particle_parameter_index_cust_nb_force">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_particle_parameter_index_cust_nb_force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">custom_nonbonded_force</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_particle_parameter_index_cust_nb_force" title="Link to this definition">¶</a></dt>
+<dd><p>Get the indices of <cite>is_real</cite> and <cite>is_switching</cite> parameters in the perParticleParameters
+of <cite>self.custom_nonbonded_force</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>custom_nonbonded_force</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.CustomNonbondedForce</span></code></span>) – The CustomNonbondedForce to be checked.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple <cite>(is_real_index, is_switching_index)</cite> indicating the indices of the corresponding
+parameters in <cite>self.custom_nonbonded_force.getPerParticleParameterName(i)</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.check_ghost_list">
 <span class="sig-name descname"><span class="pre">check_ghost_list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.check_ghost_list" title="Link to this definition">¶</a></dt>
 <dd><p>Loop over all water particles in the system to validate that <cite>self.ghost_list</cite> correctly reflects
@@ -143,7 +162,7 @@ the current ghost and switching water configuration.</p>
 <ul class="simple">
 <li><dl class="simple">
 <dt>Ghost water:</dt><dd><ol class="arabic simple">
-<li><p><cite>is_real = 0.0</cite> and <cite>is_switching = 0.0</cite> in <cite>self.custom_nonbonded_force</cite></p></li>
+<li><p><cite>is_real = 0.0</cite> and <cite>is_switching = 0.0</cite> in every CustomNonbondedForce in <cite>self.custom_nonbonded_force_list</cite></p></li>
 <li><p>Charge = 0.0 in <cite>self.nonbonded_force</cite></p></li>
 </ol>
 </dd>
@@ -151,7 +170,7 @@ the current ghost and switching water configuration.</p>
 </li>
 <li><dl class="simple">
 <dt>Real and not switching water:</dt><dd><ol class="arabic simple">
-<li><p><cite>is_real = 1.0</cite> in <cite>self.custom_nonbonded_force</cite></p></li>
+<li><p><cite>is_real = 1.0</cite> in every CustomNonbondedForce in <cite>self.custom_nonbonded_force_list</cite></p></li>
 <li><p>Charge = Proper_water_charge in <cite>self.nonbonded_force</cite></p></li>
 </ol>
 </dd>
@@ -159,7 +178,7 @@ the current ghost and switching water configuration.</p>
 </li>
 <li><dl class="simple">
 <dt>Switching water:</dt><dd><ol class="arabic simple">
-<li><p><cite>is_real = 1.0</cite> in <cite>self.custom_nonbonded_force</cite></p></li>
+<li><p><cite>is_real = 1.0</cite> in every CustomNonbondedForce in <cite>self.custom_nonbonded_force_list</cite></p></li>
 <li><p>Charge = 0.0 in <cite>self.nonbonded_force</cite></p></li>
 </ol>
 </dd>
@@ -212,6 +231,130 @@ only one that is switching.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.customise_force_amber">
+<span class="sig-name descname"><span class="pre">customise_force_amber</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.customise_force_amber" title="Link to this definition">¶</a></dt>
+<dd><p>In Amber, NonbondedForce handles both electrostatics and vdW. This function will remove vdW from NonbondedForce
+and create a list of CustomNonbondedForce (in this case, only 1 in the list) to handle vdW, so that the
+interaction can be switched off for certain water.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>system</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.System</span></code></span>) – openmm.System
+The system to be converted.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.customise_force_charmm">
+<span class="sig-name descname"><span class="pre">customise_force_charmm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.customise_force_charmm" title="Link to this definition">¶</a></dt>
+<dd><p>In Charmm, NonbondedForce handles electrostatics, and CustomNonbondedForce handles vdW. For vdW, this function will add
+perParticle parameters ‘is_real’, ‘is_switching’, global parameter <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code> to the CustomNonbondedForce.
+For Coulomb, this function will add ParticleParameterOffset to the switching water and <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code>
+to the NonbondedForce.</p>
+<dl class="simple">
+<dt>The CustomNonbondedForce should have the following energy expression:</dt><dd><p>‘(a/r6)^2-b/r6; r6=r^6;a=acoef(type1, type2);b=bcoef(type1, type2)’
+or
+‘acoef(type1, type2)/r^12 - bcoef(type1, type2)/r^6;’</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>system</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.System</span></code></span>) – openmm.System
+The system to be converted.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.customise_force_hybrid">
+<span class="sig-name descname"><span class="pre">customise_force_hybrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.customise_force_hybrid" title="Link to this definition">¶</a></dt>
+<dd><p>If the system is Hybrid, this function will add perParticleParameters <code class="docutils literal notranslate"><span class="pre">is_real</span></code> and <code class="docutils literal notranslate"><span class="pre">is_switching</span></code>
+to the custom_nonbonded_force (openmm.openmm.CustomNonbondedForce) for vdw.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Groups</p></th>
+<th class="head"><p>old</p></th>
+<th class="head"><p>core</p></th>
+<th class="head"><p>new</p></th>
+<th class="head"><p>fix</p></th>
+<th class="head"><p>wat</p></th>
+<th class="head"><p>swit</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>old</p></td>
+<td><p>C1</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>core</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>new</p></td>
+<td><p>None</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>fix</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td><p>C4</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>wat</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td><p>C3</p></td>
+<td><p>C3</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>swit</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td><p>C2</p></td>
+<td><p>C2</p></td>
+<td><p>C2</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>system</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.System</span></code></span>) – The system to be converted.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_ghost_list">
 <span class="sig-name descname"><span class="pre">get_ghost_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">check_system</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_ghost_list" title="Link to this definition">¶</a></dt>
 <dd><p>Get a copy of the current ghost water list.</p>
@@ -229,22 +372,6 @@ Default is False.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_particle_parameter_index_cust_nb_force">
-<span class="sig-name descname"><span class="pre">get_particle_parameter_index_cust_nb_force</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_particle_parameter_index_cust_nb_force" title="Link to this definition">¶</a></dt>
-<dd><p>Get the indices of <cite>is_real</cite> and <cite>is_switching</cite> parameters in the perParticleParameters
-of <cite>self.custom_nonbonded_force</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A tuple <cite>(is_real_index, is_switching_index)</cite> indicating the indices of the corresponding
-parameters in <cite>self.custom_nonbonded_force.getPerParticleParameterName(i)</cite>.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tuple of int</p>
 </dd>
 </dl>
 </dd></dl>
@@ -565,7 +692,7 @@ line of recording</p>
 <span class="sig-name descname"><span class="pre">set_ghost_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ghost_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_system</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.set_ghost_list" title="Link to this definition">¶</a></dt>
 <dd><p>Update the water residues in <cite>ghost_list</cite> to ghost.</p>
 <p>If <cite>check_system</cite> is True, <cite>self.check_ghost_list</cite> will be called to validate the consistency of self.ghost_list
-with <cite>self.custom_nonbonded_force</cite> and <cite>self.nonbonded_force</cite>. If the validation fails,
+with <cite>self.custom_nonbonded_force_list</cite> and <cite>self.nonbonded_force</cite>. If the validation fails,
 a ValueError will be raised.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -630,13 +757,13 @@ the updated <cite>ghost_list</cite>. Default is True.</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.Adam_GCMC">
-<span class="sig-name descname"><span class="pre">Adam_GCMC</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">unit.Quantity</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.Adam_GCMC" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">Adam_GCMC</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.Adam_GCMC" title="Link to this definition">¶</a></dt>
 <dd><p>Adam value, considering the selected sphere and water molecules in the sphere.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.Adam_box">
-<span class="sig-name descname"><span class="pre">Adam_box</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">unit.Quantity</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.Adam_box" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">Adam_box</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.Adam_box" title="Link to this definition">¶</a></dt>
 <dd><p>Adam value, considering the whole simulation box and all water molecules.</p>
 </dd></dl>
 
@@ -648,28 +775,20 @@ the updated <cite>ghost_list</cite>. Default is True.</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.chemical_potential">
-<span class="sig-name descname"><span class="pre">chemical_potential</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">unit.Quantity</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.chemical_potential" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">chemical_potential</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.chemical_potential" title="Link to this definition">¶</a></dt>
 <dd><p>Chemical potential of the GC particle.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.compound_integrator">
-<span class="sig-name descname"><span class="pre">compound_integrator</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">openmm.CompoundIntegrator</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.compound_integrator" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">compound_integrator</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.CompoundIntegrator</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.compound_integrator" title="Link to this definition">¶</a></dt>
 <dd><p>2 integrators in this attribute. The 1st one is for Canonical simulation, the 2nd one is for non-equilibirum insertion/deletion.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.custom_nonbonded_force">
-<span class="sig-name descname"><span class="pre">custom_nonbonded_force</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">openmm.CustomNonbondedForce</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.custom_nonbonded_force" title="Link to this definition">¶</a></dt>
-<dd><p>This force handles vdW. It has PerParticleParameter is_real and is_switching to control real/ghost and
-switching/non-switching. It also has a global parameter <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code> to control the switching water.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.dcd_reporter">
-<span class="sig-name descname"><span class="pre">dcd_reporter</span></span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.dcd_reporter" title="Link to this definition">¶</a></dt>
-<dd><p>Call this reporter to write the dcd trajectory file.</p>
-</dd></dl>
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.custom_nonbonded_force_list">
+<span class="sig-name descname"><span class="pre">custom_nonbonded_force_list</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.CustomNonbondedForce</span></code><span class="pre">]</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.custom_nonbonded_force_list" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.ghost_list">
@@ -679,26 +798,26 @@ switching/non-switching. It also has a global parameter <code class="docutils li
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.kBT">
-<span class="sig-name descname"><span class="pre">kBT</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">unit.Quantity</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.kBT" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">kBT</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.kBT" title="Link to this definition">¶</a></dt>
 <dd><p>k<sub>B</sub>* T, with unit.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.logger">
-<span class="sig-name descname"><span class="pre">logger</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">logging.Logger</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.logger" title="Link to this definition">¶</a></dt>
-<dd><p>Logger object</p>
+<span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.logger" title="Link to this definition">¶</a></dt>
+<dd><p>Logger for the Sampler</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.nonbonded_force">
-<span class="sig-name descname"><span class="pre">nonbonded_force</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">openmm.NonbondedForce</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.nonbonded_force" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">nonbonded_force</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.NonbondedForce</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.nonbonded_force" title="Link to this definition">¶</a></dt>
 <dd><p>This force handles Coulomb. The switching water has ParticleParameterOffset with global parameter
 <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code> to control the switching water.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.num_of_points_water">
-<span class="sig-name descname"><span class="pre">num_of_points_water</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.num_of_points_water" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">num_of_points_water</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.num_of_points_water" title="Link to this definition">¶</a></dt>
 <dd><p>The number of points in the water model. 3 for TIP3P, 4 for OPC.</p>
 </dd></dl>
 
@@ -709,70 +828,64 @@ switching/non-switching. It also has a global parameter <code class="docutils li
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.rst_reporter">
-<span class="sig-name descname"><span class="pre">rst_reporter</span></span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.rst_reporter" title="Link to this definition">¶</a></dt>
-<dd><p>Call this reporter to write the rst7 restart file.</p>
-</dd></dl>
-
-<dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.simulation">
-<span class="sig-name descname"><span class="pre">simulation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">app.Simulation</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.simulation" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">simulation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.app.simulation.Simulation</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.simulation" title="Link to this definition">¶</a></dt>
 <dd><p>Simulation ties together Topology, System, Integrator, and Context in this sampler.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.standard_volume">
-<span class="sig-name descname"><span class="pre">standard_volume</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">unit.Quantity</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.standard_volume" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">standard_volume</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.standard_volume" title="Link to this definition">¶</a></dt>
 <dd><p>Standard volume of a water molecule in the reservoir.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.switching_water">
-<span class="sig-name descname"><span class="pre">switching_water</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.switching_water" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">switching_water</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.switching_water" title="Link to this definition">¶</a></dt>
 <dd><p>The residue index of the switching water. The switching water will be set as the last water during initialization.
 It should not be changed during the simulation, as the ParticleParameterOffset can not be updated in NonbondedForce.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.system">
-<span class="sig-name descname"><span class="pre">system</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">openmm.System</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.system" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">system</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.System</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.system" title="Link to this definition">¶</a></dt>
 <dd><p>The OpenMM System object.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.system_type">
-<span class="sig-name descname"><span class="pre">system_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.system_type" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">system_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.system_type" title="Link to this definition">¶</a></dt>
 <dd><p>The type of the system. Can be Amber, Charmm or Hybrid depending on the system and energy expression in the given CustomNonbondedForce.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.temperature">
-<span class="sig-name descname"><span class="pre">temperature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">unit.Quantity</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.temperature" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">temperature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.temperature" title="Link to this definition">¶</a></dt>
 <dd><p>The reference temperature for the system, with proper units (e.g., kelvin).</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.topology">
-<span class="sig-name descname"><span class="pre">topology</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">app.Topology</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.topology" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">topology</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.app.topology.Topology</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.topology" title="Link to this definition">¶</a></dt>
 <dd><p>The OpenMM Topology object. All the res_name, atom_index, atom_name, etc. are in this topology.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.wat_params">
-<span class="sig-name descname"><span class="pre">wat_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.wat_params" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">wat_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.wat_params" title="Link to this definition">¶</a></dt>
 <dd><p>A dictionary to track the nonbonded parameter of water. The keys are <code class="docutils literal notranslate"><span class="pre">charge</span></code>, <code class="docutils literal notranslate"><span class="pre">sigma</span></code>, <code class="docutils literal notranslate"><span class="pre">epsilon</span></code>,
 The values are a list of parameters with unit.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.water_res_2_O">
-<span class="sig-name descname"><span class="pre">water_res_2_O</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.water_res_2_O" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">water_res_2_O</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.water_res_2_O" title="Link to this definition">¶</a></dt>
 <dd><p>A dictionary of residue index to the atom index of water oxygen.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.water_res_2_atom">
-<span class="sig-name descname"><span class="pre">water_res_2_atom</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.water_res_2_atom" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">water_res_2_atom</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.water_res_2_atom" title="Link to this definition">¶</a></dt>
 <dd><p>A dictionary of residue index to a list of atom indices of water.</p>
 </dd></dl>
 

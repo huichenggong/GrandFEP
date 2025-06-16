@@ -99,7 +99,7 @@
 <h1>NPTSamplerMPI<a class="headerlink" href="#nptsamplermpi" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.sampler.</span></span><span class="sig-name descname"><span class="pre">NPTSamplerMPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_lambda_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_dict=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.sampler.</span></span><span class="sig-name descname"><span class="pre">NPTSamplerMPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_lambda_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_dict=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_ReplicaExchangeMixin</span></code>, <a class="reference internal" href="NPTSampler.html#grandfep.sampler.NPTSampler" title="grandfep.sampler.NPT.NPTSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NPTSampler</span></code></a></p>
 <p>NPT Sampler class with MPI (replica exchange) support. Only Hamiltonian is allowed to be different.</p>
 <dl class="field-list simple">
@@ -169,12 +169,44 @@ The key is the MPI rank pairs, and the value is the decision and the acceptance 
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.replica_exchange_global_param">
+<span class="sig-name descname"><span class="pre">replica_exchange_global_param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calc_neighbor_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.replica_exchange_global_param" title="Link to this definition">¶</a></dt>
+<dd><p>Perform one neighbor swap replica exchange. In odd RE steps, attempt exchange between 0-1, 2-3, …
+In even RE steps, attempt exchange between 1-2, 3-4, … If RE is accepted, update the
+position/boxVector/velocity</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>calc_neighbor_only</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – If True, only the nearest neighbor will be calculated.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>reduced_energy_matrix</strong> (<em>np.array</em>) – A numpy array with the size of (n_lambda_states, n_simulated_states)</p></li>
+<li><p><strong>re_decision</strong> (<em>dict</em>) – The exchange decision between all the pairs. e.g., <code class="docutils literal notranslate"><span class="pre">{(0,1):(True,</span> <span class="pre">ratio_0_1),</span> <span class="pre">(2,3):(True,</span> <span class="pre">ratio_2_3)}</span></code>.
+The key is the MPI rank pairs, and the value is the decision and the acceptance ratio.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.report_dcd">
 <span class="sig-name descname"><span class="pre">report_dcd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.report_dcd" title="Link to this definition">¶</a></dt>
-<dd><p>Append a frame to the DCD trajectory file.</p>
+<dd><p>gather the coordinates from all MPI rank, only rank 0 writes the file. Report both dcd and rst7 files.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.State</span></code></span>) – State of the simulation. If None, it will get the current state from the simulation context.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.report_dcd_rank0">
+<span class="sig-name descname"><span class="pre">report_dcd_rank0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.report_dcd_rank0" title="Link to this definition">¶</a></dt>
+<dd><p>gather the coordinates from all MPI rank, only rank 0 writes the file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.State</span></code></span>) – State of the simulation. If None, it will get the current state from the simulation context.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -182,10 +214,21 @@ The key is the MPI rank pairs, and the value is the decision and the acceptance 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.report_rst">
 <span class="sig-name descname"><span class="pre">report_rst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.report_rst" title="Link to this definition">¶</a></dt>
-<dd><p>Write an Amber rst7 restart file.</p>
+<dd><p>gather the coordinates from all MPI rank, only rank 0 write the file.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.State</span></code></span>) – XXX</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.report_rst_rank0">
+<span class="sig-name descname"><span class="pre">report_rst_rank0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.report_rst_rank0" title="Link to this definition">¶</a></dt>
+<dd><p>gather the coordinates from all MPI rank, only rank 0 write the file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.State</span></code></span>) – XXX</p>
 </dd>
 </dl>
 </dd></dl>
@@ -213,6 +256,20 @@ and init_lambda_state should be one of the values in <code class="docutils liter
 <li><p><strong>lambda_dict</strong> (<em>dict</em>) – A dictionary of mapping from global parameters to their values in all the sampling states.
 For example, <code class="docutils literal notranslate"><span class="pre">{&quot;lambda_gc_vdw&quot;:</span> <span class="pre">[0.0,</span> <span class="pre">0.5,</span> <span class="pre">1.0,</span> <span class="pre">1.0,</span> <span class="pre">1.0],</span> <span class="pre">&quot;lambda_gc_coulomb&quot;:</span> <span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">1.0,</span> <span class="pre">0.5,</span> <span class="pre">1.0]}</span></code></p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.set_lambda_state">
+<span class="sig-name descname"><span class="pre">set_lambda_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.set_lambda_state" title="Link to this definition">¶</a></dt>
+<dd><p>Set the lambda state index for this replica.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> (<em>int</em>) – The lambda state index for this replica, counting from 0</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -254,15 +311,9 @@ For example, <code class="docutils literal notranslate"><span class="pre">{&quot
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.dcd_reporter">
-<span class="sig-name descname"><span class="pre">dcd_reporter</span></span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.dcd_reporter" title="Link to this definition">¶</a></dt>
-<dd><p>Call this reporter to write the dcd trajectory file.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.init_lambda_state">
-<span class="sig-name descname"><span class="pre">init_lambda_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.init_lambda_state" title="Link to this definition">¶</a></dt>
-<dd><p>Lambda state index for this replica, counting from 0</p>
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.dcd_reporter_dict">
+<span class="sig-name descname"><span class="pre">dcd_reporter_dict</span></span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.dcd_reporter_dict" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of all the dcd reporter. Call the reporter inside to write the dcd trajectory file.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -278,9 +329,21 @@ For example, <code class="docutils literal notranslate"><span class="pre">{&quot
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.lambda_state_index">
+<span class="sig-name descname"><span class="pre">lambda_state_index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.lambda_state_index" title="Link to this definition">¶</a></dt>
+<dd><p>Lambda state index for this replica, counting from 0</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.lambda_states_list">
 <span class="sig-name descname"><span class="pre">lambda_states_list</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></em><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.lambda_states_list" title="Link to this definition">¶</a></dt>
 <dd><p>Index of the Lambda state which is simulated. All the init_lambda_state in this MPI run can be fetched with <code class="docutils literal notranslate"><span class="pre">self.lambda_states_list[rank]</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.logger">
+<span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.logger" title="Link to this definition">¶</a></dt>
+<dd><p>Logger for the Sampler</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -302,9 +365,9 @@ For example, <code class="docutils literal notranslate"><span class="pre">{&quot
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.rst_reporter">
-<span class="sig-name descname"><span class="pre">rst_reporter</span></span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.rst_reporter" title="Link to this definition">¶</a></dt>
-<dd><p>Call this reporter to write the rst7 restart file.</p>
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.rst_reporter_dict">
+<span class="sig-name descname"><span class="pre">rst_reporter_dict</span></span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.rst_reporter_dict" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of all the rst7 reporter. Call the reporter inside to write the rst7 restart file.</p>
 </dd></dl>
 
 <dl class="py attribute">

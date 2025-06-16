@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Versions &#8212; GrandFEP  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=3f530b75" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=fd3c8104" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tutorials" href="tutorial/tutorial.html" />
+    <link rel="prev" title="Introduction" href="intro.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">GrandFEP</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=huichenggong&repo=GrandFEP&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="intro.html">Introduction</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="intro.html#background">1. Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#installation">2. Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#citation">3. Citation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#author-s-and-contact">4. Author(s) and Contact</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="intro.html#developmental-log">5. Developmental Log</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/tutorial.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">GrandFEP API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="commandline.html">GrandFEP CLI</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="intro.html">Introduction</a><ul>
+      <li>Previous: <a href="intro.html" title="previous chapter">Introduction</a></li>
+      <li>Next: <a href="tutorial/tutorial.html" title="next chapter">Tutorials</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="versions">
+<h1>Versions<a class="headerlink" href="#versions" title="Link to this heading">¶</a></h1>
+<section id="v0-1-1-speed-up-updateparametersincontext">
+<h2>v0.1.1 Speed up <code class="docutils literal notranslate"><span class="pre">updateParametersInContext</span></code><a class="headerlink" href="#v0-1-1-speed-up-updateparametersincontext" title="Link to this heading">¶</a></h2>
+<section id="create-a-new-branch">
+<h3>Create a new branch<a class="headerlink" href="#create-a-new-branch" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># create a new branch and switch to it</span>
+git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span><span class="m">0</span>.1.1_dev
+
+<span class="c1"># push the branch to github</span>
+git<span class="w"> </span>push<span class="w"> </span>-u<span class="w"> </span>origin<span class="w"> </span><span class="m">0</span>.1.1_dev
+
+<span class="c1"># merge to master</span>
+git<span class="w"> </span>checkout<span class="w"> </span>master
+git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>master
+git<span class="w"> </span>merge<span class="w"> </span><span class="m">0</span>.1.1_dev
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>master
+</pre></div>
+</div>
+</section>
+<section id="problem-to-be-solved">
+<h3>Problem to be Solved<a class="headerlink" href="#problem-to-be-solved" title="Link to this heading">¶</a></h3>
+<p>In the <code class="docutils literal notranslate"><span class="pre">0.1.0</span></code>, <code class="docutils literal notranslate"><span class="pre">updateParametersInContext</span></code> cost ~1 min. This means if a RE/GCMC is accepted, the particular replica will spend 1 min  waiting. There are two solutions to speed this up.</p>
+</section>
+<section id="solution-part-1-no-configuration-exchange-in-re">
+<h3>Solution Part 1: no configuration exchange in RE<a class="headerlink" href="#solution-part-1-no-configuration-exchange-in-re" title="Link to this heading">¶</a></h3>
+<p>In RE, if a move is accepted, the global parameter(s) in the MPI rank changes while the coordinate and velocity stay in the MPI rank. Each rank has to figure out which file to append during the <code class="docutils literal notranslate"><span class="pre">report_rst</span></code> and <code class="docutils literal notranslate"><span class="pre">report_dcd</span></code>. Rank 0 write the reduced energy to a csv file.</p>
+<p>By applying this, RE will only change the global parameter and will neither call <code class="docutils literal notranslate"><span class="pre">set_ghost_list</span></code> nor call <code class="docutils literal notranslate"><span class="pre">updateParametersInContext</span></code>.</p>
+</section>
+<section id="solution-part-2-split-water-water-into-new-customnonbondedforce">
+<h3>Solution Part 2: split water-water into new CustomNonbondedForce<a class="headerlink" href="#solution-part-2-split-water-water-into-new-customnonbondedforce" title="Link to this heading">¶</a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"><p>old</p></th>
+<th class="head"><p>core</p></th>
+<th class="head"><p>new</p></th>
+<th class="head"><p>fix</p></th>
+<th class="head"><p>wat</p></th>
+<th class="head"><p>Switch</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Old</p></td>
+<td><p>C1</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Core</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>New</p></td>
+<td><p>None</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Fix</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td><p>C4</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Wat</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td><p>C3</p></td>
+<td><p>C3</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Switch</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td><p>C1</p></td>
+<td><p>C2</p></td>
+<td><p>C2</p></td>
+<td><p>C2</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">C1</span></code> uses the same energy expression as before. The <code class="docutils literal notranslate"><span class="pre">env</span></code> group includes <code class="docutils literal notranslate"><span class="pre">Fix</span></code> and <code class="docutils literal notranslate"><span class="pre">Wat</span></code>, and the <code class="docutils literal notranslate"><span class="pre">env</span></code>-<code class="docutils literal notranslate"><span class="pre">env</span></code> intrection is now included in this <code class="docutils literal notranslate"><span class="pre">CustomNonbondedForce</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">C2</span></code> does not need to split state A and B in per particle parameter. It still need <code class="docutils literal notranslate"><span class="pre">is_real</span></code> and <code class="docutils literal notranslate"><span class="pre">is_switch</span></code>, the same as <code class="docutils literal notranslate"><span class="pre">C1</span></code>. It avoids the many global parameters which controls the RBFE and only includes <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code> and <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code> for controlling the switching water</p>
+<p><code class="docutils literal notranslate"><span class="pre">C3</span></code> only needs <code class="docutils literal notranslate"><span class="pre">is_real</span></code>, no global parameter</p>
+<p><code class="docutils literal notranslate"><span class="pre">C4</span></code> does not change.</p>
+<p>If water H has no vdw, remove them from the water group also speeds up the update. In this version, for the same HSP90 system, the time for <code class="docutils literal notranslate"><span class="pre">updateParametersInContext</span></code> is ~ 7s.</p>
+</section>
+</section>
+<section id="v0-1-0-basic-gc-fep-functionalities">
+<h2>v0.1.0 Basic GC FEP functionalities<a class="headerlink" href="#v0-1-0-basic-gc-fep-functionalities" title="Link to this heading">¶</a></h2>
+<section id="documentation">
+<h3>1. Documentation<a class="headerlink" href="#documentation" title="Link to this heading">¶</a></h3>
+<section id="install-sphinx-and-autodoc-extention">
+<h4>1.1 Install Sphinx and autodoc extention<a class="headerlink" href="#install-sphinx-and-autodoc-extention" title="Link to this heading">¶</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>sphinx<span class="w"> </span>sphinx-autodoc-typehints
+mamba<span class="w"> </span>install<span class="w"> </span>ghp-import<span class="w"> </span><span class="c1"># for pushing doc to github</span>
+pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>sphinx_mdinclude<span class="w"> </span><span class="c1"># for markdown support</span>
+</pre></div>
+</div>
+</section>
+<section id="initialize-sphinx-in-the-project">
+<h4>1.2 Initialize Sphinx in the project<a class="headerlink" href="#initialize-sphinx-in-the-project" title="Link to this heading">¶</a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sphinx</span><span class="o">-</span><span class="n">quickstart</span> <span class="n">docs</span>
+</pre></div>
+</div>
+<p>Edit <code class="docutils literal notranslate"><span class="pre">docs/conf.py</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>html
+</pre></div>
+</div>
+</section>
+<section id="push-the-documentation-to-gh-pages">
+<h4>1.3 Push the documentation to gh-pages<a class="headerlink" href="#push-the-documentation-to-gh-pages" title="Link to this heading">¶</a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ghp</span><span class="o">-</span><span class="kn">import</span><span class="w"> </span><span class="o">-</span><span class="n">n</span> <span class="o">-</span><span class="n">p</span> <span class="n">docs</span><span class="o">/</span><span class="n">_build</span><span class="o">/</span><span class="n">html</span>
+</pre></div>
+</div>
+</section>
+<section id="check-it-online">
+<h4>1.4 Check it online<a class="headerlink" href="#check-it-online" title="Link to this heading">¶</a></h4>
+<p><a class="reference external" href="https://huichenggong.github.io/GrandFEP/">Documentation</a></p>
+</section>
+</section>
+<section id="set-up-pytest-mpi">
+<h3>2. set up pytest-mpi<a class="headerlink" href="#set-up-pytest-mpi" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>pytest-mpi
+</pre></div>
+</div>
+<section id="run-npt-re-test">
+<h4>2.1 Run NPT RE test<a class="headerlink" href="#run-npt-re-test" title="Link to this heading">¶</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">4</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>--with-mpi<span class="w"> </span>test/test_NPT_MPI.py
+</pre></div>
+</div>
+</section>
+<section id="run-gc-re-test">
+<h4>2.2 Run GC RE test<a class="headerlink" href="#run-gc-re-test" title="Link to this heading">¶</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">4</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>--with-mpi<span class="w"> </span>test/test_GC_MPI.py::test_GC_RE
+mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">8</span><span class="w"> </span>--use-hwthread-cpus<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>--with-mpi<span class="w"> </span>test/test_GC_MPI.py::test_GC_RE
+<span class="c1"># I only have 4 physical cores here.</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Chenggong Hui.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/devlog.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/huichenggong/GrandFEP" class="github">
+        <img src="_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

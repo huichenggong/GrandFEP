@@ -166,6 +166,42 @@
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="grandfep.utils.dcd_reporter">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">dcd_reporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reportInterval</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforcePeriodicBox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.dcd_reporter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">DCDReporter</span></code></p>
+<p>A custom DCD reporter that can report from coordinate np.array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file</strong> (<em>string</em>) – The file to write to</p></li>
+<li><p><strong>reportInterval</strong> (<em>int</em>) – The interval (in time steps) at which to write frames</p></li>
+<li><p><strong>append</strong> (<em>bool=False</em>) – If True, open an existing DCD file to append to.  If False, create a new file.</p></li>
+<li><p><strong>enforcePeriodicBox</strong> (<em>bool</em>) – Specifies whether particle positions should be translated so the center of every molecule
+lies in the same periodic box.  If None (the default), it will automatically decide whether
+to translate molecules based on whether the system being simulated uses periodic boundary
+conditions.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.dcd_reporter.report_positions">
+<span class="sig-name descname"><span class="pre">report_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">simulation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periodicBoxVectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions_nm</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.dcd_reporter.report_positions" title="Link to this definition">¶</a></dt>
+<dd><p>Write one frame to the DCD file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>simulation</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.app.simulation.Simulation</span></code></span>) – The Simulation to generate a report for</p></li>
+<li><p><strong>periodicBoxVectors</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">typing.Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.vec3.Vec3</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.array</span></code>]</span>) – You can prepare this np.array with <code class="docutils literal notranslate"><span class="pre">state.getPeriodicBoxVectors()</span></code></p></li>
+<li><p><strong>positions_nm</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">typing.Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code>]</span>) – You can prepare this np.array with <code class="docutils literal notranslate"><span class="pre">state.getPositions(asNumpy=True).value_in_unit(unit.nanometers)</span></code>.
+It should either be <code class="docutils literal notranslate"><span class="pre">unit.Quantity</span></code> or value in nm.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="grandfep.utils.md_params_yml">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">md_params_yml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">yml_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.md_params_yml" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -617,6 +653,46 @@ can give a list of lambda values for the path of GC insertion.</p>
 </section>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="grandfep.utils.rst7_reporter">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">rst7_reporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reportInterval</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_multiple</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">netcdf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_velocities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.rst7_reporter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">RestartReporter</span></code></p>
+<p>A reporter to handle writing Amber rst7 restart files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file</strong> (<em>str</em>) – Name of the file to write the restart to.</p></li>
+<li><p><strong>reportInterval</strong> (<em>int</em>) – Number of steps between writing restart files</p></li>
+<li><p><strong>write_multiple</strong> (<em>bool=False</em>) – Either write a separate restart each time (appending the step number in
+the format .# to the file name given above) if True, or overwrite the
+same file each time if False</p></li>
+<li><p><strong>netcdf</strong> (<em>bool=False</em>) – Use the Amber NetCDF restart file format</p></li>
+<li><p><strong>write_velocities</strong> (<em>bool=True</em>) – Write velocities to the restart file. You can turn this off for passing
+in, for instance, a minimized structure.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.rst7_reporter.report_positions_velocities">
+<span class="sig-name descname"><span class="pre">report_positions_velocities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periodicBoxVectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions_A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocities</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.rst7_reporter.report_positions_velocities" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a report.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.app.simulation.Simulation</span></code></span>) – The Simulation to generate a report for</p></li>
+<li><p><strong>state</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.State</span></code></span>) – The current state of the simulation. Only the time will be read from this state.</p></li>
+<li><p><strong>periodicBoxVectors</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">typing.Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.vec3.Vec3</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.array</span></code>]</span>) – You can prepare this np.array with <code class="docutils literal notranslate"><span class="pre">state.getPeriodicBoxVectors()</span></code></p></li>
+<li><p><strong>positions_A</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">typing.Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code>]</span>) – You can prepare this np.array with <code class="docutils literal notranslate"><span class="pre">state.getPositions(asNumpy=True).value_in_unit(unit.angstrom)</span></code>.
+It should either be <code class="docutils literal notranslate"><span class="pre">unit.Quantity</span></code> or value in Angstrom.</p></li>
+<li><p><strong>velocities</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">typing.Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code>]</span>) – You can prepare this np.array with <code class="docutils literal notranslate"><span class="pre">state.getVelocities(asNumpy=True).value_in_unit(unit.angstrom/unit.picosecond)</span></code>.
+It should either be <code class="docutils literal notranslate"><span class="pre">unit.Quantity</span></code> or value in Angstrom/ps.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="grandfep.utils.find_mapping">
 <span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">find_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">map_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resB</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.find_mapping" title="Link to this definition">¶</a></dt>
@@ -625,8 +701,10 @@ can give a list of lambda values for the path of GC insertion.</p>
 <h2>Parameter<a class="headerlink" href="#parameter" title="Link to this heading">¶</a></h2>
 <dl>
 <dt>map_list :</dt><dd><p>A list of mapping. For example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[{</span><span class="s1">&#39;res_nameA&#39;</span><span class="p">:</span> <span class="s1">&#39;MOL&#39;</span><span class="p">,</span> <span class="s1">&#39;res_nameB&#39;</span><span class="p">:</span> <span class="s1">&#39;MOL&#39;</span><span class="p">,</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[{</span><span class="s1">&#39;res_nameA&#39;</span><span class="p">:</span> <span class="s1">&#39;MOL&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;res_nameB&#39;</span><span class="p">:</span> <span class="s1">&#39;MOL&#39;</span><span class="p">,</span>
   <span class="s1">&#39;index_map&#39;</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+ <span class="p">}]</span>
 </pre></div>
 </div>
 </dd>
@@ -781,6 +859,22 @@ to define the box. Without setting the box, trajectory files may lack box inform
 <li><p><em>old_to_new_core</em> – A dictionay for Alchemical (core) atoms that should map from old (state A) to new (state B)</p></li>
 </ul>
 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.prepare_restraints_force">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">prepare_restraints_force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_resname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'HOH'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.prepare_restraints_force" title="Link to this definition">¶</a></dt>
+<dd><p>Prepare a force to add position restraints to heavy atoms. 1/2 * k * (x - x0)^2</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>topology</strong> (<em>openmm.app.Topology</em>) – The OpenMM topology object.</p></li>
+<li><p><strong>positions</strong> (<em>openmm.unit.Quantity</em>) – The reference positions of the atoms in the system.</p></li>
+<li><p><strong>fc</strong> (<em>openmm.unit.Quantity</em>) – The force constant for the position restraints. Unit in kJ/mol/nm^2.</p></li>
+<li><p><strong>water_resname</strong> (<em>str</em>) – The residue name of water molecules to be excluded from the restraints. Default is “HOH”.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

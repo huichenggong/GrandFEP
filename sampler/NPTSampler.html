@@ -99,7 +99,7 @@
 <h1>NPTSampler<a class="headerlink" href="#nptsampler" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="grandfep.sampler.NPTSampler">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.sampler.</span></span><span class="sig-name descname"><span class="pre">NPTSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.sampler.</span></span><span class="sig-name descname"><span class="pre">NPTSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_reporter=True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>NPT Sampler class</p>
 <dl class="field-list simple">
@@ -169,9 +169,9 @@
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="grandfep.sampler.NPTSampler.dcd_reporter">
-<span class="sig-name descname"><span class="pre">dcd_reporter</span></span><a class="headerlink" href="#grandfep.sampler.NPTSampler.dcd_reporter" title="Link to this definition">¶</a></dt>
-<dd><p>Call this reporter to write the dcd trajectory file.</p>
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSampler.dcd_reporter_dict">
+<span class="sig-name descname"><span class="pre">dcd_reporter_dict</span></span><a class="headerlink" href="#grandfep.sampler.NPTSampler.dcd_reporter_dict" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of all the dcd reporter. Call the reporter inside to write the dcd trajectory file.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -181,9 +181,15 @@
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="grandfep.sampler.NPTSampler.rst_reporter">
-<span class="sig-name descname"><span class="pre">rst_reporter</span></span><a class="headerlink" href="#grandfep.sampler.NPTSampler.rst_reporter" title="Link to this definition">¶</a></dt>
-<dd><p>Call this reporter to write the rst7 restart file.</p>
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSampler.logger">
+<span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#grandfep.sampler.NPTSampler.logger" title="Link to this definition">¶</a></dt>
+<dd><p>Logger for the Sampler</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSampler.rst_reporter_dict">
+<span class="sig-name descname"><span class="pre">rst_reporter_dict</span></span><a class="headerlink" href="#grandfep.sampler.NPTSampler.rst_reporter_dict" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of all the rst7 reporter. Call the reporter inside to write the rst7 restart file.</p>
 </dd></dl>
 
 <dl class="py attribute">
