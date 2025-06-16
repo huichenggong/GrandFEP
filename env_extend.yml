@@ -23,3 +23,5 @@ dependencies:
   - matplotlib
   - pytest-mpi
   - ghp-import
+  - rdkit
+  
