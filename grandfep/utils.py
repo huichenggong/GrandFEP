@@ -361,6 +361,16 @@ def prepare_restraints_force(topology: app.Topology, positions: unit.Quantity, f
     solvent_resname : list
         The residue name of water molecules to be excluded from the restraints. Default is "HOH", "Na+", "K+", "Cl-".
 
+    Returns
+    -------
+    posres :
+        An OpenMM CustomExternalForce object for position restraints.
+
+    res_atom_count : int
+        The number of atoms in the system that are restrained.
+
+    res_residue_list : list
+        A list of residue names that are restrained.
     """
     if solvent_resname is None:
         solvent_resname = ["HOH", "Na+", "K+", "Cl-"]
@@ -370,16 +380,18 @@ def prepare_restraints_force(topology: app.Topology, positions: unit.Quantity, f
     posres.addPerParticleParameter('y0')
     posres.addPerParticleParameter('z0')
     res_atom_count = 0
+    res_residue_list = []
     for res in topology.residues():
         if res.name in solvent_resname:
             continue
+        res_residue_list.append(res.name)
         for at in res.atoms():
             if at.element.symbol == "H" or at.element.symbol is None:
                 continue
             pos = positions[at.index]
             posres.addParticle(at.index, [fc, pos[0], pos[1], pos[2]])
             res_atom_count += 1
-    return posres, res_atom_count
+    return posres, res_atom_count, res_residue_list
 
 class md_params_yml:
     """
