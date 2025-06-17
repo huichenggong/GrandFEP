@@ -342,7 +342,8 @@ def prepare_atom_map(topologyA: app.Topology, topologyB: app.Topology, map_list:
             raise ValueError(f"{resA} - {resB} Cannot be Mapped")
     return old_to_new_all, old_to_new_core
 
-def prepare_restraints_force(topology: app.Topology, positions: unit.Quantity, fc: unit.Quantity, water_resname: str ="HOH"):
+def prepare_restraints_force(topology: app.Topology, positions: unit.Quantity, fc: unit.Quantity,
+                             solvent_resname=None):
     """
     Prepare a force to add position restraints to heavy atoms. 1/2 * k * (x - x0)^2
 
@@ -357,10 +358,12 @@ def prepare_restraints_force(topology: app.Topology, positions: unit.Quantity, f
     fc : openmm.unit.Quantity
         The force constant for the position restraints. Unit in kJ/mol/nm^2.
 
-    water_resname : str
-        The residue name of water molecules to be excluded from the restraints. Default is "HOH".
+    solvent_resname : list
+        The residue name of water molecules to be excluded from the restraints. Default is "HOH", "Na+", "K+", "Cl-".
 
     """
+    if solvent_resname is None:
+        solvent_resname = ["HOH", "Na+", "K+", "Cl-"]
     posres = openmm.CustomExternalForce('0.5*k*periodicdistance(x, y, z, x0, y0, z0)^2;')
     posres.addPerParticleParameter('k')
     posres.addPerParticleParameter('x0')
@@ -368,7 +371,7 @@ def prepare_restraints_force(topology: app.Topology, positions: unit.Quantity, f
     posres.addPerParticleParameter('z0')
     res_atom_count = 0
     for res in topology.residues():
-        if res.name == water_resname:
+        if res.name in solvent_resname:
             continue
         for at in res.atoms():
             if at.element.symbol == "H" or at.element.symbol is None:
