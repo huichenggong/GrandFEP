@@ -1,3 +1,11 @@
+## v0.1.2 
+### Problem to be Solved
+1. Add trajectory processing tools. We need 1. center the trajectory, 2. remove the water, 3. cluster water.
+2. Make output writing more efficient.
+3. Hybrid system with CMAP.
+4. Why does OPC water have force when all the nonbonded interactions are turned off?
+5. Lambda path optimization.
+
 ## v0.1.1 Speed up `updateParametersInContext`
 ### Create a new branch
 ```bash
@@ -24,14 +32,14 @@ stay in the MPI rank. Only rank 0 collects and writes the trajectory/rst/energy.
 By applying this, RE will only change the global parameter and will neither call `set_ghost_list` nor call `updateParametersInContext`.
 
 ### Solution Part 2: split water-water into new CustomNonbondedForce
-|        | old  | core | new  | fix  | wat  | Switch |
-|--------|------|------|------|------|------|--------|
-| Old    |  C1  |      |      |      |      |        |
-| Core   |  C1  |  C1  |      |      |      |        |
-| New    | None |  C1  |  C1  |      |      |        |
-| Fix    |  C1  |  C1  |  C1  |  C4  |      |        |
-| Wat    |  C1  |  C1  |  C1  |  C3  |  C3  |        |
-| Switch |  C1  |  C1  |  C1  |  C2  |  C2  |  C2    |
+|        | Old  | Core | New | Fix | Wat | Switch |
+|--------|------|------|-----|-----|-----|--------|
+| Old    | C1   |      |     |     |     |        |
+| Core   | C1   | C1   |     |     |     |        |
+| New    | None | C1   | C1  |     |     |        |
+| Fix    | C1   | C1   | C1  | C4  |     |        |
+| Wat    | C1   | C1   | C1  | C3  | C3  |        |
+| Switch | C1   | C1   | C1  | C2  | C2  |  C2    |
 
 `C1` uses the same energy expression as before. The `env` group includes `Fix` and `Wat`, and the `env`-`env` intrection is now included in this `CustomNonbondedForce`.  
 
