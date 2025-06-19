@@ -810,31 +810,38 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
             if flag_inside and flag_not_s and flag_real:
                 water_inside.append(res_index)
         n_water = len(water_inside)
-        r_wat_index = np.random.choice(water_inside)
-        self.set_ghost_list(ghost_list_old + [int(r_wat_index)], check_system=False)
-        for at_real, at_switch in zip(self.water_res_2_atom[r_wat_index],
-                                      self.water_res_2_atom[self.switching_water]):
-            # swap
-            pos_new[[at_real, at_switch]] = pos_new[[at_switch, at_real]]
-            vel_new[[at_real, at_switch]] = vel_new[[at_switch, at_real]]
-        self.simulation.context.setPositions(pos_new)
-        self.simulation.context.setVelocities(-vel_new)
-
-        explosion, protocol_work, protocol_work_list = self.work_process(n_prop, l_vdw_list, l_chg_list)
-
-        state = self.simulation.context.getState(getPositions=True)
-        water_stat_dict, _dist = self.get_water_state(state.getPositions(asNumpy=True))
-
-        sw_water_inside = True
-        if explosion:
-            acc_prob = 0
-        elif water_stat_dict[self.switching_water] == 0:
-            acc_prob = 0
-            sw_water_inside = False
+        if n_water == 0:
+            accept=False
+            acc_prob=0
+            protocol_work = 0.0 * unit.kilocalories_per_mole
+            protocol_work_list = [0.0]
+            sw_water_inside=False
         else:
-            acc_prob = math.exp(-self.Adam_GCMC) * math.exp(-protocol_work / self.kBT) * n_water
+            r_wat_index = np.random.choice(water_inside)
+            self.set_ghost_list(ghost_list_old + [int(r_wat_index)], check_system=False)
+            for at_real, at_switch in zip(self.water_res_2_atom[r_wat_index],
+                                          self.water_res_2_atom[self.switching_water]):
+                # swap
+                pos_new[[at_real, at_switch]] = pos_new[[at_switch, at_real]]
+                vel_new[[at_real, at_switch]] = vel_new[[at_switch, at_real]]
+            self.simulation.context.setPositions(pos_new)
+            self.simulation.context.setVelocities(-vel_new)
 
-        accept = np.random.rand() < acc_prob
+            explosion, protocol_work, protocol_work_list = self.work_process(n_prop, l_vdw_list, l_chg_list)
+
+            state = self.simulation.context.getState(getPositions=True)
+            water_stat_dict, _dist = self.get_water_state(state.getPositions(asNumpy=True))
+
+            sw_water_inside = True
+            if explosion:
+                acc_prob = 0
+            elif water_stat_dict[self.switching_water] == 0:
+                acc_prob = 0
+                sw_water_inside = False
+            else:
+                acc_prob = math.exp(-self.Adam_GCMC) * math.exp(-protocol_work / self.kBT) * n_water
+
+            accept = np.random.rand() < acc_prob
         if accept:
             # re-count the number of water inside the sphere
             state_new = self.simulation.context.getState(getPositions=True)
