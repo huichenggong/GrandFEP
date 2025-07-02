@@ -541,7 +541,7 @@ class HybridTopologyFactory:
             else:
 
                 if constraint_lengths[hybrid_atoms] != length:
-                    raise AssertionError('constraint length is changing')
+                    raise AssertionError(f'constraint length between {at1} and {at2} in the old system is changing')
 
         # new system
         hybrid_map = self._new_to_hybrid_map
@@ -555,7 +555,7 @@ class HybridTopologyFactory:
                 constraint_lengths[hybrid_atoms] = length
             else:
                 if constraint_lengths[hybrid_atoms] != length:
-                    raise AssertionError('constraint length is changing')
+                    raise AssertionError(f'constraint length between {at1} and {at2} in the new system is changing')
 
     @staticmethod
     def _copy_threeparticleavg(atm_map, env_atoms, vs):
