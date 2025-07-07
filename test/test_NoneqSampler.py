@@ -159,6 +159,21 @@ class MyTestCase(unittest.TestCase):
             )))
         self.assertDictEqual(water_state_dict, {1: 1, 2: 1, 3: 1, 4: 1})
 
+        print("# move water and check again")
+        pdb = app.PDBFile(str(self.base / "CH4_C2H6/lig0/06_solv_shift-2.pdb"))
+        ngcmc.simulation.context.setPositions(pdb.positions)
+        pos = ngcmc.simulation.context.getState(getPositions=True).getPositions(asNumpy=True)
+        water_state_dict, dist_all_o = ngcmc.get_water_state(pos)
+        self.assertTrue(
+            np.all(np.isclose(
+                dist_all_o, np.array([
+                    0.761234195238233,
+                    0.4311484547113674,
+                    0.39189719315146916,
+                    0.333233686772511])
+            )))
+        self.assertDictEqual(water_state_dict, {1: 0, 2: 1, 3: 1, 4: 1})
+
     def test_insert_empty(self):
         print()
         print("# Insertion BOX, with high Adam")

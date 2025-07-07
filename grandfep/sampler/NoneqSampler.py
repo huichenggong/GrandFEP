@@ -627,10 +627,10 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         Returns
         -------
         water_state_dict : dict
-            A dictionary label whether the water molecule is inside the box (1) or not (0).
+            A dictionary label whether the water molecule is inside the sphere (1) or not (0).
 
         dist_all_o : np.array
-            All the distance bewteen water oxygen and the center of the sphere.
+            The distance between all the water oxygen and the center of the sphere. Value in nanometers.
 
         """
         sphere_center = self.get_sphere_center(positions).value_in_unit(unit.nanometer)
