@@ -695,7 +695,7 @@ class FreeEAnalysis:
         kBT_val = self.kBT.value_in_unit(unit.kilocalorie_per_mole)
         u_unco = self.u_unco
         N_k = self.N_k
-        mbar = pymbar.MBAR(np.vstack(u_unco).T, N_k)
+        mbar = pymbar.MBAR(np.vstack(u_unco).T, N_k, initialize="BAR", solver_protocol="robust")
         res = mbar.compute_free_energy_differences()
         dG = res["Delta_f"] * kBT_val
         dG_err = res["dDelta_f"] * kBT_val
@@ -746,21 +746,21 @@ class FreeEAnalysis:
     def print_res_all(res_all):
         print(f" A - B :   ", end="")
         for k, v in res_all.items():
-            print(f"{k:23}", end="")
+            print(f"{k:24}", end="")
         print()
 
-        print("-" * (10 + len(res_all) * 23))
+        print("-" * (10 + len(res_all) * 24))
 
         for i in range(len(v[-1])):
             print(f"{i:2d} -{i + 1:2d} :", end="")
             for k, (dG, dG_err, v) in res_all.items():
-                print(f" {v[i, 0]:7.3f} +- {v[i, 1]:6.3f} {v[i, 2]:4.2f}", end="")
+                print(f" {v[i, 0]:8.4f} +- {v[i, 1]:7.4f} {v[i, 2]:4.2f}", end="")
             print()
 
-        print("-" * (10 + len(res_all) * 23))
+        print("-" * (10 + len(res_all) * 24))
         print("Total  :", end="")
         for k, (dG, dG_err, v) in res_all.items():
-            print(f" {dG[0, -1]:7.3f} +- {dG_err[0, -1]:6.3f}     ", end="")
+            print(f" {dG[0, -1]:8.4f} +- {dG_err[0, -1]:7.4f}     ", end="")
         print()
 
 class dcd_reporter(app.DCDReporter):
