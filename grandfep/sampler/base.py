@@ -68,7 +68,7 @@ class BaseGrandCanonicalMonteCarloSampler:
 
     create_simulation :
         Whether to create a system inside this class. When you only want to customize the system using this class,
-        you can set this to False, to avoid unecessary memory usage.
+        you can set this to False, to avoid unnecessary memory usage.
 
     """
     def __init__(self,
