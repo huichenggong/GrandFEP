@@ -210,9 +210,13 @@ class HybridTopologyFactory:
 
         has_nonbonded_force = ('NonbondedForce' in self._old_system_forces or
                                'NonbondedForce' in self._new_system_forces)
+        has_CMAPs = self._has_CMAPs()
 
         if has_nonbonded_force:
             self._add_nonbonded_force_terms()
+
+        if has_CMAPs:
+            self._add_CMAP_torsion_force()
 
         # Call each force preparation method to generate the actual
         # interactions that we need:
@@ -228,6 +232,9 @@ class HybridTopologyFactory:
             if not (len(self._old_system_exceptions.keys()) == 0 and
                     len(self._new_system_exceptions.keys()) == 0):
                 self._handle_old_new_exceptions()
+
+        if has_CMAPs:
+            self._handle_CMAP_torsion_force()
 
         # Get positions for the hybrid
         self._hybrid_positions = self._compute_hybrid_positions()
@@ -326,9 +333,13 @@ class HybridTopologyFactory:
 
         def _check_unknown_forces(forces, system_name):
             # TODO: double check that CMMotionRemover is ok being here
-            known_forces = {'HarmonicBondForce', 'HarmonicAngleForce',
-                            'PeriodicTorsionForce', 'NonbondedForce',
-                            'MonteCarloBarostat', 'CMMotionRemover'}
+            known_forces = {'HarmonicBondForce',
+                            'HarmonicAngleForce',
+                            'PeriodicTorsionForce',
+                            'NonbondedForce',
+                            'MonteCarloBarostat',
+                            'CMMotionRemover',
+                            'CMAPTorsionForce'}
 
             force_names = forces.keys()
             unknown_forces = set(force_names) - set(known_forces)
@@ -763,6 +774,37 @@ class HybridTopologyFactory:
         unique_atom_torsion_force = openmm.PeriodicTorsionForce()
         self._hybrid_system.addForce(unique_atom_torsion_force)
         self._hybrid_system_forces['unique_atom_torsion_force'] = unique_atom_torsion_force
+
+    def _has_CMAPs(self):
+        """
+        Check if the old and new systems have identical CMAPs.
+
+        :return:
+        """
+        # If there is no CMAP torsion force in the old/new system, do nothing
+        old_has = 'CMAPTorsionForce' in self._old_system_forces
+        new_has = 'CMAPTorsionForce' in self._new_system_forces
+        if not old_has and not new_has:
+            return False
+        elif not old_has and new_has:
+            errmsg = "New system has CMAP torsion force, but old system does not."
+            raise ValueError(errmsg)
+        elif old_has and not new_has:
+            errmsg = "Old system has CMAP torsion force, but new system does not."
+            raise ValueError(errmsg)
+        else:
+            return True
+
+    def _add_CMAP_torsion_force(self):
+        """
+        This function adds the CMAP torsion force to the hybrid system. At the moment, only identical CMAPs in old
+        and new systems are supported.
+
+        :return:
+        """
+        force = openmm.CMAPTorsionForce()
+        self._hybrid_system.addForce(force)
+        self._hybrid_system_forces['cmap_torsion_force'] = force
 
     @staticmethod
     def _nonbonded_custom(v2):
@@ -1522,6 +1564,95 @@ class HybridTopologyFactory:
                 hybrid_index_list[2], hybrid_index_list[3],
                 hybrid_force_parameters
             )
+
+    def _handle_CMAP_torsion_force(self):
+        """
+        Only identical CMAPs are supported for now.
+        1. Add map and torsion terms from the old system to the hybrid.
+        2. Check that the new system has the same maps and torsions as the old system.
+
+        :return: None
+        """
+
+        # number of MAPs and torsions should be the same
+        old_system_cmap_force = self._old_system_forces['CMAPTorsionForce']
+        new_system_cmap_force = self._new_system_forces['CMAPTorsionForce']
+        if not old_system_cmap_force.getNumTorsions() == new_system_cmap_force.getNumTorsions():
+            errmsg = ("Old and new systems have different number of CMAP "
+                      "torsions. Cannot handle this case.")
+            raise ValueError(errmsg)
+        if not old_system_cmap_force.getNumMaps() == new_system_cmap_force.getNumMaps():
+            errmsg = ("Old and new systems have different number of CMAP "
+                      "maps. Cannot handle this case.")
+            raise ValueError(errmsg)
+
+        # Loop over the old system, and add each CMAP term to the hybrid
+        cmap_tracking_dict = dict()
+        torsion_tracking_dict = dict()
+        ## add map
+        for cmap_ind in range(old_system_cmap_force.getNumMaps()):
+            ngrid, cmap = old_system_cmap_force.getMapParameters(cmap_ind)
+            self._hybrid_system_forces['cmap_torsion_force'].addMap(ngrid, cmap)
+            cmap_tracking_dict[cmap_ind] = (ngrid, cmap)
+
+        ## add torsion
+        for torsion_ind in range(old_system_cmap_force.getNumTorsions()):
+            map_index, a1, a2, a3, a4, b1, b2, b3, b4 = old_system_cmap_force.getTorsionParameters(torsion_ind)
+            hybrid_index_tuple = (
+                self._old_to_hybrid_map[a1],
+                self._old_to_hybrid_map[a2],
+                self._old_to_hybrid_map[a3],
+                self._old_to_hybrid_map[a4],
+                self._old_to_hybrid_map[b1],
+                self._old_to_hybrid_map[b2],
+                self._old_to_hybrid_map[b3],
+                self._old_to_hybrid_map[b4]
+        )
+            self._hybrid_system_forces['cmap_torsion_force'].addTorsion(
+                map_index, *hybrid_index_tuple
+            )
+            torsion_tracking_dict[hybrid_index_tuple] = map_index
+
+        # Loop over the new system, and the term should be identical. We cannot handle CMAP changing for now.
+        ## check map
+        for cmap_ind in range(new_system_cmap_force.getNumMaps()):
+            ngrid, cmap = new_system_cmap_force.getMapParameters(cmap_ind)
+            ngrid_old = cmap_tracking_dict[cmap_ind][0]
+            if ngrid != ngrid_old:
+                errmsg = (f"The {cmap_ind} cmap has {ngrid} in the new system, and {ngrid_old} in the old system. "
+                          "Only identical CMAPs are supported for now.")
+                raise ValueError(errmsg)
+            cmap_old = cmap_tracking_dict[cmap_ind][1]
+            if not np.allclose([i._value for i in cmap], [i._value for i in cmap_old]):
+                errmsg = (f"The {cmap_ind} cmap has different values in the map of new and old system. "
+                          "Only identical CMAPs are supported for now.")
+                raise ValueError(errmsg)
+
+        ## check torsion
+        for torsion_ind in range(new_system_cmap_force.getNumTorsions()):
+            map_index, a1, a2, a3, a4, b1, b2, b3, b4 = new_system_cmap_force.getTorsionParameters(torsion_ind)
+            hybrid_index_tuple = (
+                self._new_to_hybrid_map[a1],
+                self._new_to_hybrid_map[a2],
+                self._new_to_hybrid_map[a3],
+                self._new_to_hybrid_map[a4],
+                self._new_to_hybrid_map[b1],
+                self._new_to_hybrid_map[b2],
+                self._new_to_hybrid_map[b3],
+                self._new_to_hybrid_map[b4]
+            )
+            if hybrid_index_tuple not in torsion_tracking_dict:
+                errmsg = (f"The {torsion_ind} torsion has {hybrid_index_tuple} in the new system, "
+                          "but not in the old system. Only identical CMAPs are supported for now.")
+                raise ValueError(errmsg)
+            if torsion_tracking_dict[hybrid_index_tuple] != map_index:
+                errmsg = (f"The {torsion_ind} torsion has {hybrid_index_tuple} in the new system, "
+                          f"and {torsion_tracking_dict[hybrid_index_tuple]} in the old system. "
+                          "Only identical CMAPs are supported for now.")
+                raise ValueError(errmsg)
+
+
+
 
     def _handle_nonbonded(self):
         """

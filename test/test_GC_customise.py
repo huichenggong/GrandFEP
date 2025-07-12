@@ -1,6 +1,7 @@
 import unittest
 from pathlib import Path
 import time
+import copy
 
 import numpy as np
 
@@ -19,7 +20,7 @@ nonbonded_Charmm = {"nonbondedMethod": app.PME,
                     "constraints"    : app.HBonds
                     }
 
-def calc_energy_force(system, topology, positions, platform=openmm.Platform.getPlatform('Reference')):
+def calc_energy_force(system, topology, positions, platform=openmm.Platform.getPlatform('Reference'), global_parameters=None):
     """
     Calculate energy and force for the system
     :param system: openmm.System
@@ -30,6 +31,9 @@ def calc_energy_force(system, topology, positions, platform=openmm.Platform.getP
     integrator = openmm.LangevinIntegrator(300 * unit.kelvin, 1.0 / unit.picosecond, 2.0 * unit.femtosecond)
     simulation = app.Simulation(topology, system, integrator, platform)
     simulation.context.setPositions(positions)
+    if global_parameters:
+        for key, value in global_parameters.items():
+            simulation.context.setParameter(key, value)
     state = simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
     energy = state.getPotentialEnergy()
     force = state.getForces(asNumpy=True)
@@ -724,6 +728,76 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(len(force), 3539)
         map = [i for i in range(3526) if i != 3281]
         all_close_flag, mis_match_list, error_msg = match_force(force_84[map], force[map])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+    def test_hybridFF_A19_CMAP(self):
+        print()
+        print("# Test Hybrid Amber19SB system with CMAP")
+        base = Path(__file__).resolve().parent
+
+        inpcrdA, prmtopA, sysA = load_amber_sys(
+            base / "HSP90" / "A19CMAP" / '1/12_A19.inpcrd',
+            base / "HSP90" / "A19CMAP" / '1/12_A19.prmtop', nonbonded_Amber)
+
+        inpcrdB, prmtopB, sysB = load_amber_sys(
+            base / "HSP90" / "A19CMAP" / '2/12_A19.inpcrd',
+            base / "HSP90" / "A19CMAP" / '2/12_A19.prmtop', nonbonded_Amber)
+
+
+
+
+        mdp = utils.md_params_yml(base / "HSP90/A19CMAP/map.yml")
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(
+            prmtopA.topology, prmtopB.topology, mdp.mapping_list
+        )
+
+        h_factory = utils.HybridTopologyFactory(
+            copy.deepcopy(sysA), inpcrdA.getPositions(), prmtopA.topology,
+            copy.deepcopy(sysB), inpcrdB.getPositions(), prmtopB.topology,
+            old_to_new_atom_map,       # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            softcore_LJ_v2=False)
+
+
+
+        print("## 1. All forces on the protein should be the same in state A.")
+        positionA = [h_factory.hybrid_positions[h_factory._old_to_hybrid_map[i]] for i in range(len(inpcrdA.positions))]
+        energy_refA, force_refA = calc_energy_force(sysA, prmtopA.topology, positionA)
+        energy_h, force_h = calc_energy_force(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            h_factory.hybrid_positions)
+
+        # The forces should be the same for non-preturbed atoms
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[0:3282], force_refA[0:3282])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[3323:4445], force_refA[3323:])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        print("## 2. All forces on the protein should be the same in state B.")
+        positionB = [h_factory.hybrid_positions[h_factory._new_to_hybrid_map[i]] for i in range(len(inpcrdB.positions))]
+        energy_refB, force_refB = calc_energy_force(sysB, prmtopB.topology, positionB)
+        energy_h, force_h = calc_energy_force(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            h_factory.hybrid_positions,
+            global_parameters={
+                "lambda_angles": 1.0,
+                "lambda_bonds": 1.0,
+                "lambda_sterics_core": 1.0,
+                "lambda_electrostatics_core": 1.0,
+                "lambda_sterics_delete": 1.0,
+                "lambda_electrostatics_delete": 1.0,
+                "lambda_sterics_insert": 1.0,
+                "lambda_electrostatics_insert": 1.0,
+                "lambda_torsions": 1.0,
+            }
+        )
+        # The forces should be the same for non-preturbed atoms
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[0:3282], force_refB[0:3282])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[3323:4445], force_refB[3326:])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
     def test_hybridFF_speed(self):
