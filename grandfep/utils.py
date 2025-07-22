@@ -408,7 +408,6 @@ class md_params_yml:
     Attributes:
         integrator (str): Name of the integrator.
         dt (unit.Quantity): Time step. Unit in ps
-        maxh (float): The maximum run time. Unit in hour
         nsteps (int): Number of steps.
         nst_dcd (int): Number of steps per dcd trajectory output.
         nst_csv (int): Number of steps per csv energy file output.
@@ -475,7 +474,6 @@ class md_params_yml:
         # Default parameter values
         self.integrator = "LangevinIntegrator"
         self.dt = 0.002 * unit.picoseconds
-        self.maxh = 1.0
         self.nsteps = 100
         self.nst_dcd = 0
         self.nst_csv = 0
