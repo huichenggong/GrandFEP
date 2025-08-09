@@ -1,10 +1,11 @@
 ## v0.1.2 
 ### Problem to be Solved
-1. Add trajectory processing tools. We need 1. center the trajectory, 2. remove the water, 3. cluster water.
+1. Add trajectory processing tools. We need 1. center the trajectory, 2. remove ghost water, 3. cluster water.
 2. Make output writing more efficient.
 3. Hybrid system with CMAP.
 4. Why does OPC water have force when all the nonbonded interactions are turned off?
 5. Lambda path optimization.
+6. ABFE with native openmmtools.
 
 ## v0.1.1 Speed up `updateParametersInContext`
 ### Create a new branch
