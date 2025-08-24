@@ -36,39 +36,6 @@ class BaseGrandCanonicalMonteCarloSampler:
     are given zero charge, and switching waters use `ParticleParameterOffset` with a global parameter
     ``lambda_gc_coulomb``.
 
-    Parameters
-    ----------
-    system :
-        The OpenMM System object. Must include `CustomNonbondedForce` and `NonbondedForce` with
-        appropriate per-particle parameters and global parameter definitions.
-
-    topology :
-        The OpenMM Topology object. Must contain water molecules with the specified residue and atom names.
-
-    temperature :
-        The reference temperature for the system, with proper units (e.g., kelvin).
-
-    collision_rate :
-        The collision rate (friction) for the Langevin integrator, with time units.
-
-    timestep :
-        The timestep for the integrator, with time units (e.g., femtoseconds).
-
-    log :
-        Path to the log file. This file will be opened in append mode.
-
-    platform :
-        The OpenMM computational platform to use. Default is CUDA.
-
-    water_resname :
-        The residue name of water in the topology. Default is 'HOH'.
-
-    water_O_name :
-        The atom name of oxygen in water. Default is 'O'.
-
-    create_simulation :
-        Whether to create a system inside this class. When you only want to customize the system using this class,
-        you can set this to False, to avoid unnecessary memory usage.
 
     """
     def __init__(self,
@@ -84,6 +51,30 @@ class BaseGrandCanonicalMonteCarloSampler:
                  create_simulation: bool = True,
                  ):
         """
+        Parameters
+        ----------
+        system :
+            The OpenMM System object. Must include `CustomNonbondedForce` and `NonbondedForce` with
+            appropriate per-particle parameters and global parameter definitions.
+        topology :
+            The OpenMM Topology object. Must contain water molecules with the specified residue and atom names.
+        temperature :
+            The reference temperature for the system, with proper units (e.g., kelvin).
+        collision_rate :
+            The collision rate (friction) for the Langevin integrator, with time units.
+        timestep :
+            The timestep for the integrator, with time units (e.g., femtoseconds).
+        log :
+            Path to the log file. This file will be opened in append mode.
+        platform :
+            The OpenMM computational platform to use. Default is CUDA.
+        water_resname :
+            The residue name of water in the topology. Default is 'HOH'.
+        water_O_name :
+            The atom name of oxygen in water. Default is 'O'.
+        create_simulation :
+            Whether to create a system inside this class. When you only want to customize the system using this class,
+            you can set this to False, in order to avoid unnecessary memory usage.
         """
 
         # prepare logger

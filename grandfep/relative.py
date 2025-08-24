@@ -2698,3 +2698,90 @@ class HybridTopologyFactory:
             if self._hybrid_system.isVirtualSite(ix):
                 return True
         return False
+
+class HybridTopologyErrorREST2(HybridTopologyFactory):
+    """
+    This class can add REST2 when creating a hybrid topology.
+
+    Atoms in the resulting hybrid system are treated as being from one
+    of four possible types:
+
+    unique_old_atom : These atoms are not mapped and only present in the old
+        system. Their interactions will be on for lambda=0, off for lambda=1
+    unique_new_atom : These atoms are not mapped and only present in the new
+        system. Their interactions will be off for lambda=0, on for lambda=1
+    core_atom : These atoms are mapped between the two end states, and are
+        part of a residue that is changing alchemically. Their interactions
+        will be those corresponding to the old system at lambda=0, and those
+        corresponding to the new system at lambda=1
+    environment_atom : These atoms are mapped between the two end states, and
+        are not part of a residue undergoing an alchemical change. Their
+        interactions are always on and are alchemically unmodified.
+
+    Properties
+    ----------
+    hybrid_system : openmm.System
+        The hybrid system for simulation
+    new_to_hybrid_atom_map : dict of int : int
+        The mapping of new system atoms to hybrid atoms
+    old_to_hybrid_atom_map : dict of int : int
+        The mapping of old system atoms to hybrid atoms
+    hybrid_positions : [n, 3] np.ndarray
+        The positions of the hybrid system
+    hybrid_topology : mdtraj.Topology
+        The topology of the hybrid system
+    omm_hybrid_topology : openmm.app.Topology
+        The OpenMM topology object corresponding to the hybrid system
+
+
+    Here are the forces in the hybrid system:
+        - CustomBondForce -- handles bonds involving `core_atoms` (these are interpolated)
+        - HarmonicBondForce -- handles bonds involving `environment_atoms`, `unique_old_atoms` and `unique_new_atoms` (these are never scaled)
+        - CustomAngleForce -- handles angles involving `core_atoms` (these are interpolated)
+        - HarmonicAngleForce -- handles angles involving `environment_atoms`, `unique_old_atoms` and `unique_new_atoms` (these are never scaled)
+        - CustomTorsionForce -- handles torsions involving `core_atoms` (these are interpolated)
+        - PeriodicTorsionForce -- handles torsions involving `environment_atoms`, `unique_old_atoms` and `unique_new_atoms` (these are never scaled)
+        - NonbondedForce -- handles all electrostatic interactions, environment-environment steric interactions
+        - CustomNonbondedForce -- handle all non environment-environment sterics
+        - CustomBondForce_exceptions -- handles all electrostatics and sterics exceptions involving unique old/new atoms when interpolate_14s is True, otherwise the electrostatics/sterics exception is in the NonbondedForce
+
+    where `interactions` refers to any pair of atoms that is not 1-2, 1-3, 1-4
+    """
+
+    def __init__(self):
+        """
+        Parameters
+        ----------
+        old_system :
+            The OpenMM System object of the old state (state A).
+
+        old_positions :
+            The positions of the old state (state A).
+
+        old_topology :
+            The OpenMM Topology object of the old state (state A).
+
+        new_system :
+            The OpenMM System object of the new state (state B).
+
+        new_positions :
+            The positions of the new state (state B).
+
+        new_topology :
+            The OpenMM Topology object of the new state (state B).
+
+        old_to_new_atom_map :
+            All atoms that should map from the old state (A) to new state (B).
+
+        old_to_new_core_atom_map :
+
+        use_dispersion_correction :
+
+        softcore_alpha :
+
+        softcore_LJ_v2 :
+
+        softcore_LJ_v2_alpha :
+
+        interpolate_old_and_new_14s :
+        """

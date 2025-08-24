@@ -25,68 +25,6 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
     either be performed in the whole box or in a sub-volume (active site) of the box. In an equilibrium sampling, when
     the water is free to move in/out of the sub-volume, I recommend alternating between GCMC and box.
 
-    Parameters
-    ----------
-    system :
-        The OpenMM System object. Must include `CustomNonbondedForce` and `NonbondedForce` with
-        appropriate per-particle parameters and global parameter definitions. Call ``system.setDefaultPeriodicBoxVectors()``
-        before passing it to this class, the newly created context will use this box vectors. Only a rectangular box
-        is supported.
-
-    topology :
-        The OpenMM Topology object. Must contain water molecules with the specified residue and atom names. Must have
-        the correct boxVector. Only a rectangular box is supported.
-
-    temperature :
-        The reference temperature for the system, with proper units (e.g., kelvin).
-
-    collision_rate :
-        The collision rate (friction) for the Langevin integrator, with time units.
-
-    timestep :
-        The timestep for the integrator, with time units (e.g., femtoseconds).
-
-    log :
-        Path to the log file. This file will be opened in appended mode.
-
-    platform :
-        The OpenMM computational platform to use. Default is CUDA.
-
-    water_resname :
-        The residue name of water in the topology. Default is 'HOH'.
-
-    water_O_name :
-        The atom name of oxygen in water. Default is 'O'.
-
-    position :
-        Initial position of the system. Need to be provided for box Vectors. Default is None.
-
-    chemical_potential :
-        Chemical potential of the system, with units. Default is None.
-
-    standard_volume :
-        Standard volume of a water molecule in the reservoir. with units. Default is None.
-
-    sphere_radius :
-        Radius of the GCMC sphere. Default is 10.0 * unit.angstroms.
-
-    reference_atoms :
-        A list of atom indices in the topology that will be set as the center of the GCMC sphere. Default is None.
-
-    rst_file :
-        File name for the restart file.
-
-    dcd_file :
-        File name for the DCD trajectory file. Default is None, no DCD reporter.
-
-    append_dcd :
-        Whether to append to the DCD file. Default is True.
-
-    jsonl_file :
-        File name for the JSONL file. Default is "md.jsonl". This file saves the ghost_list. rst7 file needs this jsonl
-        to restart the ghost list, and dcd file needs this jsonl to remove the ghost water.
-
-
     """
     def __init__(self,
                  system: openmm.System,
@@ -109,6 +47,51 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
                  jsonl_file: str = "md.jsonl",
                  ):
         """
+        Parameters
+        ----------
+        system :
+            The OpenMM System object. Must include `CustomNonbondedForce` and `NonbondedForce` with
+            appropriate per-particle parameters and global parameter definitions. Call ``system.setDefaultPeriodicBoxVectors()``
+            before passing it to this class, the newly created context will use this box vectors. Only a rectangular box
+            is supported.
+
+        topology :
+            The OpenMM Topology object. Must contain water molecules with the specified residue and atom names. Must have
+            the correct boxVector. Only a rectangular box is supported.
+        temperature :
+            The reference temperature for the system, with proper units (e.g., kelvin).
+        collision_rate :
+            The collision rate (friction) for the Langevin integrator, with time units.
+        timestep :
+            The timestep for the integrator, with time units (e.g., femtoseconds).
+        log :
+            Path to the log file. This file will be opened in appended mode.
+        platform :
+            The OpenMM computational platform to use. Default is CUDA.
+        water_resname :
+            The residue name of water in the topology. Default is 'HOH'.
+        water_O_name :
+            The atom name of oxygen in water. Default is 'O'.
+        position :
+            Initial position of the system. Need to be provided for box Vectors. Default is None.
+        chemical_potential :
+            Chemical potential of the system, with units. Default is None.
+        standard_volume :
+            Standard volume of a water molecule in the reservoir. with units. Default is None.
+        sphere_radius :
+            Radius of the GCMC sphere. Default is 10.0 * unit.angstroms.
+        reference_atoms :
+            A list of atom indices in the topology that will be set as the center of the GCMC sphere. Default is None.
+        rst_file :
+            File name for the restart file.
+        dcd_file :
+            File name for the DCD trajectory file. Default is None, no DCD reporter.
+        append_dcd :
+            Whether to append to the DCD file. Default is True.
+        jsonl_file :
+            File name for the JSONL file. Default is "md.jsonl". This file saves the ghost_list. rst7 file needs this jsonl
+            to restart the ghost list, and dcd file needs this jsonl to remove the ghost water.
+
         """
         # safety check
         for val in [position, chemical_potential, standard_volume, sphere_radius]:
