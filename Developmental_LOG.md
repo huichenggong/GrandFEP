@@ -1,11 +1,26 @@
-## v0.1.2 
+## v0.1.3  
+### Plan
+1. REST2
+2. AtomMapping
+3. Lambda path auto-opt
+4. ABFE
+5. cli `run_GC_RE`
+
+### REST2
+#### 1. charge  
+#### 2. vdw  
+#### 3. 1-4
+#### 4. dihedral
+#### 5. bond, angle  
+skip  
+
+## v0.1.2  
 ### Problem to be Solved
 1. Add trajectory processing tools. We need 1. center the trajectory, 2. remove ghost water, 3. cluster water.
 2. Make output writing more efficient.
 3. Hybrid system with CMAP.
 4. Why does OPC water have force when all the nonbonded interactions are turned off?
 5. Lambda path optimization.
-6. ABFE with native openmmtools.
 
 ## v0.1.1 Speed up `updateParametersInContext`
 ### Create a new branch
