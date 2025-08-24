@@ -14,6 +14,12 @@
 #### 5. bond, angle  
 skip  
 
+```bash
+# create a new branch and switch to it
+git checkout -b 0.1.3_dev
+git push -u origin 0.1.3_dev
+```
+
 ## v0.1.2  
 ### Problem to be Solved
 1. Add trajectory processing tools. We need 1. center the trajectory, 2. remove ghost water, 3. cluster water.
