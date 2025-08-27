@@ -1,4 +1,4 @@
-REMARK   1 CREATED WITH OPENMM 8.2, 2025-05-10
+REMARK   1 CREATED WITH OPENMM 8.2, 2025-08-25
 ATOM      1  N   VAL A   1      36.599   6.335  26.558  1.00  0.00           N  
 ATOM      2  H   VAL A   1      37.410   6.222  25.967  1.00  0.00           H  
 ATOM      3  H2  VAL A   1      35.768   6.186  26.002  1.00  0.00           H  

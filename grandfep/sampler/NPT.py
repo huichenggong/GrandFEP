@@ -18,38 +18,6 @@ class NPTSampler:
     """
     NPT Sampler class
 
-    Parameters
-    ----------
-    system : openmm.System
-        OpenMM system object, this system should include a barostat
-
-    topology : app.Topology
-        OpenMM topology object
-
-    temperature : unit.Quantity
-        Reference temperature of the system, with unit
-
-    collision_rate : unit.Quantity
-        Collision rate of the system, with unit. e.g., 1 / (1.0 * unit.picoseconds)
-
-    timestep : unit.Quantity
-        Timestep of the simulation, with unit. e.g., 4 * unit.femtoseconds with Hydrogen Mass Repartitioning
-
-    log : Union[str, Path]
-        Log file path for the simulation
-
-    platform : openmm.Platform
-        OpenMM platform to use for the simulation. Default is 'CUDA'.
-
-    rst_file : str
-        Restart file path for the simulation. Default is "md.rst7".
-
-    dcd_file : str
-        DCD file path for the simulation. Default is None, which means no dcd output.
-
-    append : bool
-        If True, append to the existing dcd file. Default is False, which means overwrite the existing dcd file.
-
     """
     def __init__(self,
                  system: openmm.System,
@@ -66,6 +34,30 @@ class NPTSampler:
                  ):
         """
         Initialize the NPT sampler
+
+        Parameters
+        ----------
+        system : openmm.System
+            OpenMM system object, this system should include a barostat
+        topology : app.Topology
+            OpenMM topology object
+        temperature : unit.Quantity
+            Reference temperature of the system, with unit
+        collision_rate : unit.Quantity
+            Collision rate of the system, with unit. e.g., 1 / (1.0 * unit.picoseconds)
+        timestep : unit.Quantity
+            Timestep of the simulation, with unit. e.g., 4 * unit.femtoseconds with Hydrogen Mass Repartitioning
+        log : Union[str, Path]
+            Log file path for the simulation
+        platform : openmm.Platform
+            OpenMM platform to use for the simulation. Default is 'CUDA'.
+        rst_file : str
+            Restart file path for the simulation. Default is "md.rst7".
+        dcd_file : str
+            DCD file path for the simulation. Default is None, which means no dcd output.
+        append : bool
+            If True, append to the existing dcd file. Default is False, which means overwrite the existing dcd file.
+
         """
         # prepare logger
         #: Logger for the Sampler
@@ -201,42 +193,6 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
     """
     NPT Sampler class with MPI (replica exchange) support. Only Hamiltonian is allowed to be different.
 
-    Parameters
-    ----------
-    system : openmm.System
-        OpenMM system object, this system should include a barostat
-
-    topology : app.Topology
-        OpenMM topology object
-
-    temperature : unit.Quantity
-        Reference temperature of the system, with unit
-
-    collision_rate : unit.Quantity
-        Collision rate of the system, with unit. e.g., 1 / (1.0 * unit.picoseconds)
-
-    timestep : unit.Quantity
-        Timestep of the simulation, with unit. e.g., 4 * unit.femtoseconds with Hydrogen Mass Repartitioning
-
-    log : Union[str, Path]
-        Log file path for the simulation
-
-    platform : openmm.Platform
-        OpenMM platform to use for the simulation. Default is 'CUDA'.
-
-    rst_file : str
-        Restart file path for the simulation. Default is "md.rst7".
-
-    dcd_file : str
-        DCD file path for the simulation. Default is None, which means no dcd output.
-
-    init_lambda_state : int
-        Lambda state index for this replica, counting from 0
-
-    lambda_dict : dict
-        A dictionary of mapping from global parameters to their values in all the sampling states.
-
-
     """
     def __init__(self,
                  system: openmm.System,
@@ -254,6 +210,32 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
                  ):
         """
         Initialize the NPT sampler with MPI support
+
+        Parameters
+        ----------
+        system : openmm.System
+            OpenMM system object, this system should include a barostat
+        topology : app.Topology
+            OpenMM topology object
+        temperature : unit.Quantity
+            Reference temperature of the system, with unit
+        collision_rate : unit.Quantity
+            Collision rate of the system, with unit. e.g., 1 / (1.0 * unit.picoseconds)
+        timestep : unit.Quantity
+            Timestep of the simulation, with unit. e.g., 4 * unit.femtoseconds with Hydrogen Mass Repartitioning
+        log : Union[str, Path]
+            Log file path for the simulation
+        platform : openmm.Platform
+            OpenMM platform to use for the simulation. Default is 'CUDA'.
+        rst_file : str
+            Restart file path for the simulation. Default is "md.rst7".
+        dcd_file : str
+            DCD file path for the simulation. Default is None, which means no dcd output.
+        init_lambda_state : int
+            Lambda state index for this replica, counting from 0
+        lambda_dict : dict
+            A dictionary of mapping from global parameters to their values in all the sampling states.
+
         """
         super().__init__(system, topology, temperature, collision_rate, timestep, log, platform, rst_file, dcd_file, append, False)
 

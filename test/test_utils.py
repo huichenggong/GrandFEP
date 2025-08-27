@@ -101,6 +101,9 @@ class MyTestCase(unittest.TestCase):
         rst7_rep.report_positions_velocities(simulation, state,
                                              boxv, pos, vel)
 
+    def test_HybridTopologyFactoryREST2(self):
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

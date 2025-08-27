@@ -6,8 +6,8 @@ utils
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: grandfep.utils.HybridTopologyErrorREST2
-    :members:
+.. autoclass:: grandfep.utils.HybridTopologyFactoryREST2
+    :members: _handle_nonbonded
     :undoc-members:
     :special-members: __init__
     :show-inheritance:

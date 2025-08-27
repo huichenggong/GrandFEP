@@ -12,7 +12,7 @@ from openmm import app, openmm, unit
 import pymbar
 import parmed
 
-from .relative import HybridTopologyFactory, HybridTopologyErrorREST2
+from .relative import HybridTopologyFactory, HybridTopologyFactoryREST2
 
 
 def load_sys(sys_file: Union[str, Path]) -> openmm.System:

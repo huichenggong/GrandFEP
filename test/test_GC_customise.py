@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 import time
 import copy
+from typing import Union, List, Tuple
 
 import numpy as np
 
@@ -56,28 +57,45 @@ def match_force(force1, force2):
     error_msg = "".join([f"{at}\n    {f1}\n    {f2}\n" for at, f1, f2 in mis_match_list])
     return all_close_flag, mis_match_list, error_msg
 
-def load_amber_sys(inpcrd_file, prmtop_file, nonbonded_settings):
+def load_amber_sys(inpcrd_file: Union[str, Path],
+                   prmtop_file: Union[str, Path],
+                   nonbonded_settings: dict) -> Tuple[app.AmberInpcrdFile, app.AmberPrmtopFile, openmm.System]:
     """
     Load Amber system from inpcrd and prmtop file.
 
     Parameters
     ----------
-    inpcrd_file : str
+    inpcrd_file :
 
-    :param prmtop_file:
+    prmtop_file :
 
-    :return: (inpcrd, prmtop, sys)
+    nonbonded_settings :
+
     Returns
     -------
-        inpcrd: openmm.app.AmberInpcrdFile
-        prmtop: openmm.app.AmberPrmtopFile
-        sys: openmm.System
+    inpcrd :
+    prmtop :
+    sys :
     """
     inpcrd = app.AmberInpcrdFile(str(inpcrd_file))
     prmtop = app.AmberPrmtopFile(str(prmtop_file),
                                  periodicBoxVectors=inpcrd.boxVectors)
     sys = prmtop.createSystem(**nonbonded_settings)
     return inpcrd, prmtop, sys
+
+def separate_force(system, force_name: List):
+    """
+    Create a new system and only keep certain force
+    """
+    sys_new = openmm.System()
+    for particle_idx in range(system.getNumParticles()):
+        particle_mass = system.getParticleMass(particle_idx)
+        sys_new.addParticle(particle_mass)
+
+    for f in system.getForces():
+        if f.getName() in force_name:
+            sys_new.addForce(copy.deepcopy(f))
+    return sys_new
 
 class MyTestCase(unittest.TestCase):
     def test_AmberFF(self):
@@ -875,6 +893,176 @@ class MyTestCase(unittest.TestCase):
             print(f"## Time for updating C3 with disp_corr {disp_corr} {time.time() - tick:.3f} s")
 
             baseGC_big.check_ghost_list()
+
+    def test_hybridFF_REST2_lig(self):
+        print()
+        print("# Test HybridFF_REST2, Can we get the correct force when hybriding 2 ligand states with REST2")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+
+        base = Path(__file__).resolve().parent
+
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "CH4_C2H6" / "lig0" / "06_solv.inpcrd",
+            base / "CH4_C2H6" / "lig0" / "06_solv.prmtop", nonbonded_settings)
+        inpcrd1, prmtop1, sys1 = load_amber_sys(
+            base / "CH4_C2H6" / "lig1" / "06_solv.inpcrd",
+            base / "CH4_C2H6" / "lig1" / "06_solv.prmtop", nonbonded_settings)
+        old_to_new_atom_map = {0: 0,
+                               5: 8,    6: 9,   7: 10, # water res_index=1
+                               8: 11,   9: 12, 10: 13, # water res_index=2
+                               11: 14, 12: 15, 13: 16, # water res_index=3
+                               14: 17, 15: 18, 16: 19, # water res_index=4
+                               }
+        old_to_new_core_atom_map = {0: 0,}
+        h_factory = utils.HybridTopologyFactoryREST2(
+            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
+            old_to_new_atom_map,      # All atoms that should map from A to B
+            old_to_new_core_atom_map, # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+        )
+
+        num_env = len(h_factory._env_old_to_new_map)
+        num_core = len(h_factory._core_old_to_new_map)
+        num_total = len(h_factory._old_to_new_map)
+        self.assertEqual(num_env + num_core, num_total)
+        num_env = len(h_factory._env_new_to_old_map)
+        num_core = len(h_factory._core_new_to_old_map)
+        num_total = len(h_factory._new_to_old_map)
+        self.assertEqual(num_env + num_core, num_total)
+
+        self.assertSetEqual(h_factory._atom_classes['rest2_atoms'], {0,1,2,3,4, 17,18,19,20,21,22,23})
+
+        # separate each energy component and compare force
+        for global_param, force_name_list in {
+            "lambda_bonds"   :["CustomBondForce", "HarmonicBondForce"],
+            "lambda_angles"  :["CustomAngleForce", "HarmonicAngleForce"],
+            "lambda_torsions": ["CustomTorsionForce", "PeriodicTorsionForce"],
+        }.items():
+            energy_h, force_h = calc_energy_force(
+                separate_force(h_factory.hybrid_system, force_name_list),
+                h_factory.omm_hybrid_topology,
+                h_factory.hybrid_positions, platform, global_parameters={global_param: 0.0})
+            energy_A, force_A = calc_energy_force(
+                separate_force(sys0, force_name_list),
+                prmtop0.topology,
+                inpcrd0.positions, platform)
+            all_close_flag, mis_match_list, error_msg = match_force(force_h[1:17], force_A[1:17])
+            self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+            energy_h, force_h = calc_energy_force(
+                separate_force(h_factory.hybrid_system, force_name_list),
+                h_factory.omm_hybrid_topology,
+                h_factory.hybrid_positions, platform, global_parameters={global_param: 1.0})
+            energy_B, force_B = calc_energy_force(
+                separate_force(sys1, force_name_list),
+                prmtop1.topology,
+                inpcrd1.positions, platform)
+            all_close_flag, mis_match_list, error_msg = match_force(force_h[5:17], force_B[8:20])
+            self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+            all_close_flag, mis_match_list, error_msg = match_force(force_h[17:24], force_B[1:8])
+            self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        # dihedral potential will be scaled by 2.0 in REST2
+        energy_rest, force_h = calc_energy_force(
+            separate_force(h_factory.hybrid_system, force_name_list),
+            h_factory.omm_hybrid_topology,
+            h_factory.hybrid_positions, platform,
+            global_parameters={"lambda_torsions": 1.0, "k_rest2": 0.5})
+        self.assertAlmostEqual(energy_h/energy_rest, 2.0)
+
+
+        force_name_list = ["NonbondedForce", "CustomNonbondedForce", "CustomBondForce_exceptions"]
+        global_param = {
+            'lam_ele_coreA_x_k_rest2_sqrt': 1.0,
+            'lam_ele_coreB_x_k_rest2_sqrt': 0.0,
+            "lam_ele_del_x_k_rest2_sqrt":   1.0,
+            "lam_ele_ins_x_k_rest2_sqrt":   0.0,
+            "lambda_sterics_core":        0.0,
+            "lambda_electrostatics_core": 0.0,
+            "lambda_sterics_insert":      0.0,
+            "lambda_sterics_delete":      0.0,
+            "k_rest2_sqrt": 1.0,
+        }
+        energy_h, force_h = calc_energy_force(
+            separate_force(h_factory.hybrid_system, force_name_list),
+            h_factory.omm_hybrid_topology,
+            h_factory.hybrid_positions, platform, global_parameters=global_param)
+        energy_A, force_A = calc_energy_force(
+            separate_force(sys0, force_name_list),
+            prmtop0.topology,
+            inpcrd0.positions, platform)
+        self.assertEqual(force_A.shape, (17,3))
+        self.assertEqual(force_h.shape, (24, 3))
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[1:17], force_A[1:17])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        global_param = {
+            'lam_ele_coreA_x_k_rest2_sqrt': 0.0,
+            'lam_ele_coreB_x_k_rest2_sqrt': 1.0,
+            "lam_ele_del_x_k_rest2_sqrt":   0.0,
+            "lam_ele_ins_x_k_rest2_sqrt":   1.0,
+            "lambda_sterics_core":       1.0,
+            "lambda_electrostatics_core":1.0,
+            "lambda_sterics_insert":     1.0,
+            "lambda_sterics_delete":     1.0,
+            "k_rest2_sqrt": 1.0,
+        }
+        energy_h, force_h = calc_energy_force(
+            separate_force(h_factory.hybrid_system, force_name_list),
+            h_factory.omm_hybrid_topology,
+            h_factory.hybrid_positions, platform, global_parameters=global_param)
+        energy_B, force_B = calc_energy_force(
+            separate_force(sys1, force_name_list),
+            prmtop1.topology,
+            inpcrd1.positions, platform)
+        self.assertEqual(force_B.shape, (20, 3))
+        self.assertEqual(force_h.shape, (24, 3))
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[5:17], force_B[8:20])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[17:24], force_B[1:8])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+    def test_hybridFF_REST2_pro(self):
+        print()
+        print("# Test HybridFF_REST2, Can we get the correct force when hybriding 2 pro/lig complex states with REST2")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+
+        base = Path(__file__).resolve().parent
+
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "CH4_C2H6" / "protein" / "05-stateA.rst7",
+            base / "CH4_C2H6" / "protein" / "05-stateA.prmtop", nonbonded_settings)
+        inpcrd1, prmtop1, sys1 = load_amber_sys(
+            base / "CH4_C2H6" / "protein" / "05-stateB.rst7",
+            base / "CH4_C2H6" / "protein" / "05-stateB.prmtop", nonbonded_settings)
+        old_to_new_atom_map = {i:i for i in range(3282)} # protein+C0
+        for i in range(3286, 3532):
+            old_to_new_atom_map[i] = i + 3 # All waters
+        old_to_new_core_atom_map = {3281: 3281, }
+        h_factory = utils.HybridTopologyFactoryREST2(
+            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            old_rest2_atom_indices=[1873, 1874, 1875, 1876, 1877, 1878, 1879, 1880, 1881, 1882, 1883, 1884, 1885, 1886]
+        )
+
+        num_env = len(h_factory._env_old_to_new_map)
+        num_core = len(h_factory._core_old_to_new_map)
+        num_total = len(h_factory._old_to_new_map)
+        self.assertEqual(num_env + num_core, num_total)
+        num_env = len(h_factory._env_new_to_old_map)
+        num_core = len(h_factory._core_new_to_old_map)
+        num_total = len(h_factory._new_to_old_map)
+        self.assertEqual(num_env + num_core, num_total)
+
+        self.assertSetEqual(
+            h_factory._atom_classes['rest2_atoms'],
+            {1873, 1874, 1875, 1876, 1877, 1878, 1879, 1880, 1881, 1882, 1883, 1884, 1885, 1886, # PHE 122
+             3281, 3282, 3283, 3284, 3285,
+             3532, 3533, 3534, 3535, 3536, 3537, 3538})
 
 
 if __name__ == '__main__':

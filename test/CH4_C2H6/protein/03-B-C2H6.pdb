@@ -1,4 +1,4 @@
-REMARK   1 CREATED WITH OPENMM 8.2, 2025-05-10
+REMARK   1 CREATED WITH OPENMM 8.2, 2025-08-25
 CRYST1   30.000   30.000   30.000  90.00  90.00  90.00 P 1           1 
 HETATM    1  C   MOL A   1       1.925  -2.459  -1.726  1.00  0.00           C  
 HETATM    2  H   MOL A   1       1.332  -3.299  -1.435  1.00  0.00           H  
