@@ -2870,9 +2870,6 @@ class HybridTopologyFactoryREST2:
         if has_nonbonded_force:
             self._add_nonbonded_force_terms()
             self._handle_nonbonded()
-            if not (len(self._old_system_exceptions.keys()) == 0 and
-                    len(self._new_system_exceptions.keys()) == 0):
-                self._handle_old_new_exceptions()
 
         # Get positions for the hybrid
         self._hybrid_positions = self._compute_hybrid_positions()
@@ -4406,9 +4403,7 @@ class HybridTopologyFactoryREST2:
 
         self._handle_interaction_groups()
 
-        self._handle_hybrid_exceptions()
-
-        self._handle_original_exceptions()
+        self._handle_exceptions()
 
     def _atom_group(self, hybrid_index):
         if hybrid_index in self._atom_classes['core_atoms']:
@@ -4422,8 +4417,150 @@ class HybridTopologyFactoryREST2:
         else:
             return "EnvC"
 
-    # def _handle_exceptions(self):
-    # Gave up
+    def _handle_exceptions(self):
+        """
+        Handle all kinds of exceptions in the system.
+
+        6x6 table
+        +-------+------+------+------+------+------+
+        |       | core | new  | old  | envh | envc |
+        +=======+======+======+======+======+======+
+        | core  | 0    |
+        +-------+------+------+------+------+------+
+        | new   | 1    | 2    |
+        +-------+------+------+------+------+------+
+        | old   | 3    | None | 4    |
+        +-------+------+------+------+------+------+
+        | envh  | 5    | 6    | 7    | NonB |
+        +-------+------+------+------+------+------+
+        | envc  | NonB | NonB | NonB | NonB | NonB |
+        +-------+------+------+------+------+------+
+
+        Easy exceptions are handled in NonbondedForce with exception offset
+        Complex exceptions are handled in 2 CustomBondForce here.
+
+        0, 2, 4, 5, 6, 7 are in custom_bond_force_exception_1D, because they are linearly interpolate between 2 parameter sets.
+
+        1 (new-core), 2 (old-core) are in custom_bond_force_exception_2D, because they interpolate between they can be 0, A, B
+
+        """
+        # 1. Set up the two CustomBondForces
+        # 1.1. custom_bond_force_exception_1D
+        energy =  "U_rest2"
+        energy += "U_rest2 = (U_electrostatics + U_sterics) * k_rest2_sqrt^is_hot;"
+
+        energy += "U_sterics = 4*epsilon*x*(x-1.0);"
+        energy += "x = (sigma/r)^6;"
+        energy += "sigma   = (1-lambda_vdw)*sigma1   + lambda_vdw*sigma2;"
+        energy += "epsilon = (1-lambda_vdw)*epsilon1 + lambda_vdw*epsilon2;"
+        energy += "lambda_vdw"
+        energy += "= inter_core_core * lambda_sterics_core"
+        energy += "+ inter_new_new   * lambda_sterics_insert"
+        energy += "+ inter_old_old   * lambda_sterics_delete"
+        energy += "+ inter_envh_core * lambda_sterics_core"
+        energy += "+ inter_envh_new  * lambda_sterics_insert"
+        energy += "+ inter_envh_old  * lambda_sterics_delete;"
+
+        energy += "U_electrostatics = (1-lambda_ele) * chgP1 + lambda_ele * chgP2;"
+        energy += "lambda_ele"
+        energy += "= inter_core_core * lambda_electrostatics_core"
+        energy += "+ inter_new_new   * lambda_electrostatics_insert"
+        energy += "+ inter_old_old   * lambda_electrostatics_delete"
+        energy += "+ inter_envh_core * lambda_electrostatics_core"
+        energy += "+ inter_envh_new  * lambda_electrostatics_insert"
+        energy += "+ inter_envh_old  * lambda_electrostatics_delete;"
+
+        energy += "inter_core_core = delta(0-pair_type);"
+        energy += "inter_new_new   = delta(2-pair_type);"
+        energy += "inter_old_old   = delta(4-pair_type);"
+        energy += "inter_envh_core = delta(5-pair_type);"
+        energy += "inter_envh_new  = delta(6-pair_type);"
+        energy += "inter_envh_old  = delta(7-pair_type);"
+
+        nb_exceptions_1d = openmm.CustomBondForce(energy)
+        name = f"{nb_exceptions_1d.__class__.__name__}_exceptions_1D"
+        nb_exceptions_1d.setName(name)
+        self._hybrid_system.addForce(nb_exceptions_1d)
+        self._hybrid_system_forces['nonbonded_exceptions_force_1d'] = nb_exceptions_1d
+
+        # 1.2. custom_bond_force_exception_2D
+        energy = "U_rest2"
+        energy += "U_rest2 = (U_electrostatics + U_sterics) * k_rest2_sqrt^is_hot;"
+
+        energy += "U_sterics = 4*epsilon*x*(x-1.0);"
+        energy += "x = (sigma/r)^6;"
+        energy += "sigma   =  (1-lambda_sterics_core)*sigma1   + lambda_sterics_core*sigma2;"
+        energy += "epsilon = ((1-lambda_sterics_core)*epsilon1 + lambda_sterics_core*epsilon2) * lambda_vdw_old_new;"
+        energy += "lambda_vdw_old_new"
+        energy += "= inter_new_core   * lambda_sterics_insert"
+        energy += "+ inter_old_core   * lambda_sterics_delete;"
+
+        energy += "U_electrostatics = lambda_ele_old_new*((1-lambda_electrostatics_core) * chgP1 + lambda_electrostatics_core * chgP2);"
+        energy += "lambda_ele_old_new"
+        energy += "= inter_new_core   * lambda_electrostatics_insert"
+        energy += "+ inter_old_core   * lambda_electrostatics_delete;"
+
+        energy += "inter_new_core = delta(1-pair_type);"
+        energy += "inter_old_core = delta(3-pair_type);"
+
+        nb_exceptions_2d = openmm.CustomBondForce(energy)
+        name = f"{nb_exceptions_2d.__class__.__name__}_exceptions_2D"
+        nb_exceptions_2d.setName(name)
+        self._hybrid_system.addForce(nb_exceptions_2d)
+        self._hybrid_system_forces['nonbonded_exceptions_force_2d'] = nb_exceptions_2d
+
+        # 2. Loop through the exceptions in the old system, and classify them
+        groups = ["core", "new", "old", "EnvH", "EnvC"]
+
+        exc_index_2_parm   = {} # from (ati, atj) to (groupi, groupj, chgP1, sigma1, epsilon1, chgP2, sigma2, epsilon2)
+        exc_index_2_parm_0 = {} # from (ati, atj) to (groupi, groupj)
+        for (index1_old, index2_old), (chargeProd, sigma, epsilon) in self._old_system_exceptions.items():
+            index1_hybrid = self._old_to_hybrid_map[index1_old]
+            index2_hybrid = self._old_to_hybrid_map[index2_old]
+            group1 = self._atom_group(index1_hybrid)
+            group2 = self._atom_group(index2_hybrid)
+            if np.allclose([chargeProd.value_in_unit(unit.elementary_charge**2),
+                            epsilon.value_in_unit(unit.kilojoule_per_mole)],
+                           [0.0, 0.0]):
+                # Then this exception is effectively turned off, so we can skip it
+                exc_index_2_parm_0[(index1_hybrid, index2_hybrid)] = (group1, group2)
+            else:
+                exc_index_2_parm[(index1_hybrid, index2_hybrid)] = [group1, group2,chargeProd, sigma, epsilon, 0.0, 0.0, 0.0]
+
+        exc_index_2_parm_old = copy.deepcopy(exc_index_2_parm)
+        # 3. Loop through the exceptions in the new system, and classify them
+        for (index1_new, index2_new), (chargeProd, sigma, epsilon) in self._new_system_exceptions.items():
+            index1_hybrid = self._new_to_hybrid_map[index1_new]
+            index2_hybrid = self._new_to_hybrid_map[index2_new]
+            group1 = self._atom_group(index1_hybrid)
+            group2 = self._atom_group(index2_hybrid)
+
+            # make sure no double counting, also be careful about the order of indices
+            if (index1_hybrid, index2_hybrid) in exc_index_2_parm_0 or (index2_hybrid, index1_hybrid) in exc_index_2_parm_0:
+                pass
+            elif (index1_hybrid, index2_hybrid) in exc_index_2_parm_old or (index2_hybrid, index1_hybrid) in exc_index_2_parm_old:
+                # fill in state B (chgP2, sigma2, epsilon2)
+                exc_index_2_parm[(index1_hybrid, index2_hybrid)][5] = chargeProd
+                exc_index_2_parm[(index1_hybrid, index2_hybrid)][6] = sigma
+                exc_index_2_parm[(index1_hybrid, index2_hybrid)][7] = epsilon
+            elif (index1_hybrid, index2_hybrid) in exc_index_2_parm or (index2_hybrid, index1_hybrid) in exc_index_2_parm:
+                # This should not happen, there is duplicated exception in new system
+                raise ValueError(f"Duplicated exception in new system: {index1_new}:{index1_hybrid}, {index2_new}:{index2_hybrid} (new:hybrid) {chargeProd} {sigma} {epsilon}")
+            else:
+                # This is a new exception
+                if np.allclose([chargeProd.value_in_unit(unit.elementary_charge ** 2),
+                                epsilon.value_in_unit(unit.kilojoule_per_mole)],
+                               [0.0, 0.0]):
+                    # Then this exception is effectively turned off, so we can skip it
+                    exc_index_2_parm_0[(index1_hybrid, index2_hybrid)] = (group1, group2)
+                else:
+                    exc_index_2_parm[(index1_hybrid, index2_hybrid)] = [group1, group2, 0.0, 0.0, 0.0, chargeProd, sigma, epsilon]
+        self._hybrid_system_exceptions_nonzero = exc_index_2_parm   # save for test
+        self._hybrid_system_exceptions_zero    = exc_index_2_parm_0 # save for test
+
+
+        # 4. Add each exception to the corresponding Force
+        # 4.1. core-core
 
     def _compute_hybrid_positions(self):
         """

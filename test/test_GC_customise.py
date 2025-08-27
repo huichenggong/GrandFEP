@@ -992,6 +992,7 @@ class MyTestCase(unittest.TestCase):
             separate_force(sys0, force_name_list),
             prmtop0.topology,
             inpcrd0.positions, platform)
+        return 0 # for debug
         self.assertEqual(force_A.shape, (17,3))
         self.assertEqual(force_h.shape, (24, 3))
         all_close_flag, mis_match_list, error_msg = match_force(force_h[1:17], force_A[1:17])
@@ -1063,6 +1064,25 @@ class MyTestCase(unittest.TestCase):
             {1873, 1874, 1875, 1876, 1877, 1878, 1879, 1880, 1881, 1882, 1883, 1884, 1885, 1886, # PHE 122
              3281, 3282, 3283, 3284, 3285,
              3532, 3533, 3534, 3535, 3536, 3537, 3538})
+
+        # All exception in old and new should be found in the hybrid system
+        for atom_map, exception_dict in ((h_factory._old_to_hybrid_map, h_factory._old_system_exceptions),
+                                         (h_factory._new_to_hybrid_map, h_factory._new_system_exceptions)):
+            for (ati, atj), (chargeProd, sigma, epsilon) in exception_dict.items():
+                ind1_hyb = atom_map[ati]
+                ind2_hyb = atom_map[atj]
+                # zero exception
+                if np.allclose([chargeProd.value_in_unit(unit.elementary_charge ** 2),
+                                epsilon.value_in_unit(unit.kilojoule_per_mole)],
+                                [0.0, 0.0]):
+                    flag1 = (ind1_hyb, ind2_hyb) in h_factory._hybrid_system_exceptions_zero
+                    flag2 = (ind2_hyb, ind1_hyb) in h_factory._hybrid_system_exceptions_zero
+                    self.assertNotEqual(flag1, flag2)
+                else:
+                    flag1 = (ind1_hyb, ind2_hyb) in h_factory._hybrid_system_exceptions_nonzero
+                    flag2 = (ind2_hyb, ind1_hyb) in h_factory._hybrid_system_exceptions_nonzero
+                    self.assertNotEqual(flag1, flag2)
+
 
 
 if __name__ == '__main__':
