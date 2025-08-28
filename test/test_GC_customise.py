@@ -972,16 +972,18 @@ class MyTestCase(unittest.TestCase):
         self.assertAlmostEqual(energy_h/energy_rest, 2.0)
 
 
-        force_name_list = ["NonbondedForce", "CustomNonbondedForce", "CustomBondForce_exceptions"]
+        force_name_list = ["NonbondedForce", "CustomNonbondedForce", "CustomBondForce_exceptions_1D", "CustomBondForce_exceptions_2D"]
         global_param = {
             'lam_ele_coreA_x_k_rest2_sqrt': 1.0,
             'lam_ele_coreB_x_k_rest2_sqrt': 0.0,
             "lam_ele_del_x_k_rest2_sqrt":   1.0,
             "lam_ele_ins_x_k_rest2_sqrt":   0.0,
-            "lambda_sterics_core":        0.0,
-            "lambda_electrostatics_core": 0.0,
-            "lambda_sterics_insert":      0.0,
-            "lambda_sterics_delete":      0.0,
+            "lambda_electrostatics_core":   0.0,
+            "lambda_electrostatics_insert": 0.0,
+            "lambda_electrostatics_delete": 0.0,
+            "lambda_sterics_core":          0.0,
+            "lambda_sterics_insert":        0.0,
+            "lambda_sterics_delete":        0.0,
             "k_rest2_sqrt": 1.0,
         }
         energy_h, force_h = calc_energy_force(
@@ -992,7 +994,6 @@ class MyTestCase(unittest.TestCase):
             separate_force(sys0, force_name_list),
             prmtop0.topology,
             inpcrd0.positions, platform)
-        return 0 # for debug
         self.assertEqual(force_A.shape, (17,3))
         self.assertEqual(force_h.shape, (24, 3))
         all_close_flag, mis_match_list, error_msg = match_force(force_h[1:17], force_A[1:17])
@@ -1003,10 +1004,12 @@ class MyTestCase(unittest.TestCase):
             'lam_ele_coreB_x_k_rest2_sqrt': 1.0,
             "lam_ele_del_x_k_rest2_sqrt":   0.0,
             "lam_ele_ins_x_k_rest2_sqrt":   1.0,
-            "lambda_sterics_core":       1.0,
-            "lambda_electrostatics_core":1.0,
-            "lambda_sterics_insert":     1.0,
-            "lambda_sterics_delete":     1.0,
+            "lambda_electrostatics_core":   1.0,
+            "lambda_electrostatics_insert": 1.0,
+            "lambda_electrostatics_delete": 1.0,
+            "lambda_sterics_core":          1.0,
+            "lambda_sterics_insert":        1.0,
+            "lambda_sterics_delete":        1.0,
             "k_rest2_sqrt": 1.0,
         }
         energy_h, force_h = calc_energy_force(
@@ -1071,19 +1074,85 @@ class MyTestCase(unittest.TestCase):
             for (ati, atj), (chargeProd, sigma, epsilon) in exception_dict.items():
                 ind1_hyb = atom_map[ati]
                 ind2_hyb = atom_map[atj]
-                # zero exception
+                # zero exceptions
                 if np.allclose([chargeProd.value_in_unit(unit.elementary_charge ** 2),
                                 epsilon.value_in_unit(unit.kilojoule_per_mole)],
                                 [0.0, 0.0]):
                     flag1 = (ind1_hyb, ind2_hyb) in h_factory._hybrid_system_exceptions_zero
                     flag2 = (ind2_hyb, ind1_hyb) in h_factory._hybrid_system_exceptions_zero
                     self.assertNotEqual(flag1, flag2)
+                # non-zero exceptions
                 else:
                     flag1 = (ind1_hyb, ind2_hyb) in h_factory._hybrid_system_exceptions_nonzero
                     flag2 = (ind2_hyb, ind1_hyb) in h_factory._hybrid_system_exceptions_nonzero
                     self.assertNotEqual(flag1, flag2)
+        print("# Force should be the same in state A")
+        global_param = {
+            'lam_ele_coreA_x_k_rest2_sqrt': 1.0,
+            'lam_ele_coreB_x_k_rest2_sqrt': 0.0,
+            "lam_ele_del_x_k_rest2_sqrt": 1.0,
+            "lam_ele_ins_x_k_rest2_sqrt": 0.0,
+            "lambda_electrostatics_core": 0.0,
+            "lambda_electrostatics_insert": 0.0,
+            "lambda_electrostatics_delete": 0.0,
+            "lambda_sterics_core": 0.0,
+            "lambda_sterics_insert": 0.0,
+            "lambda_sterics_delete": 0.0,
+            "k_rest2_sqrt": 1.0,
+            "k_rest2": 1.0,
+        }
+        energy_h, force_h = calc_energy_force(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            h_factory.hybrid_positions, platform, global_parameters=global_param)
+        energy_A, force_A = calc_energy_force(
+            sys0,
+            prmtop0.topology,
+            inpcrd0.positions, platform)
+        self.assertEqual(force_A.shape, (3532, 3))
+        self.assertEqual(force_h.shape, (3532+7, 3))
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[0:3281], force_A[0:3281])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[3282:3532], force_A[3282:3532])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
+        print("# Force should be the same in state B")
+        global_param = {
+            'lam_ele_coreA_x_k_rest2_sqrt': 0.0,
+            'lam_ele_coreB_x_k_rest2_sqrt': 1.0,
+            "lam_ele_del_x_k_rest2_sqrt": 0.0,
+            "lam_ele_ins_x_k_rest2_sqrt": 1.0,
+            "lambda_electrostatics_core": 1.0,
+            "lambda_electrostatics_insert": 1.0,
+            "lambda_electrostatics_delete": 1.0,
+            "lambda_sterics_core"  : 1.0,
+            "lambda_sterics_insert": 1.0,
+            "lambda_sterics_delete": 1.0,
+            "lambda_bonds"   : 1.0,
+            "lambda_angles"  : 1.0,
+            "lambda_torsions": 1.0,
+            "k_rest2_sqrt": 1.0,
+            "k_rest2": 1.0,
+        }
+        energy_h, force_h = calc_energy_force(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            h_factory.hybrid_positions, platform, global_parameters=global_param)
+        energy_B, force_B = calc_energy_force(
+            sys1,
+            prmtop1.topology,
+            inpcrd1.positions, platform)
+        self.assertEqual(force_B.shape, (3535, 3))
+        self.assertEqual(force_h.shape, (3532 + 7, 3))
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[0:3281], force_B[0:3281])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[3286:3532], force_B[3289:35235])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match for water. \n{error_msg}")
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[3532:3539], force_B[3282:3289])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
+    def test_hybridFF_REST2_hsp90(self):
+        pass
 
 if __name__ == '__main__':
     unittest.main()

@@ -4241,7 +4241,7 @@ class HybridTopologyFactoryREST2:
         self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("lam_ele_del_x_k_rest2_sqrt",   1.0)
         self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("lam_ele_ins_x_k_rest2_sqrt",   0.0)
         self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("k_rest2_sqrt", 1.0)
-        self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("k_rest2_sqrt", 1.0)
+        self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("k_rest2", 1.0)
 
         # self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter('lam_vdw_core_x_k_rest2',  0.0)
 
@@ -4413,9 +4413,9 @@ class HybridTopologyFactoryREST2:
         elif hybrid_index in self._atom_classes['unique_old_atoms']:
             return "old"
         elif hybrid_index in self._atom_classes['rest2_atoms']:
-            return "EnvH"
+            return "envh"
         else:
-            return "EnvC"
+            return "envc"
 
     def _handle_exceptions(self):
         """
@@ -4446,7 +4446,7 @@ class HybridTopologyFactoryREST2:
         """
         # 1. Set up the two CustomBondForces
         # 1.1. custom_bond_force_exception_1D
-        energy =  "U_rest2"
+        energy =  "U_rest2;"
         energy += "U_rest2 = (U_electrostatics + U_sterics) * k_rest2_sqrt^is_hot;"
 
         energy += "U_sterics = 4*epsilon*x*(x-1.0);"
@@ -4454,21 +4454,30 @@ class HybridTopologyFactoryREST2:
         energy += "sigma   = (1-lambda_vdw)*sigma1   + lambda_vdw*sigma2;"
         energy += "epsilon = (1-lambda_vdw)*epsilon1 + lambda_vdw*epsilon2;"
         energy += "lambda_vdw"
-        energy += "= inter_core_core * lambda_sterics_core"
-        energy += "+ inter_new_new   * lambda_sterics_insert"
-        energy += "+ inter_old_old   * lambda_sterics_delete"
-        energy += "+ inter_envh_core * lambda_sterics_core"
-        energy += "+ inter_envh_new  * lambda_sterics_insert"
-        energy += "+ inter_envh_old  * lambda_sterics_delete;"
+        energy += "= inter_core_core * lambda_sterics_core "
+        energy += "+ inter_new_new   * lambda_sterics_insert "
+        energy += "+ inter_old_old   * lambda_sterics_delete "
+        energy += "+ inter_envh_core * lambda_sterics_core "
+        energy += "+ inter_envh_new  * lambda_sterics_insert "
+        energy += "+ inter_envh_old  * lambda_sterics_delete "
+        energy += "+ inter_envc_core * lambda_sterics_core "
+        energy += "+ inter_envc_new  * lambda_sterics_insert "
+        energy += "+ inter_envc_old  * lambda_sterics_delete "
+        energy += ";"
 
-        energy += "U_electrostatics = (1-lambda_ele) * chgP1 + lambda_ele * chgP2;"
+        energy += "U_electrostatics = ((1-lambda_ele) * chgP1 + lambda_ele * chgP2) * ONE_4PI_EPS0 / r;"
+        energy += "ONE_4PI_EPS0 = %f;" % ONE_4PI_EPS0
         energy += "lambda_ele"
-        energy += "= inter_core_core * lambda_electrostatics_core"
-        energy += "+ inter_new_new   * lambda_electrostatics_insert"
-        energy += "+ inter_old_old   * lambda_electrostatics_delete"
-        energy += "+ inter_envh_core * lambda_electrostatics_core"
-        energy += "+ inter_envh_new  * lambda_electrostatics_insert"
-        energy += "+ inter_envh_old  * lambda_electrostatics_delete;"
+        energy += "= inter_core_core * lambda_electrostatics_core "
+        energy += "+ inter_new_new   * lambda_electrostatics_insert "
+        energy += "+ inter_old_old   * lambda_electrostatics_delete "
+        energy += "+ inter_envh_core * lambda_electrostatics_core "
+        energy += "+ inter_envh_new  * lambda_electrostatics_insert "
+        energy += "+ inter_envh_old  * lambda_electrostatics_delete "
+        energy += "+ inter_envc_core * lambda_electrostatics_core "
+        energy += "+ inter_envc_new  * lambda_electrostatics_insert "
+        energy += "+ inter_envc_old  * lambda_electrostatics_delete "
+        energy += ";"
 
         energy += "inter_core_core = delta(0-pair_type);"
         energy += "inter_new_new   = delta(2-pair_type);"
@@ -4476,15 +4485,33 @@ class HybridTopologyFactoryREST2:
         energy += "inter_envh_core = delta(5-pair_type);"
         energy += "inter_envh_new  = delta(6-pair_type);"
         energy += "inter_envh_old  = delta(7-pair_type);"
+        energy += "inter_envc_core = delta(9-pair_type);"
+        energy += "inter_envc_new  = delta(10-pair_type);"
+        energy += "inter_envc_old  = delta(11-pair_type);"
 
         nb_exceptions_1d = openmm.CustomBondForce(energy)
         name = f"{nb_exceptions_1d.__class__.__name__}_exceptions_1D"
         nb_exceptions_1d.setName(name)
         self._hybrid_system.addForce(nb_exceptions_1d)
         self._hybrid_system_forces['nonbonded_exceptions_force_1d'] = nb_exceptions_1d
+        nb_exceptions_1d.addGlobalParameter("lambda_electrostatics_core"  , 0.0)
+        nb_exceptions_1d.addGlobalParameter("lambda_electrostatics_insert", 0.0)
+        nb_exceptions_1d.addGlobalParameter("lambda_electrostatics_delete", 0.0)
+        nb_exceptions_1d.addGlobalParameter("lambda_sterics_core"         , 0.0)
+        nb_exceptions_1d.addGlobalParameter("lambda_sterics_insert"       , 0.0)
+        nb_exceptions_1d.addGlobalParameter("lambda_sterics_delete"       , 0.0)
+        nb_exceptions_1d.addGlobalParameter("k_rest2_sqrt"                , 1.0)
+        nb_exceptions_1d.addPerBondParameter("chgP1")
+        nb_exceptions_1d.addPerBondParameter("sigma1")
+        nb_exceptions_1d.addPerBondParameter("epsilon1")
+        nb_exceptions_1d.addPerBondParameter("chgP2")
+        nb_exceptions_1d.addPerBondParameter("sigma2")
+        nb_exceptions_1d.addPerBondParameter("epsilon2")
+        nb_exceptions_1d.addPerBondParameter("is_hot")
+        nb_exceptions_1d.addPerBondParameter("pair_type")
 
         # 1.2. custom_bond_force_exception_2D
-        energy = "U_rest2"
+        energy = "U_rest2;"
         energy += "U_rest2 = (U_electrostatics + U_sterics) * k_rest2_sqrt^is_hot;"
 
         energy += "U_sterics = 4*epsilon*x*(x-1.0);"
@@ -4492,13 +4519,14 @@ class HybridTopologyFactoryREST2:
         energy += "sigma   =  (1-lambda_sterics_core)*sigma1   + lambda_sterics_core*sigma2;"
         energy += "epsilon = ((1-lambda_sterics_core)*epsilon1 + lambda_sterics_core*epsilon2) * lambda_vdw_old_new;"
         energy += "lambda_vdw_old_new"
-        energy += "= inter_new_core   * lambda_sterics_insert"
-        energy += "+ inter_old_core   * lambda_sterics_delete;"
+        energy += "= inter_new_core * lambda_sterics_insert "
+        energy += "+ inter_old_core * (1-lambda_sterics_delete);"
 
-        energy += "U_electrostatics = lambda_ele_old_new*((1-lambda_electrostatics_core) * chgP1 + lambda_electrostatics_core * chgP2);"
+        energy += "U_electrostatics = lambda_ele_old_new * ((1-lambda_electrostatics_core) * chgP1 + lambda_electrostatics_core * chgP2) * ONE_4PI_EPS0 / r;"
+        energy += "ONE_4PI_EPS0 = %f;" % ONE_4PI_EPS0
         energy += "lambda_ele_old_new"
-        energy += "= inter_new_core   * lambda_electrostatics_insert"
-        energy += "+ inter_old_core   * lambda_electrostatics_delete;"
+        energy += "= inter_new_core * lambda_electrostatics_insert "
+        energy += "+ inter_old_core * (1-lambda_electrostatics_delete);"
 
         energy += "inter_new_core = delta(1-pair_type);"
         energy += "inter_old_core = delta(3-pair_type);"
@@ -4508,59 +4536,196 @@ class HybridTopologyFactoryREST2:
         nb_exceptions_2d.setName(name)
         self._hybrid_system.addForce(nb_exceptions_2d)
         self._hybrid_system_forces['nonbonded_exceptions_force_2d'] = nb_exceptions_2d
+        nb_exceptions_2d.addGlobalParameter("lambda_electrostatics_core"  , 0.0)
+        nb_exceptions_2d.addGlobalParameter("lambda_electrostatics_insert", 0.0)
+        nb_exceptions_2d.addGlobalParameter("lambda_electrostatics_delete", 0.0)
+        nb_exceptions_2d.addGlobalParameter("lambda_sterics_core"         , 0.0)
+        nb_exceptions_2d.addGlobalParameter("lambda_sterics_insert"       , 0.0)
+        nb_exceptions_2d.addGlobalParameter("lambda_sterics_delete"       , 0.0)
+        nb_exceptions_2d.addGlobalParameter("k_rest2_sqrt"                , 1.0)
+        nb_exceptions_2d.addPerBondParameter("chgP1")
+        nb_exceptions_2d.addPerBondParameter("sigma1")
+        nb_exceptions_2d.addPerBondParameter("epsilon1")
+        nb_exceptions_2d.addPerBondParameter("chgP2")
+        nb_exceptions_2d.addPerBondParameter("sigma2")
+        nb_exceptions_2d.addPerBondParameter("epsilon2")
+        nb_exceptions_2d.addPerBondParameter("is_hot")
+        nb_exceptions_2d.addPerBondParameter("pair_type")
 
         # 2. Loop through the exceptions in the old system, and classify them
-        groups = ["core", "new", "old", "EnvH", "EnvC"]
+        # groups = ["core", "new", "old", "envh", "envc"]
 
         exc_index_2_parm   = {} # from (ati, atj) to (groupi, groupj, chgP1, sigma1, epsilon1, chgP2, sigma2, epsilon2)
         exc_index_2_parm_0 = {} # from (ati, atj) to (groupi, groupj)
         for (index1_old, index2_old), (chargeProd, sigma, epsilon) in self._old_system_exceptions.items():
-            index1_hybrid = self._old_to_hybrid_map[index1_old]
-            index2_hybrid = self._old_to_hybrid_map[index2_old]
-            group1 = self._atom_group(index1_hybrid)
-            group2 = self._atom_group(index2_hybrid)
+            ind1_hyb = self._old_to_hybrid_map[index1_old]
+            ind2_hyb = self._old_to_hybrid_map[index2_old]
+            group1 = self._atom_group(ind1_hyb)
+            group2 = self._atom_group(ind2_hyb)
             if np.allclose([chargeProd.value_in_unit(unit.elementary_charge**2),
                             epsilon.value_in_unit(unit.kilojoule_per_mole)],
                            [0.0, 0.0]):
                 # Then this exception is effectively turned off, so we can skip it
-                exc_index_2_parm_0[(index1_hybrid, index2_hybrid)] = (group1, group2)
+                exc_index_2_parm_0[(ind1_hyb, ind2_hyb)] = (group1, group2)
             else:
-                exc_index_2_parm[(index1_hybrid, index2_hybrid)] = [group1, group2,chargeProd, sigma, epsilon, 0.0, 0.0, 0.0]
+                exc_index_2_parm[(ind1_hyb, ind2_hyb)] = [group1, group2,chargeProd, sigma, epsilon, 0.0, 0.0, 0.0]
 
         exc_index_2_parm_old = copy.deepcopy(exc_index_2_parm)
         # 3. Loop through the exceptions in the new system, and classify them
         for (index1_new, index2_new), (chargeProd, sigma, epsilon) in self._new_system_exceptions.items():
-            index1_hybrid = self._new_to_hybrid_map[index1_new]
-            index2_hybrid = self._new_to_hybrid_map[index2_new]
-            group1 = self._atom_group(index1_hybrid)
-            group2 = self._atom_group(index2_hybrid)
+            ind1_hyb = self._new_to_hybrid_map[index1_new]
+            ind2_hyb = self._new_to_hybrid_map[index2_new]
+            group1 = self._atom_group(ind1_hyb)
+            group2 = self._atom_group(ind2_hyb)
+            if "old" in (group1, group2):
+                raise ValueError(f"When trying to collect exception from new system, old atom appears."
+                                 f" ({index1_new}:{ind1_hyb}, {index2_new}:{ind2_hyb} (new:hybrid)) ({group1},{group2})")
 
             # make sure no double counting, also be careful about the order of indices
-            if (index1_hybrid, index2_hybrid) in exc_index_2_parm_0 or (index2_hybrid, index1_hybrid) in exc_index_2_parm_0:
+            if (ind1_hyb, ind2_hyb) in exc_index_2_parm_0 or (ind2_hyb, ind1_hyb) in exc_index_2_parm_0:
+                if not np.allclose([chargeProd.value_in_unit(unit.elementary_charge ** 2),
+                                    epsilon.value_in_unit(unit.kilojoule_per_mole)],
+                                   [0.0, 0.0]):
+                    raise ValueError(f"Exception {ind1_hyb}-{ind2_hyb} (hybrid 0-index) was 0 but now reset as non-0")
                 pass
-            elif (index1_hybrid, index2_hybrid) in exc_index_2_parm_old or (index2_hybrid, index1_hybrid) in exc_index_2_parm_old:
+            elif (ind1_hyb, ind2_hyb) in exc_index_2_parm_old or (ind2_hyb, ind1_hyb) in exc_index_2_parm_old:
                 # fill in state B (chgP2, sigma2, epsilon2)
-                exc_index_2_parm[(index1_hybrid, index2_hybrid)][5] = chargeProd
-                exc_index_2_parm[(index1_hybrid, index2_hybrid)][6] = sigma
-                exc_index_2_parm[(index1_hybrid, index2_hybrid)][7] = epsilon
-            elif (index1_hybrid, index2_hybrid) in exc_index_2_parm or (index2_hybrid, index1_hybrid) in exc_index_2_parm:
-                # This should not happen, there is duplicated exception in new system
-                raise ValueError(f"Duplicated exception in new system: {index1_new}:{index1_hybrid}, {index2_new}:{index2_hybrid} (new:hybrid) {chargeProd} {sigma} {epsilon}")
+                exc_index_2_parm[(ind1_hyb, ind2_hyb)][5] = chargeProd
+                exc_index_2_parm[(ind1_hyb, ind2_hyb)][6] = sigma
+                exc_index_2_parm[(ind1_hyb, ind2_hyb)][7] = epsilon
+            elif (ind1_hyb, ind2_hyb) in exc_index_2_parm or (ind2_hyb, ind1_hyb) in exc_index_2_parm:
+                raise ValueError(f"Duplicated exception in new system: {index1_new}:{ind1_hyb}, {index2_new}:{ind2_hyb} (new:hybrid) {chargeProd} {sigma} {epsilon}")
             else:
                 # This is a new exception
                 if np.allclose([chargeProd.value_in_unit(unit.elementary_charge ** 2),
                                 epsilon.value_in_unit(unit.kilojoule_per_mole)],
                                [0.0, 0.0]):
                     # Then this exception is effectively turned off, so we can skip it
-                    exc_index_2_parm_0[(index1_hybrid, index2_hybrid)] = (group1, group2)
+                    exc_index_2_parm_0[(ind1_hyb, ind2_hyb)] = (group1, group2)
                 else:
-                    exc_index_2_parm[(index1_hybrid, index2_hybrid)] = [group1, group2, 0.0, 0.0, 0.0, chargeProd, sigma, epsilon]
+                    exc_index_2_parm[(ind1_hyb, ind2_hyb)] = [group1, group2, 0.0, 0.0, 0.0, chargeProd, sigma, epsilon]
         self._hybrid_system_exceptions_nonzero = exc_index_2_parm   # save for test
         self._hybrid_system_exceptions_zero    = exc_index_2_parm_0 # save for test
 
 
         # 4. Add each exception to the corresponding Force
-        # 4.1. core-core
+        length_14 = 0.35 * unit.nanometers
+        def _add_exception_bond(bond_force, ind1_hyb, ind2_hyb, params, nonbonded_force):
+            """
+            Add a bond to the bond_force (for exception), and add a exception to nonbonded_force
+            :param bond_force:
+            :param ind1_hyb:
+            :param ind2_hyb:
+            :param params:
+            :param nonbonded_force:
+            :return:
+            """
+            bond_force.addBond(ind1_hyb, ind2_hyb, params)
+            nonbonded_force.addException(
+                    ind1_hyb, ind2_hyb,
+                    0.0 * unit.elementary_charge ** 2, length_14, 0.0 * unit.kilojoules_per_mole
+                )
+        for (ind1_hyb, ind2_hyb), params in exc_index_2_parm.items():
+            group1, group2, chgP1, sig1, eps1, chgP2, sig2, eps2 = params
+            self._hybrid_system_forces['core_sterics_force'].addExclusion(ind1_hyb, ind2_hyb)
+            if {group1, group2} == {"core", "core"}:
+                is_hot, pair_type = 2, 0
+                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
+                                    self._hybrid_system_forces["standard_nonbonded_force"])
+            elif {group1, group2} == {"new", "new"}:
+                is_hot, pair_type = 2, 2
+                params = (chgP1, length_14, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                assert np.allclose([chgP1,eps1], [0.0,0.0])
+                _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
+                                    self._hybrid_system_forces["standard_nonbonded_force"])
+            elif {group1, group2} == {"old", "old"}:
+                is_hot, pair_type = 2, 4
+                params = (chgP1, sig1, eps1, chgP2, length_14, eps2, is_hot, pair_type)
+                assert np.allclose([chgP2,eps2], [0.0,0.0])
+                _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
+                                    self._hybrid_system_forces["standard_nonbonded_force"])
+            elif {group1, group2} == {"envh", "core"}:
+                is_hot, pair_type = 2, 5
+                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
+                                    self._hybrid_system_forces["standard_nonbonded_force"])
+            elif {group1, group2} == {"envh", "new"}:
+                is_hot, pair_type = 2, 6
+                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
+                                    self._hybrid_system_forces["standard_nonbonded_force"])
+            elif {group1, group2} == {"envh", "old"}:
+                is_hot, pair_type = 2, 7
+                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
+                                    self._hybrid_system_forces["standard_nonbonded_force"])
+            elif {group1, group2} == {"new", "core"}:
+                is_hot, pair_type = 2, 1
+                assert (chgP1 != chgP2) or (sig1 != sig2) or (eps1 != eps2)
+                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                _add_exception_bond(nb_exceptions_2d, ind1_hyb, ind2_hyb, params,
+                                    self._hybrid_system_forces["standard_nonbonded_force"])
+            elif {group1, group2} == {"old", "core"}:
+                is_hot, pair_type = 2,  3
+                assert (chgP1 != chgP2) or (sig1 != sig2) or (eps1 != eps2)
+                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                _add_exception_bond(nb_exceptions_2d, ind1_hyb, ind2_hyb, params,
+                                    self._hybrid_system_forces["standard_nonbonded_force"])
+            elif {group1, group2} == {"envc", "core"}:
+                is_hot, pair_type = 1, 9
+                assert (chgP1 != chgP2) or (sig1 != sig2) or (eps1 != eps2)
+                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
+                                    self._hybrid_system_forces["standard_nonbonded_force"])
+            elif {group1, group2} == {"envc", "new"}:
+                is_hot, pair_type = 1, 10
+                assert np.allclose([chgP1, eps1], [0.0, 0.0])
+                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
+                                    self._hybrid_system_forces["standard_nonbonded_force"])
+            elif {group1, group2} == {"envc", "old"}:
+                is_hot, pair_type = 1, 11
+                assert np.allclose([chgP2, eps2], [0.0, 0.0])
+                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
+                                    self._hybrid_system_forces["standard_nonbonded_force"])
+
+
+            # add exception_parameter_offset to NonbondedForce
+            elif {group1, group2} == {"envh", "envh"}:
+                assert np.allclose([chgP1._value, sig1._value, eps1._value],
+                                   [chgP2._value, sig2._value, eps2._value])
+                exception_index = self._hybrid_system_forces["standard_nonbonded_force"].addException(
+                    ind1_hyb, ind2_hyb,
+                    0.0 * chgP1, sig1, 0.0 * eps1)
+                self._hybrid_system_forces["standard_nonbonded_force"].addExceptionParameterOffset(
+                    "k_rest2", exception_index, chgP1, sig1*0.0, eps1)
+            elif {group1, group2} == {"envc", "envh"}:
+                assert np.allclose([chgP1._value, sig1._value, eps1._value],
+                                   [chgP2._value, sig2._value, eps2._value])
+                exception_index = self._hybrid_system_forces["standard_nonbonded_force"].addException(
+                    ind1_hyb, ind2_hyb,
+                    0.0 * chgP1, sig1, 0.0 * eps1)
+                self._hybrid_system_forces["standard_nonbonded_force"].addExceptionParameterOffset(
+                    "k_rest2_sqrt", exception_index, chgP1, 0.0, eps1)
+            elif {group1, group2} == {"envc", "envc"}:
+                assert np.allclose([chgP1._value, sig1._value, eps1._value],
+                                   [chgP2._value, sig2._value, eps2._value])
+                exception_index = self._hybrid_system_forces["standard_nonbonded_force"].addException(
+                    ind1_hyb, ind2_hyb,
+                    chgP1, sig1, eps1
+                )
+            else:
+                raise ValueError(f"Exception between unsupported atom groups: {group1}, {group2}")
+
+
+        for (ind1_hyb, ind2_hyb) in exc_index_2_parm_0:
+            self._hybrid_system_forces["standard_nonbonded_force"].addException(
+                ind1_hyb, ind2_hyb,
+                0.0*unit.elementary_charge**2, 1.0*unit.nanometers, 0.0*unit.kilojoules_per_mole
+            )
+            self._hybrid_system_forces['core_sterics_force'].addExclusion(ind1_hyb, ind2_hyb)
 
     def _compute_hybrid_positions(self):
         """
