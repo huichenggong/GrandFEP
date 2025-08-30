@@ -1029,7 +1029,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_hybridFF_REST2_pro(self):
         print()
-        print("# Test HybridFF_REST2, Can we get the correct force when hybriding 2 pro/lig complex states with REST2")
+        print("# Test HybridFF_REST2, Can we hybrid 2 pro/lig complex CH4->C2H6 with REST2")
         nonbonded_settings = nonbonded_Amber
         platform = platform_ref
 
@@ -1152,7 +1152,104 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
     def test_hybridFF_REST2_hsp90(self):
-        pass
+        print()
+        print("# Test HybridFF_REST2, Can we get the correct force when hybriding 2 ligands in HSP90 with REST2")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+
+        base = Path(__file__).resolve().parent
+
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xab" / "10_complex_tleap.inpcrd",
+            base / "HSP90/protein_leg" / "2xab" / "10_complex_tleap.prmtop", nonbonded_settings)
+        inpcrd1, prmtop1, sys1 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xjg" / "10_complex_tleap.inpcrd",
+            base / "HSP90/protein_leg" / "2xjg" / "10_complex_tleap.prmtop", nonbonded_settings)
+        mdp = utils.md_params_yml(base / "HSP90/water_leg/bcc_gaff2/mapping.yml")
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtop0.topology, prmtop1.topology,
+                                                                               mdp.mapping_list)
+        h_factory = utils.HybridTopologyFactoryREST2(
+            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            old_rest2_atom_indices=[1880, 1881, 1882, 1883, 1884, 1885, 1886, 1887, 1888, 1889, 1890]
+        )
+
+        print("# Force should be the same in state A")
+        global_param = {
+            'lam_ele_coreA_x_k_rest2_sqrt': 1.0,
+            'lam_ele_coreB_x_k_rest2_sqrt': 0.0,
+            "lam_ele_del_x_k_rest2_sqrt": 1.0,
+            "lam_ele_ins_x_k_rest2_sqrt": 0.0,
+            "lambda_electrostatics_core": 0.0,
+            "lambda_electrostatics_insert": 0.0,
+            "lambda_electrostatics_delete": 0.0,
+            "lambda_sterics_core": 0.0,
+            "lambda_sterics_insert": 0.0,
+            "lambda_sterics_delete": 0.0,
+            "lambda_bonds": 0.0,
+            "lambda_angles": 0.0,
+            "lambda_torsions": 0.0,
+            "k_rest2_sqrt": 1.0,
+            "k_rest2": 1.0,
+        }
+
+        energy_h, force_h = calc_energy_force(
+            # separate_force(h_factory.hybrid_system, force_name_list),
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            h_factory.hybrid_positions, platform, global_parameters=global_param)
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items()])
+        pos_old = np.zeros_like(inpcrd0.positions)
+        pos_old[old_to_hyb[:, 0]] = h_factory.hybrid_positions[old_to_hyb[:, 1]]
+        energy_A, force_A = calc_energy_force(
+            # separate_force(sys0, force_name_list),
+            sys0,
+            prmtop0.topology,
+            pos_old, platform)
+        self.assertEqual(force_A.shape, (3863, 3))
+        self.assertEqual(force_h.shape, (3867, 3))
+        # Real atom with a dummy atom attached will have extra force.
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in [3302, 3303]])
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        print("# Force should be the same in state B")
+        global_param = {
+            'lam_ele_coreA_x_k_rest2_sqrt': 0.0,
+            'lam_ele_coreB_x_k_rest2_sqrt': 1.0,
+            "lam_ele_del_x_k_rest2_sqrt": 0.0,
+            "lam_ele_ins_x_k_rest2_sqrt": 1.0,
+            "lambda_electrostatics_core": 1.0,
+            "lambda_electrostatics_insert": 1.0,
+            "lambda_electrostatics_delete": 1.0,
+            "lambda_sterics_core": 1.0,
+            "lambda_sterics_insert": 1.0,
+            "lambda_sterics_delete": 1.0,
+            "lambda_bonds": 1.0,
+            "lambda_angles": 1.0,
+            "lambda_torsions": 1.0,
+            "k_rest2_sqrt": 1.0,
+            "k_rest2": 1.0,
+        }
+        energy_h, force_h = calc_energy_force(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            h_factory.hybrid_positions, platform, global_parameters=global_param)
+        new_to_hyb = np.array([[i, j] for i, j in h_factory.new_to_hybrid_atom_map.items()])
+        pos_new = np.zeros_like(inpcrd1.positions)
+        pos_new[new_to_hyb[:, 0]] = h_factory.hybrid_positions[new_to_hyb[:, 1]]
+        energy_B, force_B = calc_energy_force(
+            sys1,
+            prmtop1.topology,
+            pos_new, platform)
+        self.assertEqual(force_B.shape, (3866, 3))
+        self.assertEqual(force_h.shape, (3867, 3))
+        # Real atom with a dummy atom attached will have extra force.
+        new_to_hyb = np.array([[i, j] for i, j in h_factory.new_to_hybrid_atom_map.items() if i not in [3302, 3303, 3312]])
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:, 1]], force_B[new_to_hyb[:, 0]])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
 if __name__ == '__main__':
     unittest.main()

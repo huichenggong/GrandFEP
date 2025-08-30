@@ -1,0 +1,16 @@
+source leaprc.protein.ff14SB
+source leaprc.water.tip3p
+source leaprc.gaff2
+
+MOL = loadmol2 05_MOL.mol2
+loadamberparams 03.frcmod
+
+COF = loadmol2  ../COF/04_rename.mol2
+loadamberparams ../COF/03.frcmod
+
+BOX = loadpdb 08_box.pdb
+setBox BOX "vdw"
+set BOX box { 84.824   84.824   84.824 }
+saveamberparm BOX 10_complex_tleap.prmtop 10_complex_tleap.inpcrd
+savepdb       BOX 10_complex_tleap.pdb
+quit

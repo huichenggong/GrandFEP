@@ -3309,7 +3309,7 @@ class HybridTopologyFactoryREST2:
           now.
         * REST2 scaling is implemented.
         """
-        energy_expression =  'U * k_rest2^rest2;'
+        energy_expression =  'U * k_rest2^is_hot;'
         energy_expression += 'U = (1-lambda_torsions)*U1 + lambda_torsions*U2;'
         energy_expression += 'U1 = K1*(1+cos(periodicity1*theta-phase1));'
         energy_expression += 'U2 = K2*(1+cos(periodicity2*theta-phase2));'
@@ -3329,7 +3329,7 @@ class HybridTopologyFactoryREST2:
         # molecule2 spring constant
         custom_core_force.addPerTorsionParameter('K2')
         # molecule2 spring constant
-        custom_core_force.addPerTorsionParameter('rest2') # 0.0: c-c-c-c, 0.25: c-c-c-h, c-c-h-c, ... 0.5: c-c-h-h ... 1: h-h-h-h
+        custom_core_force.addPerTorsionParameter('is_hot') # 0.0: c-c-c-c, 0.25: c-c-c-h, c-c-h-c, ... 0.5: c-c-h-h ... 1: h-h-h-h
 
         custom_core_force.addGlobalParameter('lambda_torsions', 0.0)
         custom_core_force.addGlobalParameter('k_rest2', 1.0) # T_cold / T_hot
@@ -3499,19 +3499,49 @@ class HybridTopologyFactoryREST2:
 
         standard_nonbonded_force.setNonbondedMethod(self._nonbonded_method)
 
-        sterics_energy_expression += self._nonbonded_custom_sterics_common()
-
-        sterics_mixing_rules = self._nonbonded_custom_mixing_rules()
+        # sterics_energy_expression += self._nonbonded_custom_sterics_common()
+        # sterics_mixing_rules = self._nonbonded_custom_mixing_rules()
 
         custom_nonbonded_method = self._translate_nonbonded_method_to_custom(
             self._nonbonded_method)
 
-        total_sterics_energy = ("U_rest2;"
-                                + "U_rest2 = U_sterics * k_rest2_sqrt^(is_hot1+is_hot2);"
-                                + sterics_energy_expression + sterics_mixing_rules)
+        energy = "U_rest2;"
+
+        energy += "U_rest2 = U_sterics * k_rest2_sqrt^is_hot;"
+        energy += "U_sterics = 4*epsilon*x*(x-1.0);"
+        energy += "x = (sigma/reff_sterics)^6;"
+        energy += "epsilon = (1-lambda_sterics)*epsilonA + lambda_sterics*epsilonB;"
+        energy += "reff_sterics = sigma*((softcore_alpha*lambda_alpha + (r/sigma)^6))^(1/6);"
+        energy += "sigma = (1-lambda_sterics)*sigmaA + lambda_sterics*sigmaB;"
+
+        energy += "lambda_alpha = new_X*(1-lambda_sterics_insert) + old_X*lambda_sterics_delete;"
+        energy += "lambda_sterics = new_X*lambda_sterics_insert + old_X*lambda_sterics_delete + core_core*lambda_sterics_core + core_env*lambda_sterics_core;"
+
+        energy += "core_env  = max(is_core1, is_core2) * max(max(is_envh1, is_envh2), max(is_envc1, is_envc2));"
+        energy += "core_core = is_core1 * is_core2;"
+        energy += "new_X     = max(is_new1, is_new2);"
+        energy += "old_X     = max(is_old1, is_old2);"
+
+        energy += "is_core1 = delta(0-atom_group1);"
+        energy += "is_new1  = delta(1-atom_group1);"
+        energy += "is_old1  = delta(2-atom_group1);"
+        energy += "is_envh1 = delta(3-atom_group1);"
+        energy += "is_envc1 = delta(4-atom_group1);"
+        energy += "is_core2 = delta(0-atom_group2);"
+        energy += "is_new2  = delta(1-atom_group2);"
+        energy += "is_old2  = delta(2-atom_group2);"
+        energy += "is_envh2 = delta(3-atom_group2);"
+        energy += "is_envc2 = delta(4-atom_group2);"
+
+        energy += "is_hot = step(3-atom_group1) + step(3-atom_group2);"
+
+        energy += "epsilonA = sqrt(epsilonA1*epsilonA2);"
+        energy += "epsilonB = sqrt(epsilonB1*epsilonB2);"
+        energy += "sigmaA = 0.5*(sigmaA1 + sigmaA2);"
+        energy += "sigmaB = 0.5*(sigmaB1 + sigmaB2);"
 
         sterics_custom_nonbonded_force = openmm.CustomNonbondedForce(
-            total_sterics_energy)
+            energy)
         # Match cutoff from non-custom NB forces
         sterics_custom_nonbonded_force.setCutoffDistance(r_cutoff)
 
@@ -3526,17 +3556,12 @@ class HybridTopologyFactoryREST2:
         sterics_custom_nonbonded_force.addPerParticleParameter("sigmaB")
         # Lennard-Jones epsilon final
         sterics_custom_nonbonded_force.addPerParticleParameter("epsilonB")
-        # 1 = hybrid old atom, 0 otherwise
-        sterics_custom_nonbonded_force.addPerParticleParameter("unique_old")
-        # 1 = hybrid new atom, 0 otherwise
-        sterics_custom_nonbonded_force.addPerParticleParameter("unique_new")
-        # REST2, 1 = hot, 0 = cold
-        sterics_custom_nonbonded_force.addPerParticleParameter("is_hot")
+        # 0: core, 1: new, 2: old, 3: envh, 4: envc
+        sterics_custom_nonbonded_force.addPerParticleParameter("atom_group")
 
         sterics_custom_nonbonded_force.addGlobalParameter(
             "lambda_sterics_core", 0.0)
-        sterics_custom_nonbonded_force.addGlobalParameter(
-            "lambda_electrostatics_core", 0.0)
+        # sterics_custom_nonbonded_force.addGlobalParameter("lambda_electrostatics_core", 0.0)
         sterics_custom_nonbonded_force.addGlobalParameter(
             "lambda_sterics_insert", 0.0)
         sterics_custom_nonbonded_force.addGlobalParameter(
@@ -4247,7 +4272,10 @@ class HybridTopologyFactoryREST2:
 
         # We have to loop through the particles in the system, because
         # nonbonded force does not accept index
+        group_dict = {"core":0, "new":1, "old":2, "envh":3, "envc":4}
         for particle_index in range(self._hybrid_system.getNumParticles()):
+            group = self._atom_group(particle_index)
+            grp_ind = group_dict[group]
             if particle_index in self._atom_classes['unique_old_atoms']:
                 if particle_index not in self._atom_classes['rest2_atoms']:
                     raise ValueError(f"Unique old atom {particle_index} must be in the rest2 region.")
@@ -4258,7 +4286,7 @@ class HybridTopologyFactoryREST2:
                 # Add the particle to the hybrid custom sterics and
                 # turning off sterics in forward direction
                 check_index = self._hybrid_system_forces['core_sterics_force'].addParticle(
-                    [sigma, epsilon, sigma, 0.0*epsilon, 1, 0, 1]
+                    [sigma, epsilon, sigma, 0.0*epsilon, grp_ind]
                 )
                 _check_indices(particle_index, check_index)
 
@@ -4286,7 +4314,7 @@ class HybridTopologyFactoryREST2:
                 # Add the particle to the hybrid custom sterics and electrostatics
                 # turning on sterics in forward direction
                 check_index = self._hybrid_system_forces['core_sterics_force'].addParticle(
-                    [sigma, 0.0*epsilon, sigma, epsilon, 0, 1, 1]
+                    [sigma, 0.0*epsilon, sigma, epsilon, grp_ind]
                 )
                 _check_indices(particle_index, check_index)
 
@@ -4318,7 +4346,7 @@ class HybridTopologyFactoryREST2:
                 # the two parameters; add steric params and zero electrostatics
                 # to core_sterics per usual
                 check_index = self._hybrid_system_forces['core_sterics_force'].addParticle(
-                    [sigma_old, epsilon_old, sigma_new, epsilon_new, 0, 0, 1])
+                    [sigma_old, epsilon_old, sigma_new, epsilon_new, grp_ind])
                 _check_indices(particle_index, check_index)
 
                 # Still add the particle to the regular nonbonded force, but
@@ -4355,7 +4383,7 @@ class HybridTopologyFactoryREST2:
                 # Add the particle to the hybrid custom sterics, but they dont
                 # change; electrostatics are ignored
                 self._hybrid_system_forces['core_sterics_force'].addParticle(
-                    [sigma, epsilon, sigma, epsilon, 0, 0, 1]
+                    [sigma, epsilon, sigma, epsilon, grp_ind]
                 )
 
                 # Add the EnvH atoms to the regular nonbonded force as
@@ -4377,7 +4405,7 @@ class HybridTopologyFactoryREST2:
                 # Add the particle to the hybrid custom sterics, but they dont
                 # change; electrostatics are ignored
                 self._hybrid_system_forces['core_sterics_force'].addParticle(
-                    [sigma, epsilon, sigma, epsilon, 0, 0, 0]
+                    [sigma, epsilon, sigma, epsilon, grp_ind]
                 )
 
                 # Add the environment atoms to the regular nonbonded force as
@@ -4455,7 +4483,9 @@ class HybridTopologyFactoryREST2:
         energy += "epsilon = (1-lambda_vdw)*epsilon1 + lambda_vdw*epsilon2;"
         energy += "lambda_vdw"
         energy += "= inter_core_core * lambda_sterics_core "
+        energy += "+ inter_new_core  * lambda_sterics_insert "
         energy += "+ inter_new_new   * lambda_sterics_insert "
+        energy += "+ inter_old_core  * lambda_sterics_delete "
         energy += "+ inter_old_old   * lambda_sterics_delete "
         energy += "+ inter_envh_core * lambda_sterics_core "
         energy += "+ inter_envh_new  * lambda_sterics_insert "
@@ -4469,7 +4499,9 @@ class HybridTopologyFactoryREST2:
         energy += "ONE_4PI_EPS0 = %f;" % ONE_4PI_EPS0
         energy += "lambda_ele"
         energy += "= inter_core_core * lambda_electrostatics_core "
+        energy += "+ inter_new_core  * lambda_electrostatics_insert "
         energy += "+ inter_new_new   * lambda_electrostatics_insert "
+        energy += "+ inter_old_core  * lambda_electrostatics_delete "
         energy += "+ inter_old_old   * lambda_electrostatics_delete "
         energy += "+ inter_envh_core * lambda_electrostatics_core "
         energy += "+ inter_envh_new  * lambda_electrostatics_insert "
@@ -4480,7 +4512,9 @@ class HybridTopologyFactoryREST2:
         energy += ";"
 
         energy += "inter_core_core = delta(0-pair_type);"
+        energy += "inter_new_core = delta(1-pair_type);"
         energy += "inter_new_new   = delta(2-pair_type);"
+        energy += "inter_old_core = delta(3-pair_type);"
         energy += "inter_old_old   = delta(4-pair_type);"
         energy += "inter_envh_core = delta(5-pair_type);"
         energy += "inter_envh_new  = delta(6-pair_type);"
@@ -4590,9 +4624,16 @@ class HybridTopologyFactoryREST2:
                 pass
             elif (ind1_hyb, ind2_hyb) in exc_index_2_parm_old or (ind2_hyb, ind1_hyb) in exc_index_2_parm_old:
                 # fill in state B (chgP2, sigma2, epsilon2)
-                exc_index_2_parm[(ind1_hyb, ind2_hyb)][5] = chargeProd
-                exc_index_2_parm[(ind1_hyb, ind2_hyb)][6] = sigma
-                exc_index_2_parm[(ind1_hyb, ind2_hyb)][7] = epsilon
+                if (ind1_hyb, ind2_hyb) in exc_index_2_parm:
+                    exc_index_2_parm[(ind1_hyb, ind2_hyb)][5] = chargeProd
+                    exc_index_2_parm[(ind1_hyb, ind2_hyb)][6] = sigma
+                    exc_index_2_parm[(ind1_hyb, ind2_hyb)][7] = epsilon
+                elif (ind2_hyb, ind1_hyb) in exc_index_2_parm:
+                    exc_index_2_parm[(ind2_hyb, ind1_hyb)][5] = chargeProd
+                    exc_index_2_parm[(ind2_hyb, ind1_hyb)][6] = sigma
+                    exc_index_2_parm[(ind2_hyb, ind1_hyb)][7] = epsilon
+                else:
+                    raise ValueError(f"Neither {ind1_hyb}-{ind2_hyb} nor the reversed pair have the state A logged")
             elif (ind1_hyb, ind2_hyb) in exc_index_2_parm or (ind2_hyb, ind1_hyb) in exc_index_2_parm:
                 raise ValueError(f"Duplicated exception in new system: {index1_new}:{ind1_hyb}, {index2_new}:{ind2_hyb} (new:hybrid) {chargeProd} {sigma} {epsilon}")
             else:
@@ -4660,18 +4701,32 @@ class HybridTopologyFactoryREST2:
                 params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
                 _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
                                     self._hybrid_system_forces["standard_nonbonded_force"])
+            # elif {group1, group2} == {"new", "core"}:
+            #     is_hot, pair_type = 2, 1
+            #     assert (chgP1 != chgP2) or (sig1 != sig2) or (eps1 != eps2)
+            #     params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+            #     _add_exception_bond(nb_exceptions_2d, ind1_hyb, ind2_hyb, params,
+            #                         self._hybrid_system_forces["standard_nonbonded_force"])
+            # elif {group1, group2} == {"old", "core"}:
+            #     is_hot, pair_type = 2,  3
+            #     assert (chgP1 != chgP2) or (sig1 != sig2) or (eps1 != eps2)
+            #     params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+            #     _add_exception_bond(nb_exceptions_2d, ind1_hyb, ind2_hyb, params,
+            #                         self._hybrid_system_forces["standard_nonbonded_force"])
+
             elif {group1, group2} == {"new", "core"}:
                 is_hot, pair_type = 2, 1
                 assert (chgP1 != chgP2) or (sig1 != sig2) or (eps1 != eps2)
-                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
-                _add_exception_bond(nb_exceptions_2d, ind1_hyb, ind2_hyb, params,
+                params = (0.0*chgP1, length_14, 0.0*eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
                                     self._hybrid_system_forces["standard_nonbonded_force"])
             elif {group1, group2} == {"old", "core"}:
                 is_hot, pair_type = 2,  3
                 assert (chgP1 != chgP2) or (sig1 != sig2) or (eps1 != eps2)
-                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
-                _add_exception_bond(nb_exceptions_2d, ind1_hyb, ind2_hyb, params,
+                params = (chgP1, sig1, eps1, 0.0*chgP2, sig2, 0.0*eps2, is_hot, pair_type)
+                _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
                                     self._hybrid_system_forces["standard_nonbonded_force"])
+
             elif {group1, group2} == {"envc", "core"}:
                 is_hot, pair_type = 1, 9
                 assert (chgP1 != chgP2) or (sig1 != sig2) or (eps1 != eps2)
