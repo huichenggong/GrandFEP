@@ -894,9 +894,10 @@ class MyTestCase(unittest.TestCase):
 
             baseGC_big.check_ghost_list()
 
+class MyTestREST2(unittest.TestCase):
     def test_hybridFF_REST2_lig(self):
         print()
-        print("# Test HybridFF_REST2, Can we get the correct force when hybriding 2 ligand states with REST2")
+        print("# Test HybridFF_REST2, Can we get the correct force when hybriding 2 ligand water system with REST2")
         nonbonded_settings = nonbonded_Amber
         platform = platform_ref
 
