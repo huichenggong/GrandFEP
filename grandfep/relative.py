@@ -3505,39 +3505,49 @@ class HybridTopologyFactoryREST2:
         custom_nonbonded_method = self._translate_nonbonded_method_to_custom(
             self._nonbonded_method)
 
-        energy = "U_rest2;"
-
-        energy += "U_rest2 = U_sterics * k_rest2_sqrt^is_hot;"
-        energy += "U_sterics = 4*epsilon*x*(x-1.0);"
-        energy += "x = (sigma/reff_sterics)^6;"
-        energy += "epsilon = (1-lambda_sterics)*epsilonA + lambda_sterics*epsilonB;"
-        energy += "reff_sterics = sigma*((softcore_alpha*lambda_alpha + (r/sigma)^6))^(1/6);"
-        energy += "sigma = (1-lambda_sterics)*sigmaA + lambda_sterics*sigmaB;"
-
-        energy += "lambda_alpha = new_X*(1-lambda_sterics_insert) + old_X*lambda_sterics_delete;"
-        energy += "lambda_sterics = new_X*lambda_sterics_insert + old_X*lambda_sterics_delete + core_ce*lambda_sterics_core;"
-
-        energy += "core_ce  = delta(old_X + new_X);"    # core-core + core-envh + core-envc"
-        energy += "new_X    = max(is_new1, is_new2);"
-        energy += "old_X    = max(is_old1, is_old2);"
-
-        energy += "is_core1 = delta(0-atom_group1);"
-        energy += "is_new1  = delta(1-atom_group1);"
-        energy += "is_old1  = delta(2-atom_group1);"
-        energy += "is_envh1 = delta(3-atom_group1);"
-        energy += "is_envc1 = delta(4-atom_group1);"
-        energy += "is_core2 = delta(0-atom_group2);"
-        energy += "is_new2  = delta(1-atom_group2);"
-        energy += "is_old2  = delta(2-atom_group2);"
-        energy += "is_envh2 = delta(3-atom_group2);"
-        energy += "is_envc2 = delta(4-atom_group2);"
-
-        energy += "is_hot = step(3-atom_group1) + step(3-atom_group2);"
-
-        energy += "epsilonA = sqrt(epsilonA1*epsilonA2);"
-        energy += "epsilonB = sqrt(epsilonB1*epsilonB2);"
-        energy += "sigmaA = 0.5*(sigmaA1 + sigmaA2);"
-        energy += "sigmaB = 0.5*(sigmaB1 + sigmaB2);"
+        energy = (
+            "U_rest2;"
+            # 8. REST2
+            "U_rest2 = U_sterics * k_rest2_sqrt^is_hot;"
+            "is_hot = step(3-atom_group1) + step(3-atom_group2);"
+    
+            "U_sterics = 4*epsilon*x*(x-1.0);"
+            # 7. introduce softcore when new/old atoms are involved
+            "x = 1 / ((softcore_alpha*lambda_alpha + (r/sigma)^6));"
+            "lambda_alpha = new_X*(1-lambda_sterics_insert) + old_X*lambda_sterics_delete;"
+    
+            # 6. Interpolating between states A and B
+            "epsilon = (1-lambda_sterics)*epsilonA + lambda_sterics*epsilonB;"
+            "sigma = (1-lambda_sterics)*sigmaA + lambda_sterics*sigmaB;"
+    
+            # 5. select lambda
+            "lambda_sterics = new_X*lambda_sterics_insert + old_X*lambda_sterics_delete + core_ce*lambda_sterics_core;"  # only one lambda_XXX will take effect
+    
+            # 4. determine interaction types
+            "core_ce  = delta(old_X + new_X);"  # core-core + core-envh + core-envc"
+            "new_X    = max(is_new1, is_new2);"
+            "old_X    = max(is_old1, is_old2);"
+    
+            # 3. determine atom groups
+            ## 3.1 check atom1
+            "is_core1 = delta(0-atom_group1);"
+            "is_new1  = delta(1-atom_group1);"
+            "is_old1  = delta(2-atom_group1);"
+            "is_envh1 = delta(3-atom_group1);"
+            "is_envc1 = delta(4-atom_group1);"
+            ## 3.2 check atom2
+            "is_core2 = delta(0-atom_group2);"
+            "is_new2  = delta(1-atom_group2);"
+            "is_old2  = delta(2-atom_group2);"
+            "is_envh2 = delta(3-atom_group2);"
+            "is_envc2 = delta(4-atom_group2);"
+    
+            # 1. LJ mixing rules
+            "epsilonA = sqrt(epsilonA1*epsilonA2);"
+            "epsilonB = sqrt(epsilonB1*epsilonB2);"
+            "sigmaA = 0.5*(sigmaA1 + sigmaA2);"
+            "sigmaB = 0.5*(sigmaB1 + sigmaB2);"
+                   )
 
         sterics_custom_nonbonded_force = openmm.CustomNonbondedForce(
             energy)
