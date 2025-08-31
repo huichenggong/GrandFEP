@@ -4553,48 +4553,6 @@ class HybridTopologyFactoryREST2:
         nb_exceptions_1d.addPerBondParameter("is_hot")
         nb_exceptions_1d.addPerBondParameter("pair_type")
 
-        # 1.2. custom_bond_force_exception_2D
-        energy = "U_rest2;"
-        energy += "U_rest2 = (U_electrostatics + U_sterics) * k_rest2_sqrt^is_hot;"
-
-        energy += "U_sterics = 4*epsilon*x*(x-1.0);"
-        energy += "x = (sigma/r)^6;"
-        energy += "sigma   =  (1-lambda_sterics_core)*sigma1   + lambda_sterics_core*sigma2;"
-        energy += "epsilon = ((1-lambda_sterics_core)*epsilon1 + lambda_sterics_core*epsilon2) * lambda_vdw_old_new;"
-        energy += "lambda_vdw_old_new"
-        energy += "= inter_new_core * lambda_sterics_insert "
-        energy += "+ inter_old_core * (1-lambda_sterics_delete);"
-
-        energy += "U_electrostatics = lambda_ele_old_new * ((1-lambda_electrostatics_core) * chgP1 + lambda_electrostatics_core * chgP2) * ONE_4PI_EPS0 / r;"
-        energy += "ONE_4PI_EPS0 = %f;" % ONE_4PI_EPS0
-        energy += "lambda_ele_old_new"
-        energy += "= inter_new_core * lambda_electrostatics_insert "
-        energy += "+ inter_old_core * (1-lambda_electrostatics_delete);"
-
-        energy += "inter_new_core = delta(1-pair_type);"
-        energy += "inter_old_core = delta(3-pair_type);"
-
-        nb_exceptions_2d = openmm.CustomBondForce(energy)
-        name = f"{nb_exceptions_2d.__class__.__name__}_exceptions_2D"
-        nb_exceptions_2d.setName(name)
-        self._hybrid_system.addForce(nb_exceptions_2d)
-        self._hybrid_system_forces['nonbonded_exceptions_force_2d'] = nb_exceptions_2d
-        nb_exceptions_2d.addGlobalParameter("lambda_electrostatics_core"  , 0.0)
-        nb_exceptions_2d.addGlobalParameter("lambda_electrostatics_insert", 0.0)
-        nb_exceptions_2d.addGlobalParameter("lambda_electrostatics_delete", 0.0)
-        nb_exceptions_2d.addGlobalParameter("lambda_sterics_core"         , 0.0)
-        nb_exceptions_2d.addGlobalParameter("lambda_sterics_insert"       , 0.0)
-        nb_exceptions_2d.addGlobalParameter("lambda_sterics_delete"       , 0.0)
-        nb_exceptions_2d.addGlobalParameter("k_rest2_sqrt"                , 1.0)
-        nb_exceptions_2d.addPerBondParameter("chgP1")
-        nb_exceptions_2d.addPerBondParameter("sigma1")
-        nb_exceptions_2d.addPerBondParameter("epsilon1")
-        nb_exceptions_2d.addPerBondParameter("chgP2")
-        nb_exceptions_2d.addPerBondParameter("sigma2")
-        nb_exceptions_2d.addPerBondParameter("epsilon2")
-        nb_exceptions_2d.addPerBondParameter("is_hot")
-        nb_exceptions_2d.addPerBondParameter("pair_type")
-
         # 2. Loop through the exceptions in the old system, and classify them
         # groups = ["core", "new", "old", "envh", "envc"]
 
