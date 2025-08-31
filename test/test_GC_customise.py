@@ -897,7 +897,7 @@ class MyTestCase(unittest.TestCase):
 class MyTestREST2(unittest.TestCase):
     def test_hybridFF_REST2_lig(self):
         print()
-        print("# Test HybridFF_REST2, Can we get the correct force when hybriding 2 ligand water system with REST2")
+        print("# Test HybridFF_REST2, Can we hybrid 2 ligands in water")
         nonbonded_settings = nonbonded_Amber
         platform = platform_ref
 
@@ -1030,7 +1030,7 @@ class MyTestREST2(unittest.TestCase):
 
     def test_hybridFF_REST2_pro(self):
         print()
-        print("# Test HybridFF_REST2, Can we hybrid 2 pro/lig complex CH4->C2H6 with REST2")
+        print("# Test HybridFF_REST2, Can we hybrid 2 ligands in Protein. CH4->C2H6")
         nonbonded_settings = nonbonded_Amber
         platform = platform_ref
 
@@ -1154,7 +1154,7 @@ class MyTestREST2(unittest.TestCase):
 
     def test_hybridFF_REST2_hsp90(self):
         print()
-        print("# Test HybridFF_REST2, Can we get the correct force when hybriding 2 ligands in HSP90 with REST2")
+        print("# Test HybridFF_REST2, Can we hybrid 2 ligands in Protein. 2xab -> 2xjg")
         nonbonded_settings = nonbonded_Amber
         platform = platform_ref
 

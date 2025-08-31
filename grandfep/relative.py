@@ -3515,12 +3515,11 @@ class HybridTopologyFactoryREST2:
         energy += "sigma = (1-lambda_sterics)*sigmaA + lambda_sterics*sigmaB;"
 
         energy += "lambda_alpha = new_X*(1-lambda_sterics_insert) + old_X*lambda_sterics_delete;"
-        energy += "lambda_sterics = new_X*lambda_sterics_insert + old_X*lambda_sterics_delete + core_core*lambda_sterics_core + core_env*lambda_sterics_core;"
+        energy += "lambda_sterics = new_X*lambda_sterics_insert + old_X*lambda_sterics_delete + core_ce*lambda_sterics_core;"
 
-        energy += "core_env  = max(is_core1, is_core2) * max(max(is_envh1, is_envh2), max(is_envc1, is_envc2));"
-        energy += "core_core = is_core1 * is_core2;"
-        energy += "new_X     = max(is_new1, is_new2);"
-        energy += "old_X     = max(is_old1, is_old2);"
+        energy += "core_ce  = delta(old_X + new_X);"    # core-core + core-envh + core-envc"
+        energy += "new_X    = max(is_new1, is_new2);"
+        energy += "old_X    = max(is_old1, is_old2);"
 
         energy += "is_core1 = delta(0-atom_group1);"
         energy += "is_new1  = delta(1-atom_group1);"
