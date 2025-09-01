@@ -35,25 +35,34 @@ def calc_energy_force(system, topology, positions, platform=openmm.Platform.getP
     if global_parameters:
         for key, value in global_parameters.items():
             simulation.context.setParameter(key, value)
-    state = simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
+    state = simulation.context.getState(getEnergy=True, getForces=True)
     energy = state.getPotentialEnergy()
     force = state.getForces(asNumpy=True)
     return energy, force
 
-def match_force(force1, force2):
+def match_force(force1, force2, excluded_list = None):
     """
     Check if the force is the same
     :param force1: state.getForces(asNumpy=True)
     :param force2: state.getForces(asNumpy=True)
+    :param excluded_list: list of atom index to be excluded in the comparison
     :return: bool
     """
+    if not excluded_list:
+        excluded_list = []
     all_close_flag = True
     mis_match_list = []
+    n_matched = 0
     for at_index, (f1, f2) in enumerate(zip(force1, force2)):
+        if at_index in excluded_list:
+            continue
         at_flag = np.allclose(f1, f2)
         if not at_flag:
             all_close_flag = False
             mis_match_list.append([at_index, f1, f2])
+        else:
+            n_matched += 1
+    print(f"{n_matched} atoms matched.")
     error_msg = "".join([f"{at}\n    {f1}\n    {f2}\n" for at, f1, f2 in mis_match_list])
     return all_close_flag, mis_match_list, error_msg
 
@@ -83,11 +92,14 @@ def load_amber_sys(inpcrd_file: Union[str, Path],
     sys = prmtop.createSystem(**nonbonded_settings)
     return inpcrd, prmtop, sys
 
-def separate_force(system, force_name: List):
+def separate_force(system, force_name: List,):
     """
     Create a new system and only keep certain force
     """
     sys_new = openmm.System()
+    # box
+    sys_new.setDefaultPeriodicBoxVectors(*system.getDefaultPeriodicBoxVectors())
+
     for particle_idx in range(system.getNumParticles()):
         particle_mass = system.getParticleMass(particle_idx)
         sys_new.addParticle(particle_mass)
@@ -1251,6 +1263,397 @@ class MyTestREST2(unittest.TestCase):
         new_to_hyb = np.array([[i, j] for i, j in h_factory.new_to_hybrid_atom_map.items() if i not in [3302, 3303, 3312]])
         all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:, 1]], force_B[new_to_hyb[:, 0]])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+class MytestREST2_GCMC(unittest.TestCase):
+    def test_REST2_GCMC_build(self):
+        print()
+        print("# REST2-GCMC Initialize a ligand-in-water system")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+
+        base = Path(__file__).resolve().parent
+
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "CH4_C2H6" / "lig0" / "06_solv.inpcrd",
+            base / "CH4_C2H6" / "lig0" / "06_solv.prmtop", nonbonded_settings)
+        inpcrd1, prmtop1, sys1 = load_amber_sys(
+            base / "CH4_C2H6" / "lig1" / "06_solv.inpcrd",
+            base / "CH4_C2H6" / "lig1" / "06_solv.prmtop", nonbonded_settings)
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(
+            prmtop0.topology,
+            prmtop1.topology,
+            [{'res_nameA': 'MOL', 'res_nameB': 'MOL', 'index_map': {0: 0}}]
+        )
+        h_factory = utils.HybridTopologyFactoryREST2(
+            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            # old_rest2_atom_indices=[1880, 1881, 1882, 1883, 1884, 1885, 1886, 1887, 1888, 1889, 1890]
+        )
+        tick = time.time()
+        base_sampler = sampler.BaseGrandCanonicalMonteCarloSampler(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_REST2_GCMC.log",
+            platform = platform,
+            create_simulation=False
+        )
+        tock = time.time()
+        print(f"## Time for initializing a REST2-GCMC system {tock - tick:.3f} s")
+
+        print(f"## State A should have the same forces")
+        energy_h, force_h = calc_energy_force(
+            base_sampler.system,
+            base_sampler.topology,
+            h_factory.hybrid_positions, platform,
+            global_parameters={"lambda_gc_coulomb": 1.0, "lambda_gc_vdw": 1.0}
+        )
+        energy_A, force_A = calc_energy_force(
+            sys0,
+            prmtop0.topology,
+            inpcrd0.positions, platform, )
+        # Real atom with a dummy atom attached will have extra force.
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in [0]])
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        print(f"## State B should have the same force")
+
+        global_param = {
+            "lam_ele_coreA_x_k_rest2_sqrt" : 0.0,
+            "lam_ele_coreB_x_k_rest2_sqrt" : 1.0,
+            "lam_ele_del_x_k_rest2_sqrt"   : 0.0,
+            "lam_ele_ins_x_k_rest2_sqrt"   : 1.0,
+            "lambda_electrostatics_core"   : 1.0,
+            "lambda_electrostatics_insert" : 1.0,
+            "lambda_electrostatics_delete" : 1.0,
+            "lambda_sterics_core"           : 1.0,
+            "lambda_sterics_insert"         : 1.0,
+            "lambda_sterics_delete"         : 1.0,
+            "lambda_bonds"   : 1.0,
+            "lambda_angles"  : 1.0,
+            "lambda_torsions": 1.0,
+            "lambda_gc_coulomb": 1.0, "lambda_gc_vdw": 1.0}
+        energy_h, force_h = calc_energy_force(
+            base_sampler.system,
+            base_sampler.topology,
+            h_factory.hybrid_positions, platform,
+            global_parameters=global_param
+        )
+        energy_B, force_B = calc_energy_force(
+            sys1,
+            prmtop1.topology,
+            inpcrd1.positions, platform)
+        new_to_hyb = np.array([[i, j] for i, j in h_factory.new_to_hybrid_atom_map.items() if i not in [0]])
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:, 1]], force_B[new_to_hyb[:, 0]])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+    def test_REST2_GCMC_HSP90(self):
+        print()
+        print("# REST2-GCMC Initialize a HSP90 system")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+
+        base = Path(__file__).resolve().parent
+
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xab" / "10_complex_tleap.inpcrd",
+            base / "HSP90/protein_leg" / "2xab" / "10_complex_tleap.prmtop", nonbonded_settings)
+        inpcrd1, prmtop1, sys1 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xjg" / "10_complex_tleap.inpcrd",
+            base / "HSP90/protein_leg" / "2xjg" / "10_complex_tleap.prmtop", nonbonded_settings)
+        mdp = utils.md_params_yml(base / "HSP90/water_leg/bcc_gaff2/mapping.yml")
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtop0.topology, prmtop1.topology,
+                                                                               mdp.mapping_list)
+        h_factory = utils.HybridTopologyFactoryREST2(
+            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            old_rest2_atom_indices=[1880, 1881, 1882, 1883, 1884, 1885, 1886, 1887, 1888, 1889, 1890]
+        )
+        tick = time.time()
+        base_sampler = sampler.BaseGrandCanonicalMonteCarloSampler(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_REST2_GCMC.log",
+            platform=platform,
+            create_simulation=True
+        )
+        tock = time.time()
+        print(f"## Time for initializing a REST2-GCMC system {tock - tick:.3f} s")
+
+        print(f"State A should have the same forces")
+        energy_h, force_h = calc_energy_force(
+            base_sampler.system,
+            base_sampler.topology,
+            h_factory.hybrid_positions, platform,
+            global_parameters={"lambda_gc_coulomb": 1.0, "lambda_gc_vdw": 1.0}
+        )
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items()])
+        pos_old = np.zeros_like(inpcrd0.positions)
+        pos_old[old_to_hyb[:, 0]] = h_factory.hybrid_positions[old_to_hyb[:, 1]]
+        energy_A, force_A = calc_energy_force(
+            sys0,
+            prmtop0.topology,
+            pos_old, platform)
+        self.assertEqual(force_A.shape, (3863, 3))
+        self.assertEqual(force_h.shape, (3867, 3))
+        # Real atom with a dummy atom attached will have extra force.
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in [3302, 3303]])
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        print("## Reducing 1 water should still have the same force")
+        inpcrd_r1, prmtop_r1, sys_r1 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xab" / "10_-1.inpcrd",
+            base / "HSP90/protein_leg" / "2xab" / "10_-1.prmtop", nonbonded_settings)
+        old_to_hyb = [[i,j] for i,j in h_factory.old_to_hybrid_atom_map.items() if j <= 3859]
+        old_to_hyb = np.array(old_to_hyb)
+
+
+        pos_old = np.zeros_like(inpcrd_r1.positions)
+        pos_old[old_to_hyb[:, 0]] = h_factory.hybrid_positions[old_to_hyb[:, 1]]
+        energy_A, force_A = calc_energy_force(
+            sys_r1,
+            prmtop_r1.topology,
+            pos_old, platform)
+
+        global_param = {
+            "lam_ele_coreA_x_k_rest2_sqrt": 1.0,
+            "lam_ele_coreB_x_k_rest2_sqrt": 0.0,
+            "lam_ele_del_x_k_rest2_sqrt": 1.0,
+            "lam_ele_ins_x_k_rest2_sqrt": 0.0,
+            "lambda_electrostatics_core": 0.0,
+            "lambda_electrostatics_insert": 0.0,
+            "lambda_electrostatics_delete": 0.0,
+            "lambda_sterics_core": 0.0,
+            "lambda_sterics_insert": 0.0,
+            "lambda_sterics_delete": 0.0,
+            "lambda_bonds": 0.0,
+            "lambda_angles": 0.0,
+            "lambda_torsions": 0.0,
+            "lambda_gc_coulomb": 0.0, "lambda_gc_vdw": 0.0}
+        energy_h, force_h = calc_energy_force(
+            base_sampler.system,
+            base_sampler.topology,
+            h_factory.hybrid_positions, platform,
+            global_parameters=global_param
+        )
+        self.assertEqual(force_A.shape, (3860, 3))
+        self.assertEqual(force_h.shape, (3867, 3))
+        # Real atom with a dummy atom attached will have extra force.
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]], excluded_list=[3302, 3303])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        base_sampler.set_ghost_list([449], check_system=True)
+        # swap the coordinate of water res_449 and res_450
+        w_index_449 = base_sampler.water_res_2_atom[449]
+        w_index_450 = base_sampler.water_res_2_atom[450]
+        pos_hyb = h_factory.hybrid_positions.copy()
+        pos_hyb[w_index_449+w_index_450] = pos_hyb[w_index_450+w_index_449]
+        energy_h, force_h = calc_energy_force(
+            base_sampler.system,
+            base_sampler.topology,
+            pos_hyb, platform,
+            global_parameters={"lambda_gc_coulomb": 1.0, "lambda_gc_vdw": 1.0}
+        )
+        self.assertEqual(force_A.shape, (3860, 3))
+        self.assertEqual(force_h.shape, (3867, 3))
+        # Real atom with a dummy atom attached will have extra force.
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]],
+                                                                excluded_list=[3302, 3303, 3857, 3858, 3859])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        print("## Reducing 2 water should still have the same force")
+        inpcrd_r2, prmtop_r2, sys_r2 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xjg" / "10_-2.inpcrd",
+            base / "HSP90/protein_leg" / "2xjg" / "10_-2.prmtop", nonbonded_settings)
+
+        global_param = {
+            "lam_ele_coreA_x_k_rest2_sqrt": 0.0,
+            "lam_ele_coreB_x_k_rest2_sqrt": 1.0,
+            "lam_ele_del_x_k_rest2_sqrt": 0.0,
+            "lam_ele_ins_x_k_rest2_sqrt": 1.0,
+            "lambda_electrostatics_core": 1.0,
+            "lambda_electrostatics_insert": 1.0,
+            "lambda_electrostatics_delete": 1.0,
+            "lambda_sterics_core": 1.0,
+            "lambda_sterics_insert": 1.0,
+            "lambda_sterics_delete": 1.0,
+            "lambda_bonds": 1.0,
+            "lambda_angles": 1.0,
+            "lambda_torsions": 1.0,
+            "lambda_gc_coulomb": 0.0, "lambda_gc_vdw": 0.0}
+        energy_h, force_h = calc_energy_force(
+            base_sampler.system,
+            base_sampler.topology,
+            h_factory.hybrid_positions, platform,
+            global_parameters=global_param
+        )
+        new_to_hyb = [[i, j] for i, j in h_factory.new_to_hybrid_atom_map.items() if j not in [3857, 3858, 3859, 3860, 3861, 3862]]
+        new_to_hyb = np.array(new_to_hyb)
+        pos_new = np.zeros_like(inpcrd_r2.positions)
+        pos_new[new_to_hyb[:, 0]] = h_factory.hybrid_positions[new_to_hyb[:, 1]]
+        energy_B, force_B = calc_energy_force(
+            sys_r2,
+            prmtop_r2.topology,
+            pos_new, platform)
+        self.assertEqual(force_B.shape, (3860, 3))
+
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:, 1]], force_B[new_to_hyb[:, 0]],
+                                                                excluded_list=[3302, 3303])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+    def test_REST2_GCMC_A19_CMAP(self):
+        print()
+        print("# REST2-GCMC A Lig-Pro complex with CMAP and OPC water")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+
+        base = Path(__file__).resolve().parent
+
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xab" / "11_complex_tleap.inpcrd",
+            base / "HSP90/protein_leg" / "2xab" / "11_complex_tleap.prmtop", nonbonded_settings)
+        inpcrd1, prmtop1, sys1 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xjg" / "11_complex_tleap.inpcrd",
+            base / "HSP90/protein_leg" / "2xjg" / "11_complex_tleap.prmtop", nonbonded_settings)
+        mdp = utils.md_params_yml(base / "HSP90/water_leg/bcc_gaff2/mapping.yml")
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtop0.topology, prmtop1.topology,
+                                                                               mdp.mapping_list)
+        h_factory = utils.HybridTopologyFactoryREST2(
+            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            old_rest2_atom_indices=[1880, 1881, 1882, 1883, 1884, 1885, 1886, 1887, 1888, 1889, 1890]
+        )
+        tick = time.time()
+        base_sampler = sampler.BaseGrandCanonicalMonteCarloSampler(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_REST2_GCMC.log",
+            platform=platform,
+            create_simulation=True
+        )
+        tock = time.time()
+        print(f"## Time for initializing a REST2-GCMC system with CMAP and OPC water {tock - tick:.3f} s")
+
+        print(f"State A should have the same forces")
+        energy_h, force_h = calc_energy_force(
+            base_sampler.system,
+            base_sampler.topology,
+            h_factory.hybrid_positions, platform,
+            global_parameters={"lambda_gc_coulomb": 1.0, "lambda_gc_vdw": 1.0}
+        )
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items()])
+        pos_old = np.zeros_like(inpcrd0.positions)
+        pos_old[old_to_hyb[:, 0]] = h_factory.hybrid_positions[old_to_hyb[:, 1]]
+        energy_A, force_A = calc_energy_force(
+            sys0,
+            prmtop0.topology,
+            pos_old, platform)
+        # Real atom with a dummy atom attached will have extra force.
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in [3302, 3303]])
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+        print(f"State B with -2 water have the same forces")
+        base_sampler.set_ghost_list([449])
+        inpcrd_r2, prmtop_r2, sys1 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xjg" / "11_-2.inpcrd",
+            base / "HSP90/protein_leg" / "2xjg" / "11_-2.prmtop", nonbonded_settings)
+        pos_new = np.zeros_like(inpcrd_r2.positions)
+        new_to_hyb = [[i, j] for i, j in h_factory.new_to_hybrid_atom_map.items() if j not in [4005, 4006, 4007, 4008, 4009, 4010, 4011, 4012,]]
+        new_to_hyb = np.array(new_to_hyb)
+        pos_new[new_to_hyb[:, 0]] = h_factory.hybrid_positions[new_to_hyb[:, 1]]
+        energy_B, force_B = calc_energy_force(
+            sys1,
+            prmtop1.topology,
+            pos_new, platform)
+        global_param = {
+            "lam_ele_coreA_x_k_rest2_sqrt": 0.0,
+            "lam_ele_coreB_x_k_rest2_sqrt": 1.0,
+            "lam_ele_del_x_k_rest2_sqrt": 0.0,
+            "lam_ele_ins_x_k_rest2_sqrt": 1.0,
+            "lambda_electrostatics_core": 1.0,
+            "lambda_electrostatics_insert": 1.0,
+            "lambda_electrostatics_delete": 1.0,
+            "lambda_sterics_core": 1.0,
+            "lambda_sterics_insert": 1.0,
+            "lambda_sterics_delete": 1.0,
+            "lambda_bonds": 1.0,
+            "lambda_angles": 1.0,
+            "lambda_torsions": 1.0,
+            "lambda_gc_coulomb": 0.0, "lambda_gc_vdw": 0.0}
+        energy_h, force_h = calc_energy_force(
+            base_sampler.system,
+            base_sampler.topology,
+            h_factory.hybrid_positions, platform,
+            global_parameters=global_param
+        )
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:, 1]], force_B[new_to_hyb[:, 0]],
+                                                                excluded_list=[3302, 3303])
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+
+    def test_REST2_GCMC_update_context_performance(self):
+        print()
+        print("# Time for updateParametersInContext")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+
+        base = Path(__file__).resolve().parent
+
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xab" / "09_complex_tleap.inpcrd",
+            base / "HSP90/protein_leg" / "2xab" / "09_complex_tleap.prmtop", nonbonded_settings)
+        inpcrd1, prmtop1, sys1 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xjg" / "09_complex_tleap.inpcrd",
+            base / "HSP90/protein_leg" / "2xjg" / "09_complex_tleap.prmtop", nonbonded_settings)
+        # 09 has 15433 water
+        mdp = utils.md_params_yml(base / "HSP90/water_leg/bcc_gaff2/mapping.yml")
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtop0.topology, prmtop1.topology,
+                                                                               mdp.mapping_list)
+        tick = time.time()
+        h_factory = utils.HybridTopologyFactoryREST2(
+            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            old_rest2_atom_indices=[1880, 1881, 1882, 1883, 1884, 1885, 1886, 1887, 1888, 1889, 1890]
+        )
+        tock1 = time.time()
+        print(f"## Hybrid 2 systems : {tock1 - tick:.3f} s")
+        base_sampler = sampler.BaseGrandCanonicalMonteCarloSampler(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_REST2_GCMC.log",
+            platform=platform,
+            create_simulation=True
+        )
+        tock2 = time.time()
+        print(f"## Create sampler : {tock2 - tock1:.3f} s")
+
+        # base_sampler.set_ghost_list([440])
+        # tock3 = time.time()
+        # print(f"## Set ghost list : {tock3 - tock2:.3f} s")
+
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -4,14 +4,20 @@
 # LICENSE: MIT
 
 import logging
-import openmm
-from openmm import unit, app
-import numpy as np
+import time
 import copy
 import itertools
+
+import numpy as np
+
+import openmm
+from openmm import unit, app
+import mdtraj as mdt
+
+
 # OpenMM constant for Coulomb interactions (implicitly in md_unit_system units)
 from openmmtools.constants import ONE_4PI_EPS0
-import mdtraj as mdt
+
 
 
 # logger = logging.getLogger(__name__)
@@ -615,7 +621,7 @@ class HybridTopologyFactory:
             particles[0], particles[1], particles[2],
             weights[0], weights[1], weights[2],
         )
-                    
+
     def _handle_virtual_sites(self):
         """
         Ensure that all virtual sites in old and new system are copied over to
@@ -2870,6 +2876,7 @@ class HybridTopologyFactoryREST2:
         if has_nonbonded_force:
             self._add_nonbonded_force_terms()
             self._handle_nonbonded()
+            self._handle_exceptions()
 
         # Get positions for the hybrid
         self._hybrid_positions = self._compute_hybrid_positions()
@@ -3163,6 +3170,39 @@ class HybridTopologyFactoryREST2:
             else:
                 if constraint_lengths[hybrid_atoms] != length:
                     raise AssertionError(f'constraint length between {at1} and {at2} in the new system is changing')
+
+    @staticmethod
+    def _copy_threeparticleavg(atm_map, env_atoms, vs):
+        """
+        Helper method to copy a ThreeParticleAverageSite virtual site
+        from two mapped Systems.
+
+        Parameters
+        ----------
+        atm_map : dict[int, int]
+          The atom map correspondance between the two Systems.
+        env_atoms: set[int]
+          A list of environment atoms for the target System. This
+          checks that no alchemical atoms are being tied to.
+        vs : openmm.ThreeParticleAverageSite
+
+        Returns
+        -------
+        openmm.ThreeParticleAverageSite
+        """
+        particles = {}
+        weights = {}
+        for i in range(vs.getNumParticles()):
+            particles[i] = atm_map[vs.getParticle(i)]
+            weights[i] = vs.getWeight(i)
+        if not all(i in env_atoms for i in particles.values()):
+            errmsg = ("Virtual sites bound to non-environment atoms "
+                      "are not supported")
+            raise ValueError(errmsg)
+        return openmm.ThreeParticleAverageSite(
+            particles[0], particles[1], particles[2],
+            weights[0], weights[1], weights[2],
+        )
 
     def _handle_virtual_sites(self):
         """
@@ -3758,11 +3798,10 @@ class HybridTopologyFactoryREST2:
                     new_system_bond_force, index1_new, index2_new)
                 if not new_bond_parameters:
                     r0_new = r0_old
-                    k_new = 0.0*unit.kilojoule_per_mole/unit.angstrom**2
+                    k_new = 0.0 * unit.kilojoule_per_mole / unit.angstrom ** 2
                 else:
                     # TODO - why is this being recalculated?
-                    [index1, index2, r0_new, k_new] = self._find_bond_parameters(
-                        new_system_bond_force, index1_new, index2_new)
+                    index1, index2, r0_new, k_new = new_bond_parameters
                 self._hybrid_system_forces['core_bond_force'].addBond(
                     index1_hybrid, index2_hybrid,
                     [r0_old, k_old, r0_new, k_new])
@@ -4440,8 +4479,6 @@ class HybridTopologyFactoryREST2:
 
         self._handle_interaction_groups()
 
-        self._handle_exceptions()
-
     def _atom_group(self, hybrid_index):
         if hybrid_index in self._atom_classes['core_atoms']:
             return "core"
@@ -4901,13 +4938,15 @@ class HybridTopologyFactoryREST2:
         # both old & new Topologies
         atom_list = []
 
+        old_top_atoms = list(self._old_topology.atoms())
+        new_top_atoms = list(self._new_topology.atoms())
         for pidx in range(self.hybrid_system.getNumParticles()):
             if pidx in self._hybrid_to_old_map:
                 idx = self._hybrid_to_old_map[pidx]
-                atom_list.append(list(self._old_topology.atoms())[idx])
+                atom_list.append(old_top_atoms[idx])
             else:
                 idx = self._hybrid_to_new_map[pidx]
-                atom_list.append(list(self._new_topology.atoms())[idx])
+                atom_list.append(new_top_atoms[idx])
 
         # Now we loop over the atoms and add them in alongside chains & resids
 
@@ -4933,13 +4972,14 @@ class HybridTopologyFactoryREST2:
 
         # Next we deal with bonds
         # First we add in all the old topology bonds
+        hybrid_top_atoms = list(hybrid_top.atoms())
         for bond in self._old_topology.bonds():
             at1 = self.old_to_hybrid_atom_map[bond.atom1.index]
             at2 = self.old_to_hybrid_atom_map[bond.atom2.index]
 
             hybrid_top.addBond(
-                list(hybrid_top.atoms())[at1],
-                list(hybrid_top.atoms())[at2],
+                hybrid_top_atoms[at1],
+                hybrid_top_atoms[at2],
                 bond.type, bond.order,
             )
 
@@ -4951,8 +4991,8 @@ class HybridTopologyFactoryREST2:
             if ((at1 in self._atom_classes['unique_new_atoms']) or
                     (at2 in self._atom_classes['unique_new_atoms'])):
                 hybrid_top.addBond(
-                    list(hybrid_top.atoms())[at1],
-                    list(hybrid_top.atoms())[at2],
+                    hybrid_top_atoms[at1],
+                    hybrid_top_atoms[at2],
                     bond.type, bond.order,
                 )
 

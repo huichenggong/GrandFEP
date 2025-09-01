@@ -1,5 +1,5 @@
-source leaprc.protein.ff14SB
-source leaprc.water.tip3p
+source leaprc.protein.ff19SB
+source leaprc.water.opc
 source leaprc.gaff2
 
 MOL = loadmol2 05_MOL.mol2
@@ -11,24 +11,24 @@ loadamberparams ../COF/03.frcmod
 BOX = loadpdb 08_box.pdb
 setBox BOX "vdw"
 set BOX box { 84.824   84.824   84.824 }
-saveamberparm BOX 10_complex_tleap.prmtop 10_complex_tleap.inpcrd
-savepdb       BOX 10_complex_tleap.pdb
+saveamberparm BOX 11_complex_tleap.prmtop 11_complex_tleap.inpcrd
+savepdb       BOX 11_complex_tleap.pdb
 
 BOX = loadpdb 08_box-1.pdb
 setBox BOX "vdw"
 set BOX box { 84.824   84.824   84.824 }
-saveamberparm BOX 10_-1.prmtop 10_-1.inpcrd
-savepdb       BOX 10_-1.pdb
+saveamberparm BOX 11_-1.prmtop 11_-1.inpcrd
+savepdb       BOX 11_-1.pdb
 
 BOX = loadpdb 08_box-2.pdb
 setBox BOX "vdw"
 set BOX box { 84.824   84.824   84.824 }
-saveamberparm BOX 10_-2.prmtop 10_-2.inpcrd
-savepdb       BOX 10_-2.pdb
+saveamberparm BOX 11_-2.prmtop 11_-2.inpcrd
+savepdb       BOX 11_-2.pdb
 
 BOX = loadpdb 08_box-3.pdb
 setBox BOX "vdw"
 set BOX box { 84.824   84.824   84.824 }
-saveamberparm BOX 10_-3.prmtop 10_-3.inpcrd
-savepdb       BOX 10_-3.pdb
+saveamberparm BOX 11_-3.prmtop 11_-3.inpcrd
+savepdb       BOX 11_-3.pdb
 quit

@@ -1,11 +1,11 @@
-%VERSION  VERSION_STAMP = V0001.000  DATE = 08/31/25  20:36:11                  
+%VERSION  VERSION_STAMP = V0001.000  DATE = 08/31/25  20:36:12                  
 %FLAG TITLE                                                                     
 %FORMAT(20a4)                                                                   
 default_name                                                                    
 %FLAG POINTERS                                                                  
 %FORMAT(10I8)                                                                   
-    3866      27    2118    1685    3788    2274    7603    7294       0       0
-   19013     451    1685    2274    7294      84     183     202      48       0
+    3857      27    2109    1685    3788    2274    7603    7294       0       0
+   19001     448    1685    2274    7294      84     183     202      48       0
        0       0       0       0       0       0       0       1      44       0
        0
 %FLAG ATOM_NAME                                                                 
@@ -202,8 +202,7 @@ H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O
 H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  
 O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  
 H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   
-H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  
-O   H1  H2  O   H1  H2  
+H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  O   H1  H2  
 %FLAG CHARGE                                                                    
 %FORMAT(5E16.8)                                                                 
   2.04636429E+00 -6.67300626E+00  2.04636429E+00  2.04636429E+00  1.08823576E+01
@@ -977,9 +976,7 @@ O   H1  H2  O   H1  H2
   7.59869910E+00  7.59869910E+00 -1.51973982E+01  7.59869910E+00  7.59869910E+00
  -1.51973982E+01  7.59869910E+00  7.59869910E+00 -1.51973982E+01  7.59869910E+00
   7.59869910E+00 -1.51973982E+01  7.59869910E+00  7.59869910E+00 -1.51973982E+01
-  7.59869910E+00  7.59869910E+00 -1.51973982E+01  7.59869910E+00  7.59869910E+00
- -1.51973982E+01  7.59869910E+00  7.59869910E+00 -1.51973982E+01  7.59869910E+00
-  7.59869910E+00
+  7.59869910E+00  7.59869910E+00
 %FLAG ATOMIC_NUMBER                                                             
 %FORMAT(10I8)                                                                   
        1       6       1       1       6       8       7       1       6       1
@@ -1367,8 +1364,7 @@ O   H1  H2  O   H1  H2
        1       8       1       1       8       1       1       8       1       1
        8       1       1       8       1       1       8       1       1       8
        1       1       8       1       1       8       1       1       8       1
-       1       8       1       1       8       1       1       8       1       1
-       8       1       1       8       1       1
+       1       8       1       1       8       1       1
 %FLAG MASS                                                                      
 %FORMAT(5E16.8)                                                                 
   1.00800000E+00  1.20100000E+01  1.00800000E+00  1.00800000E+00  1.20100000E+01
@@ -2142,9 +2138,7 @@ O   H1  H2  O   H1  H2
   1.00800000E+00  1.00800000E+00  1.60000000E+01  1.00800000E+00  1.00800000E+00
   1.60000000E+01  1.00800000E+00  1.00800000E+00  1.60000000E+01  1.00800000E+00
   1.00800000E+00  1.60000000E+01  1.00800000E+00  1.00800000E+00  1.60000000E+01
-  1.00800000E+00  1.00800000E+00  1.60000000E+01  1.00800000E+00  1.00800000E+00
-  1.60000000E+01  1.00800000E+00  1.00800000E+00  1.60000000E+01  1.00800000E+00
-  1.00800000E+00
+  1.00800000E+00  1.00800000E+00
 %FLAG ATOM_TYPE_INDEX                                                           
 %FORMAT(10I8)                                                                   
        1       2       1       1       3       4       5       6       2       7
@@ -2532,8 +2526,7 @@ O   H1  H2  O   H1  H2
        9      27       9       9      27       9       9      27       9       9
       27       9       9      27       9       9      27       9       9      27
        9       9      27       9       9      27       9       9      27       9
-       9      27       9       9      27       9       9      27       9       9
-      27       9       9      27       9       9
+       9      27       9       9      27       9       9
 %FLAG NUMBER_EXCLUDED_ATOMS                                                     
 %FORMAT(10I8)                                                                   
        6       7       4       3       7       3      10       4      16       7
@@ -2921,8 +2914,7 @@ O   H1  H2  O   H1  H2
        1       2       1       1       2       1       1       2       1       1
        2       1       1       2       1       1       2       1       1       2
        1       1       2       1       1       2       1       1       2       1
-       1       2       1       1       2       1       1       2       1       1
-       2       1       1       2       1       1
+       1       2       1       1       2       1       1
 %FLAG NONBONDED_PARM_INDEX                                                      
 %FORMAT(10I8)                                                                   
        1       2       4       7      11      16      22      29      37      46
@@ -3022,7 +3014,7 @@ WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT
 WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT 
 WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT 
 WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT 
-WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT 
+WAT WAT WAT WAT WAT WAT WAT WAT 
 %FLAG RESIDUE_POINTER                                                           
 %FORMAT(10I8)                                                                   
        1       7      23      38      52      72      82     102     119     129
@@ -3069,8 +3061,7 @@ WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT
     3744    3747    3750    3753    3756    3759    3762    3765    3768    3771
     3774    3777    3780    3783    3786    3789    3792    3795    3798    3801
     3804    3807    3810    3813    3816    3819    3822    3825    3828    3831
-    3834    3837    3840    3843    3846    3849    3852    3855    3858    3861
-    3864
+    3834    3837    3840    3843    3846    3849    3852    3855
 %FLAG BOND_FORCE_CONSTANT                                                       
 %FORMAT(5E16.8)                                                                 
   5.70000000E+02  4.90000000E+02  3.40000000E+02  3.17000000E+02  3.40000000E+02
@@ -4204,10 +4195,7 @@ WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT
       84   11538   11541      83   11535   11538      84   11535   11541      84
    11547   11550      83   11544   11547      84   11544   11550      84   11556
    11559      83   11553   11556      84   11553   11559      84   11565   11568
-      83   11562   11565      84   11562   11568      84   11574   11577      83
-   11571   11574      84   11571   11577      84   11583   11586      83   11580
-   11583      84   11580   11586      84   11592   11595      83   11589   11592
-      84   11589   11595      84
+      83   11562   11565      84   11562   11568      84
 %FLAG BONDS_WITHOUT_HYDROGEN                                                    
 %FORMAT(10I8)                                                                   
       12      15       1      12      18       2       3      12       4      60
@@ -16501,8 +16489,7 @@ WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT WAT
     3836    3836       0    3838    3839    3839       0    3841    3842    3842
        0    3844    3845    3845       0    3847    3848    3848       0    3850
     3851    3851       0    3853    3854    3854       0    3856    3857    3857
-       0    3859    3860    3860       0    3862    3863    3863       0    3865
-    3866    3866       0
+       0
 %FLAG HBOND_ACOEF                                                               
 %FORMAT(5E16.8)                                                                 
 
@@ -16706,8 +16693,7 @@ HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW
 HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  
 OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  
 HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  
-HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  
-OW  HW  HW  OW  HW  HW  
+HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  OW  HW  HW  
 %FLAG TREE_CHAIN_CLASSIFICATION                                                 
 %FORMAT(20a4)                                                                   
 M   M   E   E   M   E   M   E   M   E   3   E   3   E   E   E   3   E   E   E   
@@ -16902,8 +16888,7 @@ BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA
 BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA 
 BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA 
 BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA 
-BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA 
-BLA BLA BLA BLA BLA BLA 
+BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA BLA 
 %FLAG JOIN_ARRAY                                                                
 %FORMAT(10I8)                                                                   
        0       0       0       0       0       0       0       0       0       0
@@ -17291,8 +17276,7 @@ BLA BLA BLA BLA BLA BLA
        0       0       0       0       0       0       0       0       0       0
        0       0       0       0       0       0       0       0       0       0
        0       0       0       0       0       0       0       0       0       0
-       0       0       0       0       0       0       0       0       0       0
-       0       0       0       0       0       0
+       0       0       0       0       0       0       0
 %FLAG IROTAT                                                                    
 %FORMAT(10I8)                                                                   
        0       0       0       0       0       0       0       0       0       0
@@ -17680,11 +17664,10 @@ BLA BLA BLA BLA BLA BLA
        0       0       0       0       0       0       0       0       0       0
        0       0       0       0       0       0       0       0       0       0
        0       0       0       0       0       0       0       0       0       0
-       0       0       0       0       0       0       0       0       0       0
-       0       0       0       0       0       0
+       0       0       0       0       0       0       0
 %FLAG SOLVENT_POINTERS                                                          
 %FORMAT(3I8)                                                                    
-     301     243      94
+     301     240      94
 %FLAG ATOMS_PER_MOLECULE                                                        
 %FORMAT(10I8)                                                                   
     3268      14      44       1       1       1       1       1       1       1
@@ -17711,7 +17694,6 @@ BLA BLA BLA BLA BLA BLA
        3       3       3       3       3       3       3       3       3       3
        3       3       3       3       3       3       3       3       3       3
        3       3       3       3       3       3       3       3       3       3
-       3       3       3
 %FLAG BOX_DIMENSIONS                                                            
 %FORMAT(5E16.8)                                                                 
   9.00000000E+01  8.48240000E+01  8.48240000E+01  8.48240000E+01
@@ -18491,9 +18473,7 @@ modified Bondi radii (mbondi)
   8.00000000E-01  8.00000000E-01  1.50000000E+00  8.00000000E-01  8.00000000E-01
   1.50000000E+00  8.00000000E-01  8.00000000E-01  1.50000000E+00  8.00000000E-01
   8.00000000E-01  1.50000000E+00  8.00000000E-01  8.00000000E-01  1.50000000E+00
-  8.00000000E-01  8.00000000E-01  1.50000000E+00  8.00000000E-01  8.00000000E-01
-  1.50000000E+00  8.00000000E-01  8.00000000E-01  1.50000000E+00  8.00000000E-01
-  8.00000000E-01
+  8.00000000E-01  8.00000000E-01
 %FLAG SCREEN                                                                    
 %FORMAT(5E16.8)                                                                 
   8.50000000E-01  7.20000000E-01  8.50000000E-01  8.50000000E-01  7.20000000E-01
@@ -19267,9 +19247,7 @@ modified Bondi radii (mbondi)
   8.50000000E-01  8.50000000E-01  8.50000000E-01  8.50000000E-01  8.50000000E-01
   8.50000000E-01  8.50000000E-01  8.50000000E-01  8.50000000E-01  8.50000000E-01
   8.50000000E-01  8.50000000E-01  8.50000000E-01  8.50000000E-01  8.50000000E-01
-  8.50000000E-01  8.50000000E-01  8.50000000E-01  8.50000000E-01  8.50000000E-01
-  8.50000000E-01  8.50000000E-01  8.50000000E-01  8.50000000E-01  8.50000000E-01
-  8.50000000E-01
+  8.50000000E-01  8.50000000E-01
 %FLAG IPOL                                                                      
 %FORMAT(1I8)                                                                    
        0
