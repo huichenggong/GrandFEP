@@ -2,7 +2,7 @@ import copy
 import time
 from copy import deepcopy
 import logging
-from typing import Union
+from typing import Union, Literal
 from pathlib import Path
 import math
 
@@ -51,6 +51,7 @@ class BaseGrandCanonicalMonteCarloSampler:
                  water_resname: str = "HOH",
                  water_O_name: str = "O",
                  create_simulation: bool = True,
+                 optimization: Literal['O3','O1'] ="O3"
                  ):
         """
         Parameters
@@ -134,7 +135,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         #: These force(s) handles vdW. They have PerParticleParameter is_real and is_switching to control real/ghost and
         #: switching/non-switching to identify the only switching water. It also has a global parameter
         # ``lambda_gc_vdw`` to control the intraction of the switching water.
-        self.custom_nonbonded_force_list: list[openmm.CustomNonbondedForce] = []
+        self.custom_nonbonded_force_list: list[list] = []
         #: This force handles Coulomb. The switching water has ParticleParameterOffset with global parameter
         #: ``lambda_gc_coulomb`` to control the switching water.
         self.nonbonded_force: openmm.NonbondedForce = None
@@ -162,11 +163,11 @@ class BaseGrandCanonicalMonteCarloSampler:
         elif self.system_type == "Hybrid":
             self.customise_force_hybrid(system)
         elif self.system_type == "Hybrid_REST2":
-            self.customise_force_hybridREST2(system)
+            self.customise_force_hybridREST2(system, optimization)
         else:
             raise ValueError(f"The system ({self.system_type}) cannot be customized. Please check the system.")
         tock = time.time()
-        self.logger.info(f"Customize the system ({self.system_type}) in {tock-tick:.2f} seconds")
+        self.logger.info(f"Customize the system ({self.system_type}) in {tock-tick:.2f} seconds with {optimization=}")
 
         if create_simulation:
             # preparation of integrator, simulation
@@ -807,10 +808,20 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.nonbonded_force.addParticleParameterOffset("lambda_gc_coulomb", at_index, charge, 0.0, 0.0)
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
 
-    def customise_force_hybridREST2(self, system: openmm.System) -> None:
+    def customise_force_hybridREST2(self, system: openmm.System, optimization: Literal['O3','O1']) -> None:
         """
         If the system is Hybrid, this function will add perParticleParameters ``is_real`` and ``is_switching``
         to the custom_nonbonded_force (openmm.openmm.CustomNonbondedForce) for vdw.
+
+        Parameters
+        ----------
+        system :
+            The system to be converted.
+
+        optimization :
+            Level of optimization. It can be `O3` or `O1`. When `O3` is selected, We will try to hard code sigma and epsilon
+            into the energy expression for wat-wat interaction if there is only one water atom has LJ. This can be applied to
+            TIP3P, OPC. `O3` will make no difference if charmm TIP3P is used, because H also has LJ parameters.
 
         +----------+--------+--------+--------+--------+--------+--------+--------+
         | Groups   | core   | new    | old    | envh   | envc   | wat    | swit   |
@@ -821,13 +832,13 @@ class BaseGrandCanonicalMonteCarloSampler:
         +----------+--------+--------+--------+--------+--------+--------+--------+
         | 2 old    | C_alc  | None   | C_alc  |        |        |        |        |
         +----------+--------+--------+--------+--------+--------+--------+--------+
-        | 3 envh   | C_alc  | C_alc  | C_alc  | C_envh |        |        |        |
+        | 3 envh   | C_alc  | C_alc  | C_alc  | NonB   |        |        |        |
         +----------+--------+--------+--------+--------+--------+--------+--------+
-        | 4 envc   | C_alc  | C_alc  | C_alc  | C_envh | C_fix  |        |        |
+        | 4 envc   | C_alc  | C_alc  | C_alc  | NonB   | NonB   |        |        |
         +----------+--------+--------+--------+--------+--------+--------+--------+
-        | 5 wat    | C_WA   | C_WA   | C_WA   | C_WE   | C_WE   | C_WE   |        |
+        | 5 wat    | C_alc  | C_alc  | C_alc  | C_wat1 | C_wat2 | C_wat3 |        |
         +----------+--------+--------+--------+--------+--------+--------+--------+
-        | 6 swit   | C_SA   | C_SA   | C_SA   | C_SE   | C_SE   | C_SE   | C_SE   |
+        | 6 swit   | C_alc  | C_alc  | C_alc  | C_alc  | C_alc  | C_alc  | C_alc  |
         +----------+--------+--------+--------+--------+--------+--------+--------+
 
         - C_alc
@@ -1124,17 +1135,11 @@ class BaseGrandCanonicalMonteCarloSampler:
             "is_core1 = delta(0-atom_group1);"
             "is_new1  = delta(1-atom_group1);"
             "is_old1  = delta(2-atom_group1);"
-            "is_envh1 = delta(3-atom_group1);"
-            "is_envc1 = delta(4-atom_group1);"
-            "is_wat1  = delta(5-atom_group1);"
             "is_swit1 = delta(6-atom_group1);"
             ## 3.2 check atom2
             "is_core2 = delta(0-atom_group2);"
             "is_new2  = delta(1-atom_group2);"
             "is_old2  = delta(2-atom_group2);"
-            "is_envh2 = delta(3-atom_group2);"
-            "is_envc2 = delta(4-atom_group2);"
-            "is_wat2  = delta(5-atom_group2);"
             "is_swit2 = delta(6-atom_group2);"
 
             # 1. LJ mixing rules
@@ -1163,6 +1168,90 @@ class BaseGrandCanonicalMonteCarloSampler:
         c_nb_alchemy.addGlobalParameter("lambda_sterics_core", 0.0)    # lambda for core atoms
         c_nb_alchemy.addGlobalParameter("lambda_gc_vdw", 0.0)          # lambda for vdw part of TI insertion/deletion
         c_nb_alchemy.addGlobalParameter("k_rest2_sqrt", 1.0)           # sqrt(T_cold/T_hot)
+
+        ## 3.4.2.2 C_wat_envh, this force handles some water interactions (water) - (envh)
+        energy = (
+            "U_rest2;"
+
+            # 3. REST2
+            "U_rest2 = U_sterics * k_rest2_sqrt^is_hot;"
+            "is_hot = step(3-atom_group1) + step(3-atom_group2);"
+
+            # 2. vdw with water real/dummy
+            "U_sterics = 4*epsilon*x*(x-1.0) * is_real1 * is_real2;"
+            "x = (sigma/r)^6;"
+
+            # 1. LJ mixing rules
+            "epsilon = sqrt(epsilon1*epsilon2);"
+            "sigma = 0.5*(sigma1 + sigma2);"
+        )
+        c_nb_wat_envh = openmm.CustomNonbondedForce(energy)
+        self.system.addForce(c_nb_wat_envh)
+        self.custom_nonbonded_force_list.append(
+            [3, c_nb_wat_envh]
+        )
+        self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_envh)
+        c_nb_wat_envh.addPerParticleParameter("sigma")
+        c_nb_wat_envh.addPerParticleParameter("epsilon")
+        c_nb_wat_envh.addPerParticleParameter("atom_group")
+        c_nb_wat_envh.addPerParticleParameter("is_real")
+
+        c_nb_wat_envh.addGlobalParameter("k_rest2_sqrt", 1.0)  # sqrt(T_cold/T_hot)
+
+        ## 3.4.2.3 C_wat_fix, this force handles some water interactions (wat) - (envc, wat)
+        energy = (
+            "U_sterics;"
+
+            # 2. vdw with water real/dummy
+            "U_sterics = 4*epsilon*x*(x-1.0) * is_real1 * is_real2;"
+            "x = (sigma/r)^6;"
+
+            # 1. LJ mixing rules
+            "epsilon = sqrt(epsilon1*epsilon2);"
+            "sigma = 0.5*(sigma1 + sigma2);"
+        )
+        c_nb_wat_fix = openmm.CustomNonbondedForce(energy)
+        self.system.addForce(c_nb_wat_fix)
+        self.custom_nonbonded_force_list.append(
+            [2, c_nb_wat_fix]
+        )
+        self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_fix)
+        c_nb_wat_fix.addPerParticleParameter("sigma")
+        c_nb_wat_fix.addPerParticleParameter("epsilon")
+        c_nb_wat_fix.addPerParticleParameter("is_real")
+
+        ## 3.4.2.3
+        eps_non_zero = [not np.allclose(eps.value_in_unit(unit.kilojoule_per_mole), 0) for eps in self.wat_params["epsilon"]]
+        if optimization == 'O3' and sum(eps_non_zero) == 1:
+            flag_hard_code_wat = True
+            self.logger.info(f"One 1 vdw was found in a water and {optimization=}. Try to hard code vdw into energy expression for wat-wat.")
+            for sig, eps in zip(self.wat_params["sigma"], self.wat_params["epsilon"]):
+                if not np.allclose(eps.value_in_unit(unit.kilojoule_per_mole), 0):
+                    wat_sigma   = sig.value_in_unit(unit.nanometer)
+                    wat_epsilon = eps.value_in_unit(unit.kilojoule_per_mole)
+                    self.logger.info(f"The hard coded water sigma={wat_sigma} nm, epsilon={wat_epsilon} kj/mol")
+                    break
+            energy = (
+                "U_sterics;"
+
+                # 2. vdw with water real/dummy
+                "U_sterics = 4*epsilon*x*(x-1.0) * is_real1 * is_real2;"
+                "x = (sigma/r)^6;"
+
+                # 1. LJ mixing rules
+                f"epsilon = {wat_epsilon};"
+                f"sigma = {wat_sigma};"
+            )
+            c_nb_wat_wat = openmm.CustomNonbondedForce(energy)
+            self.system.addForce(c_nb_wat_wat)
+            self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_wat)
+            c_nb_wat_wat.addPerParticleParameter("is_real")
+            self.custom_nonbonded_force_list.append(
+                [0, c_nb_wat_wat]
+            )
+        else:
+            flag_hard_code_wat = False
+
 
         ## 3.5. Add particles to NonbondedForce and CustomNonbondedForce
         for at_ind in range(npt_force_dict["NonbondedForce"].getNumParticles()):
@@ -1209,6 +1298,10 @@ class BaseGrandCanonicalMonteCarloSampler:
             else:
                 raise ValueError(f"The group {group} is not defined.")
             c_nb_alchemy.addParticle([sigA, epsA, sigB, epsB, group, 1])
+            c_nb_wat_envh.addParticle([sigA, epsA, group, 1])
+            c_nb_wat_fix.addParticle([sigA, epsA, 1])
+            if flag_hard_code_wat:
+                c_nb_wat_wat.addParticle([1])
 
         # 3.6. copy each exception and offset
         # assert npt_force_dict["NonbondedForce"].getNumExceptions() == npt_force_dict["CustomNonbondedForce"].getNumExclusions()
@@ -1216,39 +1309,44 @@ class BaseGrandCanonicalMonteCarloSampler:
             index1, index2, chargeProd, sigma, epsilon = npt_force_dict["NonbondedForce"].getExceptionParameters(i)
             self.nonbonded_force.addException(index1, index2, chargeProd, sigma, epsilon)
             c_nb_alchemy.addExclusion(index1, index2)
+            c_nb_wat_envh.addExclusion(index1, index2)
+            c_nb_wat_fix.addExclusion(index1, index2)
+            if flag_hard_code_wat:
+                c_nb_wat_wat.addExclusion(index1, index2)
 
         for i in range(npt_force_dict["NonbondedForce"].getNumExceptionParameterOffsets()):
             glob_param, exceptionIndex, chargeProd, sigma, epsilon =  npt_force_dict["NonbondedForce"].getExceptionParameterOffset(i)
             self.nonbonded_force.addExceptionParameterOffset(glob_param, exceptionIndex, chargeProd, sigma, epsilon)
 
         # 3.7. handle interaction group
-        group_core = {at_ind for at_ind, p in self.atoms_params.items() if p[-1] == 0}
-        group_new = {at_ind for at_ind, p in self.atoms_params.items() if p[-1] == 1}
-        group_old = {at_ind for at_ind, p in self.atoms_params.items() if p[-1] == 2}
-        group_envhc = set()
-        for at_ind, p in self.atoms_params.items():
-            if p[-1] in [3, 4]:
-                group_envhc.add(at_ind)
-        group_water_switch = set()
-        for at_ind, p in self.atoms_params.items():
-            if p[-1] in [5,6]:
-                group_water_switch.add(at_ind)
-        c_nb_alchemy.addInteractionGroup(group_core, group_core)
-        c_nb_alchemy.addInteractionGroup(group_new, group_core)
-        c_nb_alchemy.addInteractionGroup(group_new, group_new)
-        c_nb_alchemy.addInteractionGroup(group_old, group_core)
-        c_nb_alchemy.addInteractionGroup(group_old, group_old)
-        c_nb_alchemy.addInteractionGroup(group_envhc, group_core)
-        c_nb_alchemy.addInteractionGroup(group_envhc, group_new)
-        c_nb_alchemy.addInteractionGroup(group_envhc, group_old)
-        c_nb_alchemy.addInteractionGroup(group_water_switch, group_core)
-        c_nb_alchemy.addInteractionGroup(group_water_switch, group_new)
-        c_nb_alchemy.addInteractionGroup(group_water_switch, group_old)
-        c_nb_alchemy.addInteractionGroup(group_water_switch, group_envhc)
-        c_nb_alchemy.addInteractionGroup(group_water_switch, group_water_switch)
+        grp_dict = {}
+        for grp_ind, grp_name in {0:"core", 1:"new", 2:"old"}.items():
+            grp_dict[grp_name] = {at_ind for at_ind, p in self.atoms_params.items() if p[-1] == grp_ind}
+        for grp_ind, grp_name in {3:"envh", 4:"envc", 5:"wat", 6:"swit"}.items():
+            grp_dict[grp_name] = {at_ind for at_ind, p in self.atoms_params.items() if p[-1] == grp_ind and (not np.allclose(p[2].value_in_unit(unit.kilojoule_per_mole), 0.0))}
 
+        group_envhc = grp_dict["envh"].union(grp_dict["envc"])
+        group_alche = grp_dict["core"].union(grp_dict["new"]).union(grp_dict["old"])
 
+        c_nb_alchemy.addInteractionGroup(grp_dict["core"], grp_dict["core"])
+        c_nb_alchemy.addInteractionGroup(grp_dict["new"] , grp_dict["core"])
+        c_nb_alchemy.addInteractionGroup(grp_dict["new"] , grp_dict["new"])
+        c_nb_alchemy.addInteractionGroup(grp_dict["old"] , grp_dict["core"])
+        c_nb_alchemy.addInteractionGroup(grp_dict["old"] , grp_dict["old"])
+        c_nb_alchemy.addInteractionGroup(group_envhc, group_alche)
+        c_nb_alchemy.addInteractionGroup(grp_dict["wat"] , group_alche)
+        c_nb_alchemy.addInteractionGroup(grp_dict["swit"], group_alche)
+        c_nb_alchemy.addInteractionGroup(grp_dict["swit"], group_envhc)
+        c_nb_alchemy.addInteractionGroup(grp_dict["swit"], grp_dict["wat"])
+        c_nb_alchemy.addInteractionGroup(grp_dict["swit"], grp_dict["swit"])
 
+        c_nb_wat_envh.addInteractionGroup(grp_dict["wat"] ,grp_dict["envh"])
+
+        c_nb_wat_fix.addInteractionGroup(grp_dict["wat"], grp_dict["envc"])
+        if flag_hard_code_wat:
+            c_nb_wat_wat.addInteractionGroup(grp_dict["wat"], grp_dict["wat"])
+        else:
+            c_nb_wat_fix.addInteractionGroup(grp_dict["wat"], grp_dict["wat"])
 
     def _turn_off_vdw(self):
         """

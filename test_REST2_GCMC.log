@@ -1435,3 +1435,275 @@
 09-01 18:19:07 - INFO: Prepare integrator and simulation
 09-01 18:19:07 - INFO: T   = 300 K.
 09-01 18:19:07 - INFO: kBT = 2494.338785445972 J/mol.
+09-01 18:58:16 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 18:58:16 - INFO: Check topology
+09-01 18:58:16 - INFO: Water res_index=450 will be set as the switching water
+09-01 18:58:16 - INFO: Prepare system
+09-01 18:58:16 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 18:58:17 - INFO: Customize the system (Hybrid_REST2) in 0.94 seconds
+09-01 18:58:17 - INFO: Prepare integrator and simulation
+09-01 18:58:17 - INFO: T   = 300 K.
+09-01 18:58:17 - INFO: kBT = 2494.338785445972 J/mol.
+09-01 19:02:39 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:02:39 - INFO: Check topology
+09-01 19:02:39 - INFO: Water res_index=450 will be set as the switching water
+09-01 19:02:39 - INFO: Prepare system
+09-01 19:02:39 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:02:40 - INFO: Customize the system (Hybrid_REST2) in 0.97 seconds
+09-01 19:02:40 - INFO: Prepare integrator and simulation
+09-01 19:02:40 - INFO: T   = 300 K.
+09-01 19:02:40 - INFO: kBT = 2494.338785445972 J/mol.
+09-01 19:03:03 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:03:03 - INFO: Check topology
+09-01 19:03:03 - INFO: Water res_index=4 will be set as the switching water
+09-01 19:03:03 - INFO: Prepare system
+09-01 19:03:03 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:03:03 - INFO: Customize the system (Hybrid_REST2) in 0.01 seconds
+09-01 19:09:38 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:09:38 - INFO: Check topology
+09-01 19:09:38 - INFO: Water res_index=4 will be set as the switching water
+09-01 19:09:38 - INFO: Prepare system
+09-01 19:09:38 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:09:38 - INFO: Customize the system (Hybrid_REST2) in 0.01 seconds
+09-01 19:11:58 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:11:58 - INFO: Check topology
+09-01 19:11:58 - INFO: Water res_index=4 will be set as the switching water
+09-01 19:11:58 - INFO: Prepare system
+09-01 19:11:58 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:11:58 - INFO: Customize the system (Hybrid_REST2) in 0.01 seconds
+09-01 19:12:34 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:12:34 - INFO: Check topology
+09-01 19:12:34 - INFO: Water res_index=4 will be set as the switching water
+09-01 19:12:34 - INFO: Prepare system
+09-01 19:12:34 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:12:34 - INFO: Customize the system (Hybrid_REST2) in 0.01 seconds
+09-01 19:13:44 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:13:44 - INFO: Check topology
+09-01 19:13:44 - INFO: Water res_index=4 will be set as the switching water
+09-01 19:13:44 - INFO: Prepare system
+09-01 19:13:44 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:13:44 - INFO: Customize the system (Hybrid_REST2) in 0.01 seconds
+09-01 19:14:11 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:14:11 - INFO: Check topology
+09-01 19:14:11 - INFO: Water res_index=450 will be set as the switching water
+09-01 19:14:11 - INFO: Prepare system
+09-01 19:14:11 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:14:12 - INFO: Customize the system (Hybrid_REST2) in 0.93 seconds
+09-01 19:14:12 - INFO: Prepare integrator and simulation
+09-01 19:14:12 - INFO: T   = 300 K.
+09-01 19:14:12 - INFO: kBT = 2494.338785445972 J/mol.
+09-01 19:14:27 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:14:27 - INFO: Check topology
+09-01 19:14:27 - INFO: Water res_index=450 will be set as the switching water
+09-01 19:14:27 - INFO: Prepare system
+09-01 19:14:27 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:14:28 - INFO: Customize the system (Hybrid_REST2) in 0.89 seconds
+09-01 19:14:28 - INFO: Prepare integrator and simulation
+09-01 19:14:28 - INFO: T   = 300 K.
+09-01 19:14:28 - INFO: kBT = 2494.338785445972 J/mol.
+09-01 19:14:33 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:14:33 - INFO: Check topology
+09-01 19:14:33 - INFO: Water res_index=4 will be set as the switching water
+09-01 19:14:33 - INFO: Prepare system
+09-01 19:14:33 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:14:33 - INFO: Customize the system (Hybrid_REST2) in 0.01 seconds
+09-01 19:14:58 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:14:58 - INFO: Check topology
+09-01 19:14:58 - INFO: Water res_index=15733 will be set as the switching water
+09-01 19:14:58 - INFO: Prepare system
+09-01 19:14:58 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:15:04 - INFO: Customize the system (Hybrid_REST2) in 5.78 seconds
+09-01 19:15:04 - INFO: Prepare integrator and simulation
+09-01 19:15:04 - INFO: T   = 300 K.
+09-01 19:15:04 - INFO: kBT = 2494.338785445972 J/mol.
+09-01 19:21:10 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:21:10 - INFO: Check topology
+09-01 19:21:10 - INFO: Water res_index=15733 will be set as the switching water
+09-01 19:21:10 - INFO: Prepare system
+09-01 19:21:10 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:21:16 - INFO: Customize the system (Hybrid_REST2) in 6.02 seconds
+09-01 19:21:16 - INFO: Prepare integrator and simulation
+09-01 19:23:56 - INFO: T   = 300 K.
+09-01 19:23:56 - INFO: kBT = 2494.338785445972 J/mol.
+09-01 19:32:51 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:32:51 - INFO: Check topology
+09-01 19:32:51 - INFO: Water res_index=4 will be set as the switching water
+09-01 19:32:51 - INFO: Prepare system
+09-01 19:32:51 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:32:51 - INFO: Customize the system (Hybrid_REST2) in 0.01 seconds
+09-01 19:33:10 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:33:10 - INFO: Check topology
+09-01 19:33:10 - INFO: Water res_index=450 will be set as the switching water
+09-01 19:33:10 - INFO: Prepare system
+09-01 19:33:10 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:33:12 - INFO: Customize the system (Hybrid_REST2) in 1.11 seconds
+09-01 19:33:12 - INFO: Prepare integrator and simulation
+09-01 19:33:12 - INFO: T   = 300 K.
+09-01 19:33:12 - INFO: kBT = 2494.338785445972 J/mol.
+09-01 19:33:36 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:33:36 - INFO: Check topology
+09-01 19:33:36 - INFO: Water res_index=450 will be set as the switching water
+09-01 19:33:36 - INFO: Prepare system
+09-01 19:33:36 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:33:37 - INFO: Customize the system (Hybrid_REST2) in 1.08 seconds
+09-01 19:33:37 - INFO: Prepare integrator and simulation
+09-01 19:33:38 - INFO: T   = 300 K.
+09-01 19:33:38 - INFO: kBT = 2494.338785445972 J/mol.
+09-01 19:34:13 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 19:34:13 - INFO: Check topology
+09-01 19:34:13 - INFO: Water res_index=15733 will be set as the switching water
+09-01 19:34:13 - INFO: Prepare system
+09-01 19:34:13 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 19:34:20 - INFO: Customize the system (Hybrid_REST2) in 6.66 seconds
+09-01 19:34:20 - INFO: Prepare integrator and simulation
+09-01 19:36:44 - INFO: T   = 300 K.
+09-01 19:36:44 - INFO: kBT = 2494.338785445972 J/mol.
+09-01 20:17:35 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-01 20:17:35 - INFO: Check topology
+09-01 20:17:35 - INFO: Water res_index=15733 will be set as the switching water
+09-01 20:17:35 - INFO: Prepare system
+09-01 20:17:35 - INFO: Try to customise a native Hybrid_REST2 system
+09-01 20:17:44 - INFO: Customize the system (Hybrid_REST2) in 8.91 seconds
+09-01 20:17:44 - INFO: Prepare integrator and simulation
+09-01 20:18:02 - INFO: T   = 300 K.
+09-01 20:18:02 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 11:23:41 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 11:23:41 - INFO: Check topology
+09-02 11:23:41 - INFO: Water res_index=15733 will be set as the switching water
+09-02 11:23:41 - INFO: Prepare system
+09-02 11:23:41 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 11:24:40 - INFO: Customize the system (Hybrid_REST2) in 58.26 seconds
+09-02 11:24:40 - INFO: Prepare integrator and simulation
+09-02 11:24:57 - INFO: T   = 300 K.
+09-02 11:24:57 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 13:52:39 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 13:52:39 - INFO: Check topology
+09-02 13:52:39 - INFO: Water res_index=450 will be set as the switching water
+09-02 13:52:39 - INFO: Prepare system
+09-02 13:52:39 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 13:52:39 - INFO: One 1 vdw was found in a water and optimization='O3'. Try to hard code vdw into energy expression for wat-wat.
+09-02 13:52:39 - INFO: The hard coded water sigma=0.316655208182147 nm, epsilon=0.8903586017365637 kj/mol
+09-02 13:52:40 - INFO: Customize the system (Hybrid_REST2) in 1.13 seconds with optimization='O3'
+09-02 13:52:40 - INFO: Prepare integrator and simulation
+09-02 13:52:40 - INFO: T   = 300 K.
+09-02 13:52:40 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 13:53:40 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 13:53:40 - INFO: Check topology
+09-02 13:53:40 - INFO: Water res_index=450 will be set as the switching water
+09-02 13:53:40 - INFO: Prepare system
+09-02 13:53:40 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 13:53:40 - INFO: One 1 vdw was found in a water and optimization='O3'. Try to hard code vdw into energy expression for wat-wat.
+09-02 13:53:40 - INFO: The hard coded water sigma=0.316655208182147 nm, epsilon=0.8903586017365637 kj/mol
+09-02 13:53:41 - INFO: Customize the system (Hybrid_REST2) in 1.29 seconds with optimization='O3'
+09-02 13:53:41 - INFO: Prepare integrator and simulation
+09-02 13:53:41 - INFO: T   = 300 K.
+09-02 13:53:41 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 13:54:17 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 13:54:17 - INFO: Check topology
+09-02 13:54:17 - INFO: Water res_index=15733 will be set as the switching water
+09-02 13:54:17 - INFO: Prepare system
+09-02 13:54:17 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 13:54:19 - INFO: One 1 vdw was found in a water and optimization='O3'. Try to hard code vdw into energy expression for wat-wat.
+09-02 13:54:19 - INFO: The hard coded water sigma=0.315075240713007 nm, epsilon=0.6359679988330078 kj/mol
+09-02 13:54:26 - INFO: Customize the system (Hybrid_REST2) in 8.53 seconds with optimization='O3'
+09-02 13:54:26 - INFO: Prepare integrator and simulation
+09-02 13:54:43 - INFO: T   = 300 K.
+09-02 13:54:43 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 13:56:35 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 13:56:35 - INFO: Check topology
+09-02 13:56:35 - INFO: Water res_index=15733 will be set as the switching water
+09-02 13:56:35 - INFO: Prepare system
+09-02 13:56:35 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 13:56:44 - INFO: Customize the system (Hybrid_REST2) in 9.03 seconds with optimization='O1'
+09-02 13:56:44 - INFO: Prepare integrator and simulation
+09-02 13:57:01 - INFO: T   = 300 K.
+09-02 13:57:01 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 13:59:25 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 13:59:25 - INFO: Check topology
+09-02 13:59:25 - INFO: Water res_index=15733 will be set as the switching water
+09-02 13:59:25 - INFO: Prepare system
+09-02 13:59:25 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 13:59:33 - INFO: Customize the system (Hybrid_REST2) in 8.43 seconds with optimization='O1'
+09-02 13:59:33 - INFO: Prepare integrator and simulation
+09-02 13:59:50 - INFO: T   = 300 K.
+09-02 13:59:50 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 14:00:04 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 14:00:04 - INFO: Check topology
+09-02 14:00:04 - INFO: Water res_index=15733 will be set as the switching water
+09-02 14:00:04 - INFO: Prepare system
+09-02 14:00:04 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 14:00:05 - INFO: One 1 vdw was found in a water and optimization='O3'. Try to hard code vdw into energy expression for wat-wat.
+09-02 14:00:05 - INFO: The hard coded water sigma=0.315075240713007 nm, epsilon=0.6359679988330078 kj/mol
+09-02 14:00:13 - INFO: Customize the system (Hybrid_REST2) in 8.43 seconds with optimization='O3'
+09-02 14:00:13 - INFO: Prepare integrator and simulation
+09-02 14:00:29 - INFO: T   = 300 K.
+09-02 14:00:29 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 16:07:56 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 16:07:56 - INFO: Check topology
+09-02 16:07:56 - INFO: Water res_index=15733 will be set as the switching water
+09-02 16:07:56 - INFO: Prepare system
+09-02 16:07:56 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 16:08:05 - INFO: Customize the system (Hybrid_REST2) in 8.37 seconds with optimization='O1'
+09-02 16:08:05 - INFO: Prepare integrator and simulation
+09-02 16:08:22 - INFO: T   = 300 K.
+09-02 16:08:22 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 16:19:30 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 16:19:30 - INFO: Check topology
+09-02 16:19:30 - INFO: Water res_index=15733 will be set as the switching water
+09-02 16:19:30 - INFO: Prepare system
+09-02 16:19:30 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 16:19:38 - INFO: Customize the system (Hybrid_REST2) in 8.28 seconds with optimization='O1'
+09-02 16:19:38 - INFO: Prepare integrator and simulation
+09-02 16:19:55 - INFO: T   = 300 K.
+09-02 16:19:55 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 16:20:26 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 16:20:26 - INFO: Check topology
+09-02 16:20:26 - INFO: Water res_index=15733 will be set as the switching water
+09-02 16:20:26 - INFO: Prepare system
+09-02 16:20:26 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 16:20:27 - INFO: One 1 vdw was found in a water and optimization='O3'. Try to hard code vdw into energy expression for wat-wat.
+09-02 16:20:27 - INFO: The hard coded water sigma=0.315075240713007 nm, epsilon=0.6359679988330078 kj/mol
+09-02 16:20:34 - INFO: Customize the system (Hybrid_REST2) in 8.42 seconds with optimization='O3'
+09-02 16:20:34 - INFO: Prepare integrator and simulation
+09-02 16:20:50 - INFO: T   = 300 K.
+09-02 16:20:50 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 16:24:17 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 16:24:17 - INFO: Check topology
+09-02 16:24:17 - INFO: Water res_index=15733 will be set as the switching water
+09-02 16:24:17 - INFO: Prepare system
+09-02 16:24:17 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 16:24:25 - INFO: Customize the system (Hybrid_REST2) in 8.48 seconds with optimization='O1'
+09-02 16:24:25 - INFO: Prepare integrator and simulation
+09-02 16:24:42 - INFO: T   = 300 K.
+09-02 16:24:42 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 16:25:12 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 16:25:12 - INFO: Check topology
+09-02 16:25:12 - INFO: Water res_index=15733 will be set as the switching water
+09-02 16:25:12 - INFO: Prepare system
+09-02 16:25:12 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 16:25:14 - INFO: One 1 vdw was found in a water and optimization='O3'. Try to hard code vdw into energy expression for wat-wat.
+09-02 16:25:14 - INFO: The hard coded water sigma=0.315075240713007 nm, epsilon=0.6359679988330078 kj/mol
+09-02 16:25:21 - INFO: Customize the system (Hybrid_REST2) in 8.44 seconds with optimization='O3'
+09-02 16:25:21 - INFO: Prepare integrator and simulation
+09-02 16:25:37 - INFO: T   = 300 K.
+09-02 16:25:37 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 16:26:05 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 16:26:05 - INFO: Check topology
+09-02 16:26:05 - INFO: Water res_index=15733 will be set as the switching water
+09-02 16:26:05 - INFO: Prepare system
+09-02 16:26:05 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 16:26:13 - INFO: Customize the system (Hybrid_REST2) in 8.04 seconds with optimization='O1'
+09-02 16:26:13 - INFO: Prepare integrator and simulation
+09-02 16:26:30 - INFO: T   = 300 K.
+09-02 16:26:30 - INFO: kBT = 2494.338785445972 J/mol.
+09-02 16:27:03 - INFO: Initializing BaseGrandCanonicalMonteCarloSampler
+09-02 16:27:03 - INFO: Check topology
+09-02 16:27:03 - INFO: Water res_index=15733 will be set as the switching water
+09-02 16:27:03 - INFO: Prepare system
+09-02 16:27:03 - INFO: Try to customise a native Hybrid_REST2 system
+09-02 16:27:04 - INFO: One 1 vdw was found in a water and optimization='O3'. Try to hard code vdw into energy expression for wat-wat.
+09-02 16:27:04 - INFO: The hard coded water sigma=0.315075240713007 nm, epsilon=0.6359679988330078 kj/mol
+09-02 16:27:12 - INFO: Customize the system (Hybrid_REST2) in 8.51 seconds with optimization='O3'
+09-02 16:27:12 - INFO: Prepare integrator and simulation
+09-02 16:27:28 - INFO: T   = 300 K.
+09-02 16:27:28 - INFO: kBT = 2494.338785445972 J/mol.

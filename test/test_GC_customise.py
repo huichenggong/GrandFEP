@@ -892,17 +892,17 @@ class MyTestCase(unittest.TestCase):
             tick = time.time()
             is_r, is_s, custom_nb_force = baseGC_big.custom_nonbonded_force_list[0]
             custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
-            print(f"## Time for updating C1 with disp_corr {disp_corr} {time.time() - tick:.3f} s")
+            print(f"## Time for updating C1 with {disp_corr=} {time.time() - tick:.3f} s")
 
             tick = time.time()
             is_r, is_s, custom_nb_force = baseGC_big.custom_nonbonded_force_list[1]
             custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
-            print(f"## Time for updating C2 with disp_corr {disp_corr} {time.time() - tick:.3f} s")
+            print(f"## Time for updating C2 with {disp_corr=} {time.time() - tick:.3f} s")
 
             tick = time.time()
             is_r, is_s, custom_nb_force = baseGC_big.custom_nonbonded_force_list[2]
             custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
-            print(f"## Time for updating C3 with disp_corr {disp_corr} {time.time() - tick:.3f} s")
+            print(f"## Time for updating C3 with {disp_corr=} {time.time() - tick:.3f} s")
 
             baseGC_big.check_ghost_list()
 
@@ -1607,12 +1607,10 @@ class MytestREST2_GCMC(unittest.TestCase):
                                                                 excluded_list=[3302, 3303])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
-
     def test_REST2_GCMC_update_context_performance(self):
         print()
         print("# Time for updateParametersInContext")
         nonbonded_settings = nonbonded_Amber
-        platform = platform_ref
 
         base = Path(__file__).resolve().parent
 
@@ -1636,22 +1634,34 @@ class MytestREST2_GCMC(unittest.TestCase):
         )
         tock1 = time.time()
         print(f"## Hybrid 2 systems : {tock1 - tick:.3f} s")
-        base_sampler = sampler.BaseGrandCanonicalMonteCarloSampler(
-            h_factory.hybrid_system,
-            h_factory.omm_hybrid_topology,
-            300 * unit.kelvin,
-            1.0 / unit.picosecond,
-            2.0 * unit.femtosecond,
-            "test_REST2_GCMC.log",
-            platform=platform,
-            create_simulation=True
-        )
-        tock2 = time.time()
-        print(f"## Create sampler : {tock2 - tock1:.3f} s")
+        for optim in ["O1", "O3", "O1", "O3"]:
+            tock1 = time.time()
+            base_sampler = sampler.BaseGrandCanonicalMonteCarloSampler(
+                h_factory.hybrid_system,
+                h_factory.omm_hybrid_topology,
+                300 * unit.kelvin,
+                1.0 / unit.picosecond,
+                2.0 * unit.femtosecond,
+                "test_REST2_GCMC.log",
+                platform=openmm.Platform.getPlatformByName('CUDA'),
+                create_simulation=True,
+                optimization=optim
+            )
+            tock2 = time.time()
+            print(f"## Create sampler : {tock2 - tock1:.3f} s")
 
-        # base_sampler.set_ghost_list([440])
-        # tock3 = time.time()
-        # print(f"## Set ghost list : {tock3 - tock2:.3f} s")
+            # base_sampler.set_ghost_list([440])
+
+            for is_real_index, custom_nb in base_sampler.custom_nonbonded_force_list:
+                t0 = time.time()
+                custom_nb.updateParametersInContext(base_sampler.simulation.context)
+                t1 = time.time()
+                print(f"{t1-t0:.3f} s for updateParametersInContext {is_real_index=}")
+
+            tick = time.time()
+            base_sampler.set_ghost_list([440])
+            tock3 = time.time()
+            print(f"## Set ghost list : {tock3 - tick:.3f} s")
 
 
 
