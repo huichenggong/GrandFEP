@@ -178,7 +178,7 @@ cython_debug/
 # unit test output
 /test/output/*
 /test/test_*.log
-/test_base_Amber.log
+/test_*.log
 /test/Water_Chemical_Potential/OPC/multidir/*/test_npt.log
 /test/md.dcd
 /test/CH4_C2H6/lig0/test_IO.*
