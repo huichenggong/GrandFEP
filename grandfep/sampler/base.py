@@ -51,7 +51,8 @@ class BaseGrandCanonicalMonteCarloSampler:
                  water_resname: str = "HOH",
                  water_O_name: str = "O",
                  create_simulation: bool = True,
-                 optimization: Literal['O3','O1'] ="O3"
+                 optimization: Literal['O3','O1'] ="O3",
+                 n_split_water: Union[int, str] = "log",
                  ):
         """
         Parameters
@@ -163,7 +164,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         elif self.system_type == "Hybrid":
             self.customise_force_hybrid(system)
         elif self.system_type == "Hybrid_REST2":
-            self.customise_force_hybridREST2(system, optimization)
+            self.customise_force_hybridREST2(system, optimization, n_split_water)
         else:
             raise ValueError(f"The system ({self.system_type}) cannot be customized. Please check the system.")
         tock = time.time()
@@ -808,7 +809,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.nonbonded_force.addParticleParameterOffset("lambda_gc_coulomb", at_index, charge, 0.0, 0.0)
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
 
-    def customise_force_hybridREST2(self, system: openmm.System, optimization: Literal['O3','O1']) -> None:
+    def customise_force_hybridREST2(self, system: openmm.System, optimization: Literal['O3','O1'], n_split="log") -> None:
         """
         If the system is Hybrid, this function will add perParticleParameters ``is_real`` and ``is_switching``
         to the custom_nonbonded_force (openmm.openmm.CustomNonbondedForce) for vdw.
@@ -844,24 +845,16 @@ class BaseGrandCanonicalMonteCarloSampler:
         - C_alc
             CustomNonbondedForce for Alchemical atoms
 
-        - C_WA
-            CustomNonbondedForce for water and Alchemical atoms
-            is_real = 0 or 1
+        - C_wat1
+            CustomNonbondedForce for
 
-        - C_WE
-            CustomNonbondedForce for water and env atoms
+        - C_wat2
+            CustomNonbondedForce for
 
-        - C_SA
-            CustomNonbondedForce for the switching water and Alchemical atoms
+        - C_wat3
+            CustomNonbondedForce for
 
-        - C_SE
-            CustomNonbondedForce for the switching water and env atoms
 
-        - C_envh
-            CustomNonbondedForce for envh-envh and envc-envh
-
-        - C_fix
-            CustomNonbondedForce for envc-envc, those interactions do not change.
 
         The most basic energy expression for vdw is the following. All the other forces are simplified from this one.:
 
@@ -992,25 +985,25 @@ class BaseGrandCanonicalMonteCarloSampler:
 
 
         # 1. build groups (core, new, old, envh, envc, wat, swit) and collect parameters
-        self.atoms_params = {}
+        atoms_params = {}
         for at_ind in range(npt_force_dict["CustomNonbondedForce"].getNumParticles()):
             (sigA, epsA, sigB, epsB, at_group) = npt_force_dict["CustomNonbondedForce"].getParticleParameters(at_ind)
             sigA *= unit.nanometer
             sigB *= unit.nanometer
             epsA *= unit.kilojoule_per_mole
             epsB *= unit.kilojoule_per_mole
-            self.atoms_params[at_ind] = [0.0, sigA, epsA, 0.0, sigB, epsB, round(at_group)]  # charge, sigmaA, epsilonA, chargeB, sigmaB, epsilonB, group
+            atoms_params[at_ind] = [0.0, sigA, epsA, 0.0, sigB, epsB, round(at_group)]  # charge, sigmaA, epsilonA, chargeB, sigmaB, epsilonB, group
 
         for res, at_list in self.water_res_2_atom.items():
             for at_ind in at_list:
-                self.atoms_params[at_ind][-1] = 5
+                atoms_params[at_ind][-1] = 5
         for at_ind in self.water_res_2_atom[self.switching_water]:
-            self.atoms_params[at_ind][-1] = 6
+            atoms_params[at_ind][-1] = 6
 
         for at_ind in range(npt_force_dict["NonbondedForce"].getNumParticles()):
             (chg, sig, eps) = npt_force_dict["NonbondedForce"].getParticleParameters(at_ind)
-            self.atoms_params[at_ind][0] = chg  # charge
-            self.atoms_params[at_ind][3] = chg  #
+            atoms_params[at_ind][0] = chg  # charge
+            atoms_params[at_ind][3] = chg  #
         for param_offset_ind in range(npt_force_dict["NonbondedForce"].getNumParticleParameterOffsets()):
             (param_name, at_ind, chg_offset, sig_offset, eps_offset) = npt_force_dict["NonbondedForce"].getParticleParameterOffset(param_offset_ind)
             if param_name == "lambda_electrostatics_delete":
@@ -1018,18 +1011,18 @@ class BaseGrandCanonicalMonteCarloSampler:
             elif param_name == "lambda_electrostatics_insert":
                 raise ValueError(f"{param_name} should not be in the NonbondedForce of a REST2 NPT system.")
             elif param_name == "lam_ele_del_x_k_rest2_sqrt":
-                self.atoms_params[at_ind][0] = chg_offset * unit.elementary_charge
-                self.atoms_params[at_ind][3] = 0.0 * unit.elementary_charge
+                atoms_params[at_ind][0] = chg_offset * unit.elementary_charge
+                atoms_params[at_ind][3] = 0.0 * unit.elementary_charge
             elif param_name == "lam_ele_ins_x_k_rest2_sqrt":
-                self.atoms_params[at_ind][0] = 0.0 * unit.elementary_charge
-                self.atoms_params[at_ind][3] = chg_offset * unit.elementary_charge
+                atoms_params[at_ind][0] = 0.0 * unit.elementary_charge
+                atoms_params[at_ind][3] = chg_offset * unit.elementary_charge
             elif param_name == "lam_ele_coreA_x_k_rest2_sqrt":
-                self.atoms_params[at_ind][0] = chg_offset * unit.elementary_charge
+                atoms_params[at_ind][0] = chg_offset * unit.elementary_charge
             elif param_name == "lam_ele_coreB_x_k_rest2_sqrt":
-                self.atoms_params[at_ind][3] = chg_offset * unit.elementary_charge
+                atoms_params[at_ind][3] = chg_offset * unit.elementary_charge
             elif param_name == "k_rest2_sqrt":
-                self.atoms_params[at_ind][0] = chg_offset * unit.elementary_charge
-                self.atoms_params[at_ind][3] = chg_offset * unit.elementary_charge
+                atoms_params[at_ind][0] = chg_offset * unit.elementary_charge
+                atoms_params[at_ind][3] = chg_offset * unit.elementary_charge
             else:
                 raise ValueError(f"{param_name} should not be in the NonbondedForce of a REST2 NPT system.")
 
@@ -1101,7 +1094,8 @@ class BaseGrandCanonicalMonteCarloSampler:
 
         # 3.4.2. NonbondedForce
         self.custom_nonbonded_force_list = []
-        ## 3.4.2.1 C_alchemy, this force handles all the alchemical atoms (core, new, old) - (all)
+        self.custom_nonbonded_force_dict = {}
+        ## 3.4.2.1 C_alchemy, this force handles all the alchemical atoms (core, new, old, swit) - (all)
         energy = (
             "U_rest2;"
 
@@ -1150,9 +1144,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         )
         c_nb_alchemy = openmm.CustomNonbondedForce(energy)
         self.system.addForce(c_nb_alchemy)
-        self.custom_nonbonded_force_list.append(
-            [5, c_nb_alchemy]
-        )
+        self.custom_nonbonded_force_dict["alchem_X"] = [5, c_nb_alchemy]
 
         self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_alchemy)
         c_nb_alchemy.addPerParticleParameter("sigmaA")
@@ -1187,9 +1179,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         )
         c_nb_wat_envh = openmm.CustomNonbondedForce(energy)
         self.system.addForce(c_nb_wat_envh)
-        self.custom_nonbonded_force_list.append(
-            [3, c_nb_wat_envh]
-        )
+        self.custom_nonbonded_force_dict["wat_envh"] = [3, c_nb_wat_envh]
         self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_envh)
         c_nb_wat_envh.addPerParticleParameter("sigma")
         c_nb_wat_envh.addPerParticleParameter("epsilon")
@@ -1198,7 +1188,7 @@ class BaseGrandCanonicalMonteCarloSampler:
 
         c_nb_wat_envh.addGlobalParameter("k_rest2_sqrt", 1.0)  # sqrt(T_cold/T_hot)
 
-        ## 3.4.2.3 C_wat_fix, this force handles some water interactions (wat) - (envc, wat)
+        ## 3.4.2.3 C_wat_fix, this force handles some water interactions (wat-envc)
         energy = (
             "U_sterics;"
 
@@ -1210,19 +1200,15 @@ class BaseGrandCanonicalMonteCarloSampler:
             "epsilon = sqrt(epsilon1*epsilon2);"
             "sigma = 0.5*(sigma1 + sigma2);"
         )
-        c_nb_wat_fix = openmm.CustomNonbondedForce(energy)
-        self.system.addForce(c_nb_wat_fix)
-        self.custom_nonbonded_force_list.append(
-            [2, c_nb_wat_fix]
-        )
-        self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_fix)
-        c_nb_wat_fix.addPerParticleParameter("sigma")
-        c_nb_wat_fix.addPerParticleParameter("epsilon")
-        c_nb_wat_fix.addPerParticleParameter("is_real")
+        c_nb_wat_envc = openmm.CustomNonbondedForce(energy)
+        self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_envc)
+        c_nb_wat_envc.addPerParticleParameter("sigma")
+        c_nb_wat_envc.addPerParticleParameter("epsilon")
+        c_nb_wat_envc.addPerParticleParameter("is_real")
 
-        ## 3.4.2.3
+        ## 3.4.2.4 wat-wat interactions
         eps_non_zero = [not np.allclose(eps.value_in_unit(unit.kilojoule_per_mole), 0) for eps in self.wat_params["epsilon"]]
-        if optimization == 'O3' and sum(eps_non_zero) == 1:
+        if optimization == 'O3' and sum(eps_non_zero) == 1 and eps_non_zero[0]:
             flag_hard_code_wat = True
             self.logger.info(f"One 1 vdw was found in a water and {optimization=}. Try to hard code vdw into energy expression for wat-wat.")
             for sig, eps in zip(self.wat_params["sigma"], self.wat_params["epsilon"]):
@@ -1243,19 +1229,31 @@ class BaseGrandCanonicalMonteCarloSampler:
                 f"sigma = {wat_sigma};"
             )
             c_nb_wat_wat = openmm.CustomNonbondedForce(energy)
-            self.system.addForce(c_nb_wat_wat)
             self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_wat)
             c_nb_wat_wat.addPerParticleParameter("is_real")
-            self.custom_nonbonded_force_list.append(
-                [0, c_nb_wat_wat]
-            )
         else:
             flag_hard_code_wat = False
+            energy = (
+                "U_sterics;"
+
+                # 2. vdw with water real/dummy
+                "U_sterics = 4*epsilon*x*(x-1.0) * is_real1 * is_real2;"
+                "x = (sigma/r)^6;"
+
+                # 1. LJ mixing rules
+                "epsilon = sqrt(epsilon1*epsilon2);"
+                "sigma = 0.5*(sigma1 + sigma2);"
+            )
+            c_nb_wat_wat = openmm.CustomNonbondedForce(energy)
+            self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_wat)
+            c_nb_wat_wat.addPerParticleParameter("sigma")
+            c_nb_wat_wat.addPerParticleParameter("epsilon")
+            c_nb_wat_wat.addPerParticleParameter("is_real")
 
 
         ## 3.5. Add particles to NonbondedForce and CustomNonbondedForce
         for at_ind in range(npt_force_dict["NonbondedForce"].getNumParticles()):
-            chgA, sigA, epsA, chgB, sigB, epsB, group = self.atoms_params[at_ind]
+            chgA, sigA, epsA, chgB, sigB, epsB, group = atoms_params[at_ind]
             if group == 0:
                 # this is core atom
                 self.nonbonded_force.addParticle(chgA*0.0, sigA, 0.0*epsA)
@@ -1299,9 +1297,11 @@ class BaseGrandCanonicalMonteCarloSampler:
                 raise ValueError(f"The group {group} is not defined.")
             c_nb_alchemy.addParticle([sigA, epsA, sigB, epsB, group, 1])
             c_nb_wat_envh.addParticle([sigA, epsA, group, 1])
-            c_nb_wat_fix.addParticle([sigA, epsA, 1])
+            c_nb_wat_envc.addParticle([sigA, epsA, 1])
             if flag_hard_code_wat:
                 c_nb_wat_wat.addParticle([1])
+            else:
+                c_nb_wat_wat.addParticle([sigA, epsA, 1])
 
         # 3.6. copy each exception and offset
         # assert npt_force_dict["NonbondedForce"].getNumExceptions() == npt_force_dict["CustomNonbondedForce"].getNumExclusions()
@@ -1310,8 +1310,8 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.nonbonded_force.addException(index1, index2, chargeProd, sigma, epsilon)
             c_nb_alchemy.addExclusion(index1, index2)
             c_nb_wat_envh.addExclusion(index1, index2)
-            c_nb_wat_fix.addExclusion(index1, index2)
-            if flag_hard_code_wat:
+            c_nb_wat_envc.addExclusion(index1, index2)
+            if not flag_hard_code_wat:
                 c_nb_wat_wat.addExclusion(index1, index2)
 
         for i in range(npt_force_dict["NonbondedForce"].getNumExceptionParameterOffsets()):
@@ -1319,11 +1319,15 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.nonbonded_force.addExceptionParameterOffset(glob_param, exceptionIndex, chargeProd, sigma, epsilon)
 
         # 3.7. handle interaction group
+        ## 3.7.1. Normal groups
         grp_dict = {}
         for grp_ind, grp_name in {0:"core", 1:"new", 2:"old"}.items():
-            grp_dict[grp_name] = {at_ind for at_ind, p in self.atoms_params.items() if p[-1] == grp_ind}
+            grp_dict[grp_name] = {at_ind for at_ind, p in atoms_params.items() if p[-1] == grp_ind}
         for grp_ind, grp_name in {3:"envh", 4:"envc", 5:"wat", 6:"swit"}.items():
-            grp_dict[grp_name] = {at_ind for at_ind, p in self.atoms_params.items() if p[-1] == grp_ind and (not np.allclose(p[2].value_in_unit(unit.kilojoule_per_mole), 0.0))}
+            grp_dict[grp_name] = {at_ind for at_ind, p in atoms_params.items() if p[-1] == grp_ind and (not np.allclose(p[2].value_in_unit(unit.kilojoule_per_mole), 0.0))}
+        for grp_name, group_set in grp_dict.items():
+            self.logger.info(f"Group {grp_name} has {len(group_set)} atoms.")
+
 
         group_envhc = grp_dict["envh"].union(grp_dict["envc"])
         group_alche = grp_dict["core"].union(grp_dict["new"]).union(grp_dict["old"])
@@ -1342,11 +1346,61 @@ class BaseGrandCanonicalMonteCarloSampler:
 
         c_nb_wat_envh.addInteractionGroup(grp_dict["wat"] ,grp_dict["envh"])
 
-        c_nb_wat_fix.addInteractionGroup(grp_dict["wat"], grp_dict["envc"])
+        ## 3.7.2. Water groups. n_water is so large, we split water into n_split groups to speed up updateParametersInContext
+        if n_split=="log":
+            n_split = max(1, int(np.log10(len(grp_dict["wat"]))))
+        self.logger.info(f"Split water interaction into {n_split} groups")
+        self.water_res_2_group_map = {}
+        water_res = [res_ind for res_ind in self.water_res_2_atom.keys() if res_ind != self.switching_water]
+        for i in range(n_split):
+            at_index_list = []
+            for res in water_res[i::n_split]:
+                if flag_hard_code_wat:
+                    at_index_list.append(self.water_res_2_atom[res][0])
+                else:
+                    at_index_list.extend(self.water_res_2_atom[res])
+                self.water_res_2_group_map[res] = i
+            grp_dict[f"wat_{i}"] = set(at_index_list)
         if flag_hard_code_wat:
-            c_nb_wat_wat.addInteractionGroup(grp_dict["wat"], grp_dict["wat"])
+            water_check = set()
+            for i in range(n_split):
+                water_check = water_check.union(grp_dict[f"wat_{i}"])
+            assert grp_dict[f"wat"] == water_check
+
+        # copy wat-envc interactions n_split times
+        c_nb_wat_envc_list = [c_nb_wat_envc]
+        for i in range(1, n_split):
+            c_nb =  openmm.XmlSerializer.deserialize(openmm.XmlSerializer.serialize(c_nb_wat_envc))
+            c_nb.addInteractionGroup(grp_dict[f"wat_{i}"], grp_dict["envc"])
+            c_nb_wat_envc_list.append(c_nb)
+            self.system.addForce(c_nb)
+        c_nb_wat_envc.addInteractionGroup(grp_dict["wat_0"], grp_dict["envc"])
+        self.system.addForce(c_nb_wat_envc)
+        self.custom_nonbonded_force_dict["wat-envc"] = [2, c_nb_wat_envc_list]
+
+
+        # build a N x N interaction group
+        c_nb_wat_wat_list = []
+        for i in range(n_split):
+            c_nb_wat_wat_list.append([])
+            for j in range(i+1):
+                c_nb_wat_wat_list[i].append(None)
+
+        c_nb_wat_wat_list[0][0] = c_nb_wat_wat
+        for i in range(1, n_split):
+            for j in range(i+1):
+                c_nb_wat_wat_new = openmm.XmlSerializer.deserialize(openmm.XmlSerializer.serialize(c_nb_wat_wat))
+                c_nb_wat_wat_list[i][j] = c_nb_wat_wat_new
+                c_nb_wat_wat_new.addInteractionGroup(grp_dict[f"wat_{i}"], grp_dict[f"wat_{j}"])
+                self.system.addForce(c_nb_wat_wat_new)
+
+        c_nb_wat_wat.addInteractionGroup(grp_dict["wat_0"], grp_dict["wat_0"])
+        self.system.addForce(c_nb_wat_wat)
+
+        if flag_hard_code_wat:
+            self.custom_nonbonded_force_dict["wat-wat"] = [0, c_nb_wat_wat_list]
         else:
-            c_nb_wat_fix.addInteractionGroup(grp_dict["wat"], grp_dict["wat"])
+            self.custom_nonbonded_force_dict["wat-wat"] = [2, c_nb_wat_wat_list]
 
     def _turn_off_vdw(self):
         """
@@ -1363,6 +1417,33 @@ class BaseGrandCanonicalMonteCarloSampler:
                 sigmaA, epsilonA, sigmaB, epsilonB, unique_old, unique_new, is_real, is_switching = custom_nb_force.getParticleParameters(at_ind)
                 custom_nb_force.setParticleParameters(at_ind, [sigmaA, 0.0*epsilonA, sigmaB, 0.0*epsilonB, unique_old, unique_new, is_real*0.0, is_switching])
             custom_nb_force.updateParametersInContext(self.simulation.context)
+
+    def _set_ghostlist_custom_nb(self, custom_nb_force, is_real_index, ghost_list, updateContext=True):
+        """
+
+        :param custom_nb_force:
+        :param is_real_index:
+        :param ghost_list:
+        :return:
+        """
+        for i in range(custom_nb_force.getNumPerParticleParameters()):
+            name = custom_nb_force.getPerParticleParameterName(i)
+            if name == "is_real":
+                assert i == is_real_index
+                break
+        for at_ind in range(custom_nb_force.getNumParticles()):
+            parameters = list(custom_nb_force.getParticleParameters(at_ind))
+            if parameters[is_real_index] != 1:
+                parameters[is_real_index] = 1
+                custom_nb_force.setParticleParameters(at_ind, parameters)
+        for ghost_res in ghost_list:
+            for at_ind in ghost_res:
+                parameters = list(custom_nb_force.getParticleParameters(at_ind))
+                parameters[is_real_index] = 0
+                custom_nb_force.setParticleParameters(at_ind, parameters)
+        if updateContext:
+            custom_nb_force.updateParametersInContext(self.simulation.context)
+
 
     def set_ghost_list(self, ghost_list: list, check_system: bool = True) -> None:
         """
@@ -1388,50 +1469,63 @@ class BaseGrandCanonicalMonteCarloSampler:
         if self.switching_water in ghost_list:
             raise ValueError("Switching water should never be set to ghost.")
 
+        water_add = []
+        water_del = []
+        for res_index in ghost_list:
+            if res_index not in self.ghost_list:
+                water_add.append(res_index)
+        for res_index in self.ghost_list:
+            if res_index not in ghost_list:
+                water_del.append(res_index)
+        # which group need to be updated
+        group_update = set()
+        for res_index in water_add + water_del:
+            if res_index not in self.water_res_2_group_map:
+                raise ValueError(f"The residue {res_index} is not water.")
+            group_update.add(self.water_res_2_group_map[res_index])
+
+
+        ghost_atoms_list = []
+        for res_index in ghost_list:
+            if res_index not in self.water_res_2_atom:
+                raise ValueError(f"The residue {res_index} is not a water.")
+            else:
+                ghost_atoms_list.append(self.water_res_2_atom[res_index])
+
         # set self.custom_nonbonded_force_list for vdw
-        if len(self.custom_nonbonded_force_list[0]) == 3:
-            for is_real_index, is_switching_index, c_nbforce in self.custom_nonbonded_force_list:
-                for res_index in self.ghost_list:
-                    if res_index not in self.water_res_2_atom:
-                        raise ValueError(f"The residue {res_index} is water.")
-                for res_index, at_list in self.water_res_2_atom.items():
-                    if res_index == self.switching_water:
-                        continue
-                    for at_index in at_list:
-                        parameters = list(c_nbforce.getParticleParameters(at_index))
-                        parameters[is_real_index] = 1.0
-                        c_nbforce.setParticleParameters(at_index, parameters)
+        for inter_name, c_nb_list in self.custom_nonbonded_force_dict.items():
+            self.logger.debug(inter_name)
+            if isinstance(c_nb_list[1], openmm.CustomNonbondedForce):
+                is_real_index, c_nbforce = c_nb_list
+                self._set_ghostlist_custom_nb(c_nbforce, is_real_index, ghost_atoms_list)
 
-                for res_index in ghost_list:
-                    if res_index not in self.water_res_2_atom:
-                        raise ValueError(f"The residue {res_index} is not water.")
-                    for at_index in self.water_res_2_atom[res_index]:
-                        parameters = list(c_nbforce.getParticleParameters(at_index))
-                        parameters[is_real_index] = 0.0
-                        c_nbforce.setParticleParameters(at_index, parameters)
-        elif len(self.custom_nonbonded_force_list[0]) == 2:
-            for is_real_index, c_nbforce in self.custom_nonbonded_force_list:
-                for res_index in self.ghost_list:
-                    if res_index not in self.water_res_2_atom:
-                        raise ValueError(f"The residue {res_index} is water.")
-                for res_index, at_list in self.water_res_2_atom.items():
-                    if res_index == self.switching_water:
-                        continue
-                    for at_index in at_list:
-                        parameters = list(c_nbforce.getParticleParameters(at_index))
-                        parameters[is_real_index] = 1.0
-                        c_nbforce.setParticleParameters(at_index, parameters)
+            elif inter_name == "wat-envc":
+                is_real_index, c_nbforce_list = c_nb_list
+                for i, c_nbforce in enumerate(c_nbforce_list):
+                    if i in group_update:
+                        self._set_ghostlist_custom_nb(c_nbforce, is_real_index, ghost_atoms_list)
+                        self.logger.debug(f"wat-envc-{i}, with update")
+                    else:
+                        self._set_ghostlist_custom_nb(c_nbforce, is_real_index, ghost_atoms_list, updateContext=False)
+                        self.logger.debug(f"wat-envc-{i}, no update")
 
-                for res_index in ghost_list:
-                    if res_index not in self.water_res_2_atom:
-                        raise ValueError(f"The residue {res_index} is not water.")
-                    for at_index in self.water_res_2_atom[res_index]:
-                        parameters = list(c_nbforce.getParticleParameters(at_index))
-                        parameters[is_real_index] = 0.0
-                        c_nbforce.setParticleParameters(at_index, parameters)
+            elif inter_name == "wat-wat":
+                is_real_index, c_nbforce_list = c_nb_list
+                for i, c_list in enumerate(c_nbforce_list):
+                    for j, c_nbforce in enumerate(c_list):
+                        if i in group_update or j in group_update:
+                            self._set_ghostlist_custom_nb(c_nbforce, is_real_index, ghost_atoms_list)
+                            self.logger.debug(f"wat-{i}-{j}, with update", )
+                        else:
+                            self._set_ghostlist_custom_nb(c_nbforce, is_real_index, ghost_atoms_list, updateContext=False)
+                            self.logger.debug(f"wat-{i}-{j}, no update")
 
+            else:
+                raise ValueError(f"Unknown interaction name {inter_name} in self.custom_nonbonded_force_dict.")
+            self.logger.debug("Done")
 
         # set self.nonbonded_force for coulomb
+        self.logger.debug(f"Nonbonded Force")
         for res_index, at_list in self.water_res_2_atom.items():
             if res_index == self.switching_water:
                 continue
@@ -1446,14 +1540,7 @@ class BaseGrandCanonicalMonteCarloSampler:
 
         # update context
         self.nonbonded_force.updateParametersInContext(self.simulation.context)
-        if len(self.custom_nonbonded_force_list[0]) == 3:
-            for _r, _s, custom_nb_force in self.custom_nonbonded_force_list:
-                custom_nb_force.updateParametersInContext(self.simulation.context)
-        elif len(self.custom_nonbonded_force_list[0]) == 2:
-            for _r, custom_nb_force in self.custom_nonbonded_force_list:
-                custom_nb_force.updateParametersInContext(self.simulation.context)
-        else:
-            raise ValueError("Wrong number of parameters in self.custom_nonbonded_force_list.")
+        self.logger.debug("Done")
         self.ghost_list = ghost_list
 
         if check_system:

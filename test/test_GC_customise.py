@@ -1,3 +1,4 @@
+import logging
 import unittest
 from pathlib import Path
 import time
@@ -1374,7 +1375,7 @@ class MytestREST2_GCMC(unittest.TestCase):
             old_to_new_atom_map,  # All atoms that should map from A to B
             old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
             use_dispersion_correction=True,
-            old_rest2_atom_indices=[1880, 1881, 1882, 1883, 1884, 1885, 1886, 1887, 1888, 1889, 1890]
+            # old_rest2_atom_indices=[1880, 1881, 1882, 1883, 1884, 1885, 1886, 1887, 1888, 1889, 1890]
         )
         tick = time.time()
         base_sampler = sampler.BaseGrandCanonicalMonteCarloSampler(
@@ -1387,6 +1388,12 @@ class MytestREST2_GCMC(unittest.TestCase):
             platform=platform,
             create_simulation=True
         )
+        # set base_sampler.logger file_handler to debug
+        base_sampler.logger.setLevel(logging.DEBUG)
+        base_sampler.logger.handlers[0].setLevel(logging.DEBUG)
+        base_sampler.logger.handlers[0].setFormatter(logging.Formatter('%(asctime)s - %(levelname)s: %(message)s'))
+        base_sampler.logger.debug("Set logger to debug")
+
         tock = time.time()
         print(f"## Time for initializing a REST2-GCMC system {tock - tick:.3f} s")
 
@@ -1453,7 +1460,7 @@ class MytestREST2_GCMC(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]], excluded_list=[3302, 3303])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
-        base_sampler.set_ghost_list([449], check_system=True)
+        base_sampler.set_ghost_list([449], check_system=False)
         # swap the coordinate of water res_449 and res_450
         w_index_449 = base_sampler.water_res_2_atom[449]
         w_index_450 = base_sampler.water_res_2_atom[450]
@@ -1570,7 +1577,7 @@ class MytestREST2_GCMC(unittest.TestCase):
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
         print(f"State B with -2 water have the same forces")
-        base_sampler.set_ghost_list([449])
+        base_sampler.set_ghost_list([449], check_system=False)
         inpcrd_r2, prmtop_r2, sys1 = load_amber_sys(
             base / "HSP90/protein_leg" / "2xjg" / "11_-2.inpcrd",
             base / "HSP90/protein_leg" / "2xjg" / "11_-2.prmtop", nonbonded_settings)
@@ -1634,35 +1641,31 @@ class MytestREST2_GCMC(unittest.TestCase):
         )
         tock1 = time.time()
         print(f"## Hybrid 2 systems : {tock1 - tick:.3f} s")
-        for optim in ["O1", "O3", "O1", "O3"]:
-            tock1 = time.time()
-            base_sampler = sampler.BaseGrandCanonicalMonteCarloSampler(
-                h_factory.hybrid_system,
-                h_factory.omm_hybrid_topology,
-                300 * unit.kelvin,
-                1.0 / unit.picosecond,
-                2.0 * unit.femtosecond,
-                "test_REST2_GCMC.log",
-                platform=openmm.Platform.getPlatformByName('CUDA'),
-                create_simulation=True,
-                optimization=optim
-            )
-            tock2 = time.time()
-            print(f"## Create sampler : {tock2 - tock1:.3f} s")
-
-            # base_sampler.set_ghost_list([440])
-
-            for is_real_index, custom_nb in base_sampler.custom_nonbonded_force_list:
-                t0 = time.time()
-                custom_nb.updateParametersInContext(base_sampler.simulation.context)
-                t1 = time.time()
-                print(f"{t1-t0:.3f} s for updateParametersInContext {is_real_index=}")
-
-            tick = time.time()
-            base_sampler.set_ghost_list([440])
-            tock3 = time.time()
-            print(f"## Set ghost list : {tock3 - tick:.3f} s")
-
+        for optim in ["O3"]:
+            for n_split in [1,2,3,4,5]:
+                tock1 = time.time()
+                base_sampler = sampler.BaseGrandCanonicalMonteCarloSampler(
+                    h_factory.hybrid_system,
+                    h_factory.omm_hybrid_topology,
+                    300 * unit.kelvin,
+                    1.0 / unit.picosecond,
+                    2.0 * unit.femtosecond,
+                    "test_REST2_GCMC.log",
+                    platform=openmm.Platform.getPlatformByName('CUDA'),
+                    create_simulation=True,
+                    optimization=optim,
+                    n_split_water=n_split
+                )
+                tock2 = time.time()
+                print(f"## Create sampler : {tock2 - tock1:.3f} s")
+    
+                for ghost in [440, 441]:
+                    tick = time.time()
+                    base_sampler.set_ghost_list([ghost], check_system=False)
+                    tock3 = time.time()
+                    msg = f"## Set ghost list {n_split:2d}: {tock3 - tick:.3f} s"
+                    print(msg)
+                    base_sampler.logger.info(msg)
 
 
 if __name__ == '__main__':

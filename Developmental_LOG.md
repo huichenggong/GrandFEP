@@ -12,13 +12,17 @@
 #### 3. 1-4
 #### 4. dihedral
 #### 5. bond, angle  
-skip  
+skip
 
 ```bash
 # create a new branch and switch to it
 git checkout -b 0.1.3_dev
 git push -u origin 0.1.3_dev
 ```
+
+Remove the non-vdw atoms from the interaction group reduce to udpate time by order of magnitude. 
+Hard code `sigma` `epsilon` into the `CustomNonbondedForce` for the water-water interaction only reduce the time from 
+17s to 16s.
 
 ## v0.1.2  
 ### Problem to be Solved
