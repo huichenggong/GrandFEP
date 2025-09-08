@@ -2495,13 +2495,15 @@ class HybridTopologyFactory:
         # both old & new Topologies
         atom_list = []
 
+        old_top_atoms = list(self._old_topology.atoms())
+        new_top_atoms = list(self._new_topology.atoms())
         for pidx in range(self.hybrid_system.getNumParticles()):
             if pidx in self._hybrid_to_old_map:
                 idx = self._hybrid_to_old_map[pidx]
-                atom_list.append(list(self._old_topology.atoms())[idx])
+                atom_list.append(old_top_atoms[idx])
             else:
                 idx = self._hybrid_to_new_map[pidx]
-                atom_list.append(list(self._new_topology.atoms())[idx])
+                atom_list.append(new_top_atoms[idx])
 
         # Now we loop over the atoms and add them in alongside chains & resids
         
@@ -2527,13 +2529,14 @@ class HybridTopologyFactory:
 
         # Next we deal with bonds
         # First we add in all the old topology bonds
+        hybrid_top_atoms = list(self.hybrid_top.atoms())
         for bond in self._old_topology.bonds():
             at1 = self.old_to_hybrid_atom_map[bond.atom1.index]
             at2 = self.old_to_hybrid_atom_map[bond.atom2.index]
 
             hybrid_top.addBond(
-                list(hybrid_top.atoms())[at1],
-                list(hybrid_top.atoms())[at2],
+                hybrid_top_atoms[at1],
+                hybrid_top_atoms[at2],
                 bond.type, bond.order,
             )
 
@@ -2545,8 +2548,8 @@ class HybridTopologyFactory:
             if ((at1 in self._atom_classes['unique_new_atoms']) or
                 (at2 in self._atom_classes['unique_new_atoms'])):
                 hybrid_top.addBond(
-                    list(hybrid_top.atoms())[at1],
-                    list(hybrid_top.atoms())[at2],
+                    hybrid_top_atoms[at1],
+                    hybrid_top_atoms[at2],
                     bond.type, bond.order,
                 )
 
