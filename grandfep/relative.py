@@ -2842,6 +2842,7 @@ class HybridTopologyFactoryREST2:
 
         # Assign atoms to one of the classes described in the class docstring
         self._set_atom_classes(old_rest2_atom_indices)
+        print(f"{self._atom_classes["rest2_atoms"]} atoms are set to hot in REST2")
 
         # Construct dictionary of exceptions in old and new systems
         self._old_system_exceptions = self._generate_dict_from_exceptions(
@@ -3062,16 +3063,16 @@ class HybridTopologyFactoryREST2:
                 raise AssertionError(errmsg)
             self._atom_classes['environment_atoms'].add(new_to_hybrid_idx)
 
-            # Set REST2 atoms, core, unique_old, unique_new atoms, and old_rest2_atoms
-            for particle_idx in self._core_old_to_new_map:
+        # Set REST2 atoms, core, unique_old, unique_new atoms, and old_rest2_atoms
+        for particle_idx in self._core_old_to_new_map:
+            self._atom_classes['rest2_atoms'].add(self._old_to_hybrid_map[particle_idx])
+        for particle_idx in self._unique_old_atoms:
+            self._atom_classes['rest2_atoms'].add(self._old_to_hybrid_map[particle_idx])
+        for particle_idx in self._unique_new_atoms:
+            self._atom_classes['rest2_atoms'].add(self._new_to_hybrid_map[particle_idx])
+        if old_rest2_atom_indices is not None:
+            for particle_idx in old_rest2_atom_indices:
                 self._atom_classes['rest2_atoms'].add(self._old_to_hybrid_map[particle_idx])
-            for particle_idx in self._unique_old_atoms:
-                self._atom_classes['rest2_atoms'].add(self._old_to_hybrid_map[particle_idx])
-            for particle_idx in self._unique_new_atoms:
-                self._atom_classes['rest2_atoms'].add(self._new_to_hybrid_map[particle_idx])
-            if old_rest2_atom_indices is not None:
-                for particle_idx in old_rest2_atom_indices:
-                    self._atom_classes['rest2_atoms'].add(self._old_to_hybrid_map[particle_idx])
 
     @staticmethod
     def _generate_dict_from_exceptions(force):
