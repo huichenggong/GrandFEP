@@ -1460,7 +1460,7 @@ class MytestREST2_GCMC(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]], excluded_list=[3302, 3303])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
-        base_sampler.set_ghost_list([449], check_system=False)
+        base_sampler.set_ghost_list([449], check_system=True)
         # swap the coordinate of water res_449 and res_450
         w_index_449 = base_sampler.water_res_2_atom[449]
         w_index_450 = base_sampler.water_res_2_atom[450]

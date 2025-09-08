@@ -1570,21 +1570,44 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.check_ghost_list()
         return deepcopy(self.ghost_list)
 
+    def _check_ghost_c_nb_force(self, c_nb_force, is_real_index):
+        for res in self.topology.residues():
+            if res.index in self.water_res_2_atom:
+                at_index_list = self.water_res_2_atom[res.index]
+            else:
+                at_index_list = list(atom.index for atom in res.atoms())
+            if res.index in self.ghost_list:
+                # ghost water should have is_real = 0.0
+                for at_index in at_index_list:
+                    parameters = c_nb_force.getParticleParameters(at_index)
+                    if parameters[is_real_index] > 1e-8:
+                        raise ValueError(
+                            f"The water (ghost) {res}:{at_index} has is_real = {parameters[is_real_index]}."
+                        )
+            else:
+                for at_index in at_index_list:
+                    parameters = c_nb_force.getParticleParameters(at_index)
+                    if parameters[is_real_index] < 0.99999999:
+                        raise ValueError(
+                            f"The water (real) {res}:{at_index} has is_real = {parameters[is_real_index]}."
+                        )
+        return True
+
     def check_ghost_list(self):
         """
         Loop over all water particles in the system to validate that `self.ghost_list` correctly reflects
         the current ghost and switching water configuration.
 
         - Ghost water:
-            1. `is_real = 0.0` and `is_switching = 0.0` in every CustomNonbondedForce in `self.custom_nonbonded_force_list`
+            1. `is_real = 0.0` and `is_switching = 0.0` in every CustomNonbondedForce in `self.custom_nonbonded_force_dict`
             2. Charge = 0.0 in `self.nonbonded_force`
 
         - Real and not switching water:
-            1. `is_real = 1.0` in every CustomNonbondedForce in `self.custom_nonbonded_force_list`
+            1. `is_real = 1.0` in every CustomNonbondedForce in `self.custom_nonbonded_force_dict`
             2. Charge = Proper_water_charge in `self.nonbonded_force`
 
         - Switching water:
-            1. `is_real = 1.0` in every CustomNonbondedForce in `self.custom_nonbonded_force_list`
+            1. `is_real = 1.0` in every CustomNonbondedForce in `self.custom_nonbonded_force_dict`
             2. Charge = 0.0 in `self.nonbonded_force`
 
         The switching water should not be present in `self.ghost_list`.
@@ -1601,49 +1624,29 @@ class BaseGrandCanonicalMonteCarloSampler:
         if self.switching_water in self.ghost_list:
             raise ValueError("Switching water should never be set to ghost.")
 
-        # check vdW in self.custom_nonbonded_force
-        if len(self.custom_nonbonded_force_list[0]) == 3:
-            for is_real_index, is_switching_index, custom_nb_force in self.custom_nonbonded_force_list:
-                for res, at_index_list in self.water_res_2_atom.items():
-                    if res in self.ghost_list:
-                        # ghost water should have is_real = 0.0, is_switching = 0.0
-                        for at_index in at_index_list:
-                            parameters = custom_nb_force.getParticleParameters(at_index)
-                            if parameters[is_real_index] > 1e-8:
-                                raise ValueError(
-                                    f"The water {res} (real) atom {at_index} has is_real = {parameters[is_real_index]}.")
-                            if is_switching_index is not None and parameters[is_switching_index] > 1e-8:
-                                raise ValueError(
-                                    f"The water {res} (real) atom {at_index} has is_switching = {parameters[is_switching_index]}.")
-                    else:
-                        # real water should have is_real = 1.0
-                        for at_index in at_index_list:
-                            parameters = custom_nb_force.getParticleParameters(at_index)
-                            if parameters[is_real_index] < 0.99999999:
-                                raise ValueError(
-                                    f"The water {res} at {at_index} has is_real = {parameters[is_real_index]}."
-                                )
-        elif len(self.custom_nonbonded_force_list[0]) == 2:
-            for is_real_index, custom_nb_force in self.custom_nonbonded_force_list:
-                for res, at_index_list in self.water_res_2_atom.items():
-                    if res in self.ghost_list:
-                        # ghost water should have is_real = 0.0, is_switching = 0.0
-                        for at_index in at_index_list:
-                            parameters = custom_nb_force.getParticleParameters(at_index)
-                            if parameters[is_real_index] > 1e-8:
-                                raise ValueError(
-                                    f"The water {res} (real) atom {at_index} has is_real = {parameters[is_real_index]}.")
-                            # if is_switching_index is not None and parameters[is_switching_index] > 1e-8:
-                            #     raise ValueError(
-                            #         f"The water {res} (real) atom {at_index} has is_switching = {parameters[is_switching_index]}.")
-                    else:
-                        # real water should have is_real = 1.0
-                        for at_index in at_index_list:
-                            parameters = custom_nb_force.getParticleParameters(at_index)
-                            if parameters[is_real_index] < 0.99999999:
-                                raise ValueError(
-                                    f"The water {res} at {at_index} has is_real = {parameters[is_real_index]}."
-                                )
+        # set self.custom_nonbonded_force_dict for vdw
+        for inter_name, c_nb_list in self.custom_nonbonded_force_dict.items():
+            self.logger.debug(f"check {inter_name}")
+            if isinstance(c_nb_list[1], openmm.CustomNonbondedForce):
+                is_real_index, c_nbforce = c_nb_list
+                self._check_ghost_c_nb_force(c_nbforce, is_real_index)
+
+            elif inter_name == "wat-envc":
+                is_real_index, c_nbforce_list = c_nb_list
+                for i, c_nbforce in enumerate(c_nbforce_list):
+                    self.logger.debug(f"check wat-envc-{i}")
+                    self._check_ghost_c_nb_force(c_nbforce, is_real_index)
+
+            elif inter_name == "wat-wat":
+                is_real_index, c_nbforce_list = c_nb_list
+                for i, c_list in enumerate(c_nbforce_list):
+                    for j, c_nbforce in enumerate(c_list):
+                        self.logger.debug(f"check wat-{i}-{j}", )
+                        self._check_ghost_c_nb_force(c_nbforce, is_real_index)
+
+            else:
+                raise ValueError(f"Unknown interaction name {inter_name} in self.custom_nonbonded_force_dict.")
+            self.logger.debug("Done")
 
         # check coulomb in self.nonbonded_force
         for res, at_index_list in self.water_res_2_atom.items():
