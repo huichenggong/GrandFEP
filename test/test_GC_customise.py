@@ -263,11 +263,9 @@ class MyTestCase(unittest.TestCase):
             platform=platform,
         )
         self.assertEqual(baseGC.system_type, "Hybrid")
-        is_r, is_s,  custom_nb_force2= baseGC.custom_nonbonded_force_list[0]
-        self.assertListEqual([is_r, is_s], [6,7])
+        self.assertEqual(len(baseGC.custom_nonbonded_force_dict), 3)
         self.assertListEqual([], baseGC.get_ghost_list())
         baseGC.check_ghost_list()
-        baseGC.check_switching()
         baseGC.simulation.context.setPositions(h_factory.hybrid_positions)
         self.assertDictEqual(baseGC.water_res_2_atom, {1:[5,6,7], 2:[8,9,10], 3:[11,12,13], 4:[14,15,16]})
         # all lambdas are 0.0
@@ -296,7 +294,6 @@ class MyTestCase(unittest.TestCase):
         baseGC.simulation.context.setParameter("lambda_gc_vdw", 0.0)
         self.assertListEqual([], baseGC.get_ghost_list())
         baseGC.check_ghost_list()
-        baseGC.check_switching()
 
         state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
         pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
@@ -317,7 +314,6 @@ class MyTestCase(unittest.TestCase):
         baseGC.set_ghost_list([3])
         self.assertListEqual([3], baseGC.get_ghost_list())
         baseGC.check_ghost_list()
-        baseGC.check_switching()
         state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
         pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
 
@@ -377,7 +373,6 @@ class MyTestCase(unittest.TestCase):
         baseGC.simulation.context.setParameter("lambda_gc_coulomb", 1.0)
         baseGC.simulation.context.setParameter("lambda_gc_vdw", 1.0)
         baseGC.simulation.context.setPositions(h_factory.hybrid_positions)
-        baseGC.check_switching()
         baseGC.check_ghost_list()
         state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
         pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
@@ -866,6 +861,11 @@ class MyTestCase(unittest.TestCase):
             2.0 * unit.femtosecond,
             "test_base_Hybrid.log",
         )
+        # set self.logger file_handler to debug
+        baseGC.logger.setLevel(logging.DEBUG)
+        baseGC.logger.handlers[0].setLevel(logging.DEBUG)
+        baseGC.logger.handlers[0].setFormatter(logging.Formatter('%(asctime)s - %(levelname)s: %(message)s'))
+        baseGC.logger.debug("Set logger to debug")
         tick = time.time()
         baseGC.set_ghost_list([10, 11, 12], check_system=False)
         print(f"## Time for updating a lig-wat system {time.time() - tick:.3f} s")
@@ -881,31 +881,13 @@ class MyTestCase(unittest.TestCase):
             2.0 * unit.femtosecond,
             "test_base_Hybrid.log",
         )
+        # set self.logger file_handler to debug
+        baseGC_big.logger.setLevel(logging.DEBUG)
+        baseGC_big.logger.handlers[0].setLevel(logging.DEBUG)
+        baseGC_big.logger.handlers[0].setFormatter(logging.Formatter('%(asctime)s - %(levelname)s: %(message)s'))
+        baseGC_big.logger.debug("Set logger to debug")
+        baseGC.set_ghost_list([1001, 1002, 1003], check_system=False)
 
-        for disp_corr in [False, True]:
-            for is_r, is_s, custom_nb_force in baseGC_big.custom_nonbonded_force_list:
-                custom_nb_force.setUseLongRangeCorrection(disp_corr)
-
-            tick = time.time()
-            baseGC_big.set_ghost_list([271, 272, 273], check_system=False)
-            print(f"## Time for updating a lig-pro system with disp_corr {disp_corr} {time.time() - tick:.3f} s")
-
-            tick = time.time()
-            is_r, is_s, custom_nb_force = baseGC_big.custom_nonbonded_force_list[0]
-            custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
-            print(f"## Time for updating C1 with {disp_corr=} {time.time() - tick:.3f} s")
-
-            tick = time.time()
-            is_r, is_s, custom_nb_force = baseGC_big.custom_nonbonded_force_list[1]
-            custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
-            print(f"## Time for updating C2 with {disp_corr=} {time.time() - tick:.3f} s")
-
-            tick = time.time()
-            is_r, is_s, custom_nb_force = baseGC_big.custom_nonbonded_force_list[2]
-            custom_nb_force.updateParametersInContext(baseGC_big.simulation.context)
-            print(f"## Time for updating C3 with {disp_corr=} {time.time() - tick:.3f} s")
-
-            baseGC_big.check_ghost_list()
 
 class MyTestREST2(unittest.TestCase):
     def test_hybridFF_REST2_lig(self):

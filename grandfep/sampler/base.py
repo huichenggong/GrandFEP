@@ -674,7 +674,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             custom_nb_force1.setParticleParameters(at_index, parameters)
 
         # C1 Done
-        self.custom_nonbonded_force_list = [(is_real_index, is_switching_index, custom_nb_force1)]
+        self.custom_nonbonded_force_dict = {"alchem_X": [is_real_index, custom_nb_force1]}
 
         # Create C2 for switch-(fix, wat, switch)
         energy_expression = (
@@ -733,9 +733,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             custom_nb_force2.setParticleParameters(at_index, parameters)
 
         # C2 Done
-        self.custom_nonbonded_force_list.append(
-            (is_real_index, is_switching_index, custom_nb_force2)
-        )
+        self.custom_nonbonded_force_dict["swit"] = [is_real_index, custom_nb_force2]
         self.system.addForce(custom_nb_force2)
 
         # Create C3 for wat-fix, wat-wat
@@ -764,10 +762,11 @@ class BaseGrandCanonicalMonteCarloSampler:
         custom_nb_force3.addInteractionGroup(water_group_set, water_group_set)
         # C3 Done
         is_real_index, is_switching_index = self.get_particle_parameter_index_cust_nb_force(custom_nb_force3)
-        self.custom_nonbonded_force_list.append(
-            (is_real_index, is_switching_index, custom_nb_force3)
-        )
+        self.custom_nonbonded_force_dict["wat"] = [is_real_index, custom_nb_force3]
         self.system.addForce(custom_nb_force3)
+
+        # all water is in group 0
+        self.water_res_2_group_map = {res_id:0 for res_id in self.water_res_2_atom.keys()}
 
 
 

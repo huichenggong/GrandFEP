@@ -2529,7 +2529,7 @@ class HybridTopologyFactory:
 
         # Next we deal with bonds
         # First we add in all the old topology bonds
-        hybrid_top_atoms = list(self.hybrid_top.atoms())
+        hybrid_top_atoms = list(hybrid_top.atoms())
         for bond in self._old_topology.bonds():
             at1 = self.old_to_hybrid_atom_map[bond.atom1.index]
             at2 = self.old_to_hybrid_atom_map[bond.atom2.index]
