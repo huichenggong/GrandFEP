@@ -1247,22 +1247,6 @@ class MyTestREST2(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:, 1]], force_B[new_to_hyb[:, 0]])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
-    def test_hybridFF_REST2_lig2(self):
-        base=Path("/home/chui/E29Project-2023-04-11/136-grandFEP/benchmark/08-Water-Set/Benchmark_waterSet_2025_06_30/hsp90_woodhead/edges/edge_1_2/ligand_REST2")
-        inpcrd0, prmtop0, sys0 = load_amber_sys(
-            base / "../../../system_prep/1/07_dry.inpcrd",
-            base / "../../../system_prep/1/07_dry.prmtop", nonbonded_Amber)
-        inpcrd1, prmtop1, sys1 = load_amber_sys(
-            base / "../../../system_prep/2/07_dry.inpcrd",
-            base / "../../../system_prep/2/07_dry.prmtop", nonbonded_Amber)
-        mdp = utils.md_params_yml(base / "map.yml")
-        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtop0.topology, prmtop1.topology,
-                                                                               mdp.mapping_list)
-        h_factory = utils.HybridTopologyFactoryREST2(
-            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
-            old_to_new_atom_map,  # All atoms that should map from A to B
-            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
-            use_dispersion_correction=True)
 
 class MytestREST2_GCMC(unittest.TestCase):
     def test_REST2_GCMC_build(self):
