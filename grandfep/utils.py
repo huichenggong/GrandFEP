@@ -553,6 +553,13 @@ class md_params_yml:
         for attr in dir(self):
             if attr.startswith("lambda_") and not attr.startswith("lambda_gc_"):
                 lambda_dict[attr] = getattr(self, attr)
+        if "k_rest2" in dir(self):
+            lambda_dict["k_rest2"]      = [j        for j in self.k_rest2]
+            lambda_dict["k_rest2_sqrt"] = [j ** 0.5 for j in self.k_rest2]
+            lambda_dict["lam_ele_coreA_x_k_rest2_sqrt"] = [(1-i) * j**0.5 for i,j in zip(self.lambda_electrostatics_core  , self.k_rest2)]
+            lambda_dict["lam_ele_coreB_x_k_rest2_sqrt"] = [ i    * j**0.5 for i,j in zip(self.lambda_electrostatics_core  , self.k_rest2)]
+            lambda_dict["lam_ele_del_x_k_rest2_sqrt"]   = [(1-i) * j**0.5 for i,j in zip(self.lambda_electrostatics_delete, self.k_rest2)]
+            lambda_dict["lam_ele_ins_x_k_rest2_sqrt"]   = [ i    * j**0.5 for i,j in zip(self.lambda_electrostatics_insert, self.k_rest2)]
         return lambda_dict
 
 

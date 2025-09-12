@@ -943,7 +943,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         for i, force in enumerate(system.getForces()):
             if force.getName() in force_name:
                 npt_force_dict[force.getName()] = force
-            elif force.getName() in ["CMAPTorsionForce"]:
+            elif force.getName() in ["CMAPTorsionForce", "CMMotionRemover"]:
                 npt_force_dict[force.getName()] = force
             else:
                 raise ValueError(f"{force.getName()} should not be in a REST2 NPT system.")
@@ -1062,9 +1062,17 @@ class BaseGrandCanonicalMonteCarloSampler:
                        "CustomTorsionForce", "PeriodicTorsionForce",
                        "CustomBondForce_exceptions_1D"
                        ]:
-            self.system.addForce(copy.deepcopy(npt_force_dict[f_name]))
+            self.system.addForce(
+                openmm.XmlSerializer.deserialize(openmm.XmlSerializer.serialize((npt_force_dict[f_name])))
+            )
         if "CMAPTorsionForce" in npt_force_dict:
-            self.system.addForce(copy.deepcopy(npt_force_dict["CMAPTorsionForce"]))
+            self.system.addForce(
+                openmm.XmlSerializer.deserialize(openmm.XmlSerializer.serialize((npt_force_dict["CMAPTorsionForce"])))
+            )
+        if "CMMotionRemover" in npt_force_dict:
+            self.system.addForce(
+                openmm.XmlSerializer.deserialize(openmm.XmlSerializer.serialize((npt_force_dict["CMMotionRemover"])))
+            )
 
         # 3.4. set up NonbondedForce and CustomNonbondedForce
         # 3.4.1. NonbondedForce
