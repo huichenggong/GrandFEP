@@ -441,7 +441,12 @@ class BaseGrandCanonicalMonteCarloSampler:
             self.nonbonded_force.addParticleParameterOffset("lambda_gc_coulomb", at_index, charge, 0.0, 0.0)
             self.nonbonded_force.setParticleParameters(at_index, charge * 0.0, sigma, epsilon) # remove charge
 
-        self.custom_nonbonded_force_list = [(is_real_index, is_switching_index, custom_nb_force)]
+        # self.custom_nonbonded_force_list = [(is_real_index, is_switching_index, custom_nb_force)]
+        self.custom_nonbonded_force_dict = {"alchem_X": [is_real_index, custom_nb_force]}
+        self.water_res_2_group_map = {}
+        for res_idx in self.water_res_2_atom:
+            for at_idx in self.water_res_2_atom[res_idx]:
+                self.water_res_2_group_map[res_idx] = 0
 
     def customise_force_charmm(self, system: openmm.System) -> None:
         """

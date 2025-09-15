@@ -159,14 +159,12 @@ class MyTestCase(unittest.TestCase):
 
         # All Particles should be real, last water molecule should be switching
         self.assertEqual(baseGC.ghost_list, [])
-        is_real_ind, is_switching_ind, custom_nb_force = baseGC.custom_nonbonded_force_list[0]
-        self.assertEqual((2,3), (is_real_ind, is_switching_ind))
+        is_real_ind, custom_nb_force = baseGC.custom_nonbonded_force_dict["alchem_X"]
+        self.assertEqual(2, is_real_ind)
         for i in range(14):
             self.assertEqual(1.0, custom_nb_force.getParticleParameters(i)[is_real_ind])
-            self.assertEqual(0.0, custom_nb_force.getParticleParameters(i)[is_switching_ind])
         for i in range(14,17):
             self.assertEqual(1.0, custom_nb_force.getParticleParameters(i)[is_real_ind])
-            self.assertEqual(1.0, custom_nb_force.getParticleParameters(i)[is_switching_ind])
 
 
         print("## Set lambda_gc=0.0 for the switching water. Force should be the same as a 3-water system")
@@ -179,7 +177,7 @@ class MyTestCase(unittest.TestCase):
         baseGC.simulation.context.setParameter("lambda_gc_vdw", 0.0)
         state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
         pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
-        baseGC.check_switching()
+        # baseGC.check_switching()
         # The forces should be the same for 0-13 atoms
         self.assertEqual(len(force_3wat), 14)
         self.assertEqual(len(force), 17)
@@ -198,7 +196,7 @@ class MyTestCase(unittest.TestCase):
         baseGC.simulation.context.setParameter("lambda_gc_vdw", 0.0)
         state = baseGC.simulation.context.getState(getEnergy=True, getPositions=True, getForces=True)
         pos, energy, force = state.getPositions(asNumpy=True), state.getPotentialEnergy(), state.getForces(asNumpy=True)
-        baseGC.check_switching()
+        # baseGC.check_switching()
         # The forces should be the same for 0-11 atoms
         self.assertEqual(len(force_2wat), 11)
         self.assertEqual(len(force), 17)
