@@ -4663,7 +4663,7 @@ class HybridTopologyFactoryREST2:
 
 
         # 4. Add each exception to the corresponding Force
-        length_14 = 0.35 * unit.nanometers
+        length_14 = 0.45 * unit.nanometers
         def _add_exception_bond(bond_force, ind1_hyb, ind2_hyb, params, nonbonded_force):
             """
             Add a bond to the bond_force (for exception), and add a exception to nonbonded_force
