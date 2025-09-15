@@ -174,9 +174,9 @@ class BaseGrandCanonicalMonteCarloSampler:
             # preparation of integrator, simulation
             self.logger.info("Prepare integrator and simulation")
             self.compound_integrator = openmm.CompoundIntegrator()
-            integrator = BAOABIntegrator(temperature, collision_rate, timestep)
+            integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
             self.compound_integrator.addIntegrator(integrator) # for EQ run
-            self.ncmc_integrator = BAOABIntegrator(temperature, collision_rate, timestep)
+            self.ncmc_integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
             self.compound_integrator.addIntegrator(self.ncmc_integrator) # for NCMC run
 
             self.simulation = app.Simulation(self.topology, self.system, self.compound_integrator, platform)

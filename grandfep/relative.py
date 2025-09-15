@@ -4528,9 +4528,13 @@ class HybridTopologyFactoryREST2:
         energy += "U_rest2 = (U_electrostatics + U_sterics) * k_rest2_sqrt^is_hot;"
 
         energy += "U_sterics = 4*epsilon*x*(x-1.0);"
-        energy += "x = (sigma/r)^6;"
+        # introduce softcore when new/old atoms are involved
+        energy += "x = 1 / ((softcore_alpha*lambda_alpha + (r/sigma)^6));"
         energy += "sigma   = (1-lambda_vdw)*sigma1   + lambda_vdw*sigma2;"
         energy += "epsilon = (1-lambda_vdw)*epsilon1 + lambda_vdw*epsilon2;"
+        energy += "lambda_alpha = new_X*(1-lambda_sterics_insert) + old_X*lambda_sterics_delete;"
+        energy += "new_X = max(max(inter_new_core, inter_new_new), max(inter_envh_new, inter_envc_new));"
+        energy += "old_X = max(max(inter_old_core, inter_old_old), max(inter_envh_old, inter_envc_old));"
         energy += "lambda_vdw"
         energy += "= inter_core_core * lambda_sterics_core "
         energy += "+ inter_new_core  * lambda_sterics_insert "
@@ -4562,9 +4566,9 @@ class HybridTopologyFactoryREST2:
         energy += ";"
 
         energy += "inter_core_core = delta(0-pair_type);"
-        energy += "inter_new_core = delta(1-pair_type);"
+        energy += "inter_new_core  = delta(1-pair_type);"
         energy += "inter_new_new   = delta(2-pair_type);"
-        energy += "inter_old_core = delta(3-pair_type);"
+        energy += "inter_old_core  = delta(3-pair_type);"
         energy += "inter_old_old   = delta(4-pair_type);"
         energy += "inter_envh_core = delta(5-pair_type);"
         energy += "inter_envh_new  = delta(6-pair_type);"
@@ -4585,6 +4589,7 @@ class HybridTopologyFactoryREST2:
         nb_exceptions_1d.addGlobalParameter("lambda_sterics_insert"       , 0.0)
         nb_exceptions_1d.addGlobalParameter("lambda_sterics_delete"       , 0.0)
         nb_exceptions_1d.addGlobalParameter("k_rest2_sqrt"                , 1.0)
+        nb_exceptions_1d.addGlobalParameter("softcore_alpha", 0.5)  # softcore alpha
         nb_exceptions_1d.addPerBondParameter("chgP1")
         nb_exceptions_1d.addPerBondParameter("sigma1")
         nb_exceptions_1d.addPerBondParameter("epsilon1")
@@ -4731,7 +4736,7 @@ class HybridTopologyFactoryREST2:
             elif {group1, group2} == {"old", "core"}:
                 is_hot, pair_type = 2,  3
                 assert (chgP1 != chgP2) or (sig1 != sig2) or (eps1 != eps2)
-                params = (chgP1, sig1, eps1, 0.0*chgP2, sig2, 0.0*eps2, is_hot, pair_type)
+                params = (chgP1, sig1, eps1, 0.0*chgP2, length_14, 0.0*eps2, is_hot, pair_type)
                 _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
                                     self._hybrid_system_forces["standard_nonbonded_force"])
 
@@ -4744,13 +4749,13 @@ class HybridTopologyFactoryREST2:
             elif {group1, group2} == {"envc", "new"}:
                 is_hot, pair_type = 1, 10
                 assert np.allclose([chgP1, eps1], [0.0, 0.0])
-                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                params = (chgP1, length_14, eps1, chgP2, sig2, eps2, is_hot, pair_type)
                 _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
                                     self._hybrid_system_forces["standard_nonbonded_force"])
             elif {group1, group2} == {"envc", "old"}:
                 is_hot, pair_type = 1, 11
                 assert np.allclose([chgP2, eps2], [0.0, 0.0])
-                params = (chgP1, sig1, eps1, chgP2, sig2, eps2, is_hot, pair_type)
+                params = (chgP1, sig1, eps1, chgP2, length_14, eps2, is_hot, pair_type)
                 _add_exception_bond(nb_exceptions_1d, ind1_hyb, ind2_hyb, params,
                                     self._hybrid_system_forces["standard_nonbonded_force"])
 

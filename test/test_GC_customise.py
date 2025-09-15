@@ -1443,6 +1443,11 @@ class MytestREST2_GCMC(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]], excluded_list=[3302, 3303])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
+        print("## Switch water should have 0 force")
+        w_index = base_sampler.water_res_2_atom[base_sampler.switching_water]
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[w_index, ], np.zeros((3,3))*(unit.kilojoule_per_mole / unit.nanometer) )
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
         base_sampler.set_ghost_list([449], check_system=True)
         # swap the coordinate of water res_449 and res_450
         w_index_449 = base_sampler.water_res_2_atom[449]
@@ -1461,6 +1466,10 @@ class MytestREST2_GCMC(unittest.TestCase):
         all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]],
                                                                 excluded_list=[3302, 3303, 3857, 3858, 3859])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+        w_index = base_sampler.water_res_2_atom[449]
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[w_index, ], np.zeros((3,3))*(unit.kilojoule_per_mole / unit.nanometer) )
+        self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
+
 
         print("## Reducing 2 water should still have the same force")
         inpcrd_r2, prmtop_r2, sys_r2 = load_amber_sys(
