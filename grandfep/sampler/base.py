@@ -443,10 +443,8 @@ class BaseGrandCanonicalMonteCarloSampler:
 
         # self.custom_nonbonded_force_list = [(is_real_index, is_switching_index, custom_nb_force)]
         self.custom_nonbonded_force_dict = {"alchem_X": [is_real_index, custom_nb_force]}
-        self.water_res_2_group_map = {}
-        for res_idx in self.water_res_2_atom:
-            for at_idx in self.water_res_2_atom[res_idx]:
-                self.water_res_2_group_map[res_idx] = 0
+        # all water is in group 0
+        self.water_res_2_group_map = {res_id: 0 for res_id in self.water_res_2_atom.keys()}
 
     def customise_force_charmm(self, system: openmm.System) -> None:
         """
@@ -526,7 +524,10 @@ class BaseGrandCanonicalMonteCarloSampler:
             parameters = list(custom_nb_force.getParticleParameters(at_index))
             parameters[is_switching_index] = 1.0
             custom_nb_force.setParticleParameters(at_index, parameters)
-        self.custom_nonbonded_force_list = [(is_real_index, is_switching_index, custom_nb_force)]
+        # self.custom_nonbonded_force_list = [(is_real_index, is_switching_index, custom_nb_force)]
+        self.custom_nonbonded_force_dict = {"alchem_X": [is_real_index, custom_nb_force]}
+        # all water is in group 0
+        self.water_res_2_group_map = {res_id: 0 for res_id in self.water_res_2_atom.keys()}
 
         # set ParticleParameters and add ParticleParameterOffset for the switching water
         for at_index in self.water_res_2_atom[self.switching_water]:
