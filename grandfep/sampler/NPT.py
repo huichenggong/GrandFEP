@@ -86,7 +86,7 @@ class NPTSampler:
         self.topology = topology
         #: The OpenMM System object.
         self.system = system
-        integrator = BAOABIntegrator(temperature, collision_rate, timestep)
+        integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
         #: Simulation ties together Topology, System, Integrator, and Context in this sampler.
         self.simulation: app.Simulation = app.Simulation(self.topology, self.system, integrator, platform)
 
