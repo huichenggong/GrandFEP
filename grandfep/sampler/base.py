@@ -1874,9 +1874,13 @@ class _ReplicaExchangeMixin:
 
         ## Check if the global parameter exist in the context
         parameters = self.simulation.context.getParameters()
+        lam_remove = []
         for lam in lambda_dict:
             if lam not in parameters:
-                raise ValueError(f"{lam} is not found as a Global Parameter")
+                self.logger.info(f"{lam} is not found as a Global Parameter. Remove.")
+                lam_remove.append(lam)
+        for lam in lam_remove:
+            lambda_dict.pop(lam)
 
         ## lambda_dict should be identical across all MPI
         all_l_dict = self.comm.allgather(lambda_dict)
