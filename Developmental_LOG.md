@@ -22,7 +22,17 @@ git push -u origin 0.1.3_dev
 
 Remove the non-vdw atoms from the interaction group reduce to udpate time by order of magnitude. 
 Hard code `sigma` `epsilon` into the `CustomNonbondedForce` for the water-water interaction only reduce the time from 
-17s to 16s.
+17s to 16s. Split water molecules into several groups saves the time for `updateParametersInContext` 
+from 16s to 4s.
+
+### Changes
+1. Change the integrator from `openmmtools.integrators.BAOABIntegrator` 
+to `openmm.LangevinMiddleIntegrator`, according to the following Reference.  
+   1. [GROMACS Stochastic Dynamics and BAOAB Are Equivalent Configurational Sampling Algorithms](https://pubs.acs.org/doi/10.1021/acs.jctc.2c00585)
+   2. [Openmm doc LangevinMiddleIntegrator](https://docs.openmm.org/development/api-python/generated/openmm.openmm.LangevinMiddleIntegrator.html)
+   3. [Unified Efficient Thermostat Scheme for the Canonical Ensemble with Holonomic or Isokinetic Constraints via Molecular Dynamics](https://pubs.acs.org/doi/10.1021/acs.jpca.9b02771)
+2. Dihedral of dummy atoms ???
+
 
 ## v0.1.2  
 ### Problem to be Solved
