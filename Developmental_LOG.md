@@ -31,7 +31,12 @@ to `openmm.LangevinMiddleIntegrator`, according to the following Reference.
    1. [GROMACS Stochastic Dynamics and BAOAB Are Equivalent Configurational Sampling Algorithms](https://pubs.acs.org/doi/10.1021/acs.jctc.2c00585)
    2. [Openmm doc LangevinMiddleIntegrator](https://docs.openmm.org/development/api-python/generated/openmm.openmm.LangevinMiddleIntegrator.html)
    3. [Unified Efficient Thermostat Scheme for the Canonical Ensemble with Holonomic or Isokinetic Constraints via Molecular Dynamics](https://pubs.acs.org/doi/10.1021/acs.jpca.9b02771)
-2. Dihedral of dummy atoms ???
+2. Dihedral with dummy atoms  
+Dihedral with dummy atoms are will be selectively scaled. If this
+dihedral is an improper or double bonded dihedral, it will not be scaled, 
+neither by REST2, nor by `lambda_torsions`. We don't want isomerization of 
+a double bond, and we don't want to touch the ring's planarity.
+3. XXX
 
 
 ## v0.1.2  

@@ -1434,7 +1434,7 @@ class MytestREST2_GCMC(unittest.TestCase):
         self.assertEqual(force_A.shape, (3863, 3))
         self.assertEqual(force_h.shape, (3867, 3))
         # Real atom with a dummy atom attached will have extra force.
-        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in [3302, 3303]])
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in [3301, 3302, 3303, 3285]])
         all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
@@ -1477,7 +1477,7 @@ class MytestREST2_GCMC(unittest.TestCase):
         self.assertEqual(force_A.shape, (3860, 3))
         self.assertEqual(force_h.shape, (3867, 3))
         # Real atom with a dummy atom attached will have extra force.
-        all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]], excluded_list=[3302, 3303])
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]], excluded_list=[3301, 3302, 3303, 3285])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
         print("## Switch water should have 0 force")
@@ -1501,7 +1501,7 @@ class MytestREST2_GCMC(unittest.TestCase):
         self.assertEqual(force_h.shape, (3867, 3))
         # Real atom with a dummy atom attached will have extra force.
         all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]],
-                                                                excluded_list=[3302, 3303, 3857, 3858, 3859])
+                                                                excluded_list=[3301, 3302, 3303, 3285, 3857, 3858, 3859])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
         w_index = base_sampler.water_res_2_atom[449]
         all_close_flag, mis_match_list, error_msg = match_force(force_h[w_index, ], np.zeros((3,3))*(unit.kilojoule_per_mole / unit.nanometer) )
@@ -1545,7 +1545,7 @@ class MytestREST2_GCMC(unittest.TestCase):
         self.assertEqual(force_B.shape, (3860, 3))
 
         all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:, 1]], force_B[new_to_hyb[:, 0]],
-                                                                excluded_list=[3302, 3303])
+                                                                excluded_list=[3301, 3302, 3303, 3285])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
     def test_REST2_GCMC_A19_CMAP(self):
@@ -1601,8 +1601,9 @@ class MytestREST2_GCMC(unittest.TestCase):
             prmtop0.topology,
             pos_old, platform)
         # Real atom with a dummy atom attached will have extra force.
-        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in [3302, 3303]])
-        all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]])
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items()])
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]],
+                                                                excluded_list=[3301, 3302, 3303, 3285])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
         print(f"State B with -2 water have the same forces")
@@ -1640,7 +1641,7 @@ class MytestREST2_GCMC(unittest.TestCase):
             global_parameters=global_param
         )
         all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:, 1]], force_B[new_to_hyb[:, 0]],
-                                                                excluded_list=[3302, 3303])
+                                                                excluded_list=[3301, 3302, 3303, 3285])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
     def test_REST2_GCMC_update_context_performance(self):
