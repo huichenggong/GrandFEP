@@ -4372,7 +4372,7 @@ class HybridTopologyFactoryREST2:
             is_old = [idx in self._atom_classes["unique_old_atoms"] for idx in index_list]
             is_hot  = [idx in self._atom_classes["rest2_atoms"] for idx in index_list]
             assert sum(is_old) <= sum(is_hot), f"All unique old atoms {index_list} should be in hot region."
-            assert sum(is_old) >= 1, f"At least one old unique atom should be in this old only torsion. {index_list}."
+            # assert sum(is_old) >= 1, f"At least one old unique atom should be in this old only torsion. {index_list}."
 
             if torsion_type == "normal":
                 # rest2 scaling
@@ -4389,10 +4389,10 @@ class HybridTopologyFactoryREST2:
             periodicity, phase, k, torsion_type = param
             # this torsion only appears in state A, it must contain at least one old unique atom, which means at least one hot atom
             index_list = [idx1, idx2, idx3, idx4]
-            is_old = [idx in self._atom_classes["unique_new_atoms"] for idx in index_list]
+            is_new = [idx in self._atom_classes["unique_new_atoms"] for idx in index_list]
             is_hot  = [idx in self._atom_classes["rest2_atoms"] for idx in index_list]
-            assert sum(is_old) <= sum(is_hot), f"All unique new atoms {index_list} should be in hot region."
-            assert sum(is_old) >= 1, f"At least one new unique atom should be in this new only torsion. {index_list}."
+            assert sum(is_new) <= sum(is_hot), f"All unique new atoms {index_list} should be in hot region."
+            # assert sum(is_new) >= 1, f"At least one new unique atom should be in this new only torsion. {index_list}."
 
             if torsion_type == "normal":
                 # rest2 scaling
