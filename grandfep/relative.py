@@ -38,6 +38,66 @@ def invert_dict(dictionary: dict) -> dict:
     """
     return {v: k for k, v in dictionary.items()}
 
+
+def find_force(system, force_name):
+    for force in system.getForces():
+        if force.getName() == force_name:
+            return force
+    return None
+
+
+def find_force_dihe(system):
+    return find_force(system, "PeriodicTorsionForce")
+
+
+def find_force_bond(system):
+    return find_force(system, "HarmonicBondForce")
+
+
+def find_bond_const(system, revers=True):
+    """
+    find all the bond and constrain from a system,
+    if revers, both bond_ij and bond_ji will be returned
+    """
+    harmonic_bond_force = find_force_bond(system)
+    bond_const_list = []
+    for bond_i in range(harmonic_bond_force.getNumBonds()):
+        at_i, at_j, length, force_k = harmonic_bond_force.getBondParameters(bond_i)
+        bond_const_list.append((at_i, at_j))
+        if revers:
+            bond_const_list.append((at_j, at_i))
+    for const_i in range(system.getNumConstraints()):
+        at_i, at_j, dist = system.getConstraintParameters(const_i)
+        bond_const_list.append((at_i, at_j))
+        if revers:
+            bond_const_list.append((at_j, at_i))
+    return bond_const_list
+
+
+def check_dihe_type(bond_const_list, torsion_parameters):
+    """
+    0-1-2-3 is a normal dihedral
+
+      2        1
+      |   or   |   is an improper
+    0-1-3    0-2-3
+    """
+    at0, at1, at2, at3, periodicity, phase, force_k = torsion_parameters
+    flag_01 = (at0, at1) in bond_const_list
+    flag_12 = (at1, at2) in bond_const_list
+    flag_23 = (at2, at3) in bond_const_list
+
+    flag_13 = (at1, at3) in bond_const_list
+    flag_02 = (at0, at2) in bond_const_list
+    if flag_01 and flag_12 and flag_23 and periodicity in [1, 3, 4]:
+        return "normal"
+    elif flag_01 and flag_12 and flag_23 and periodicity == 2:
+        return "double"
+    elif ((flag_01 and flag_13) or (flag_02 and flag_23)) and periodicity in [1, 2]:
+        return "improper"
+    else:
+        return "unseen"
+
 class HybridTopologyFactory:
     """
     This class generates a hybrid topology based on two input systems and an
@@ -2867,7 +2927,7 @@ class HybridTopologyFactoryREST2:
         # Adding forces object and add parameters into each force
         self._handle_harmonic_bonds()
         self._handle_harmonic_angles()
-        self._handle_periodic_torsion_force()
+        self._handle_torsion_force_terms()
 
         has_CMAPs = self._has_CMAPs()
         if has_CMAPs:
@@ -3359,33 +3419,33 @@ class HybridTopologyFactoryREST2:
         energy_expression += 'U2 = K2*(1+cos(periodicity2*theta-phase2));'
 
         # Create the force and add the relevant parameters
-        custom_core_force = openmm.CustomTorsionForce(energy_expression)
+        custom_torsion_force = openmm.CustomTorsionForce(energy_expression)
         # molecule1 periodicity
-        custom_core_force.addPerTorsionParameter('periodicity1')
+        custom_torsion_force.addPerTorsionParameter('periodicity1')
         # molecule1 phase
-        custom_core_force.addPerTorsionParameter('phase1')
+        custom_torsion_force.addPerTorsionParameter('phase1')
         # molecule1 spring constant
-        custom_core_force.addPerTorsionParameter('K1')
+        custom_torsion_force.addPerTorsionParameter('K1')
         # molecule2 periodicity
-        custom_core_force.addPerTorsionParameter('periodicity2')
+        custom_torsion_force.addPerTorsionParameter('periodicity2')
         # molecule2 phase
-        custom_core_force.addPerTorsionParameter('phase2')
+        custom_torsion_force.addPerTorsionParameter('phase2')
         # molecule2 spring constant
-        custom_core_force.addPerTorsionParameter('K2')
+        custom_torsion_force.addPerTorsionParameter('K2')
         # molecule2 spring constant
-        custom_core_force.addPerTorsionParameter('is_hot') # 0.0: c-c-c-c, 0.25: c-c-c-h, c-c-h-c, ... 0.5: c-c-h-h ... 1: h-h-h-h
+        custom_torsion_force.addPerTorsionParameter('is_hot') # 0.0: c-c-c-c, 0.25: c-c-c-h, c-c-h-c, ... 0.5: c-c-h-h ... 1: h-h-h-h
 
-        custom_core_force.addGlobalParameter('lambda_torsions', 0.0)
-        custom_core_force.addGlobalParameter('k_rest2', 1.0) # T_cold / T_hot
+        custom_torsion_force.addGlobalParameter('lambda_torsions', 0.0)
+        custom_torsion_force.addGlobalParameter('k_rest2', 1.0) # T_cold / T_hot
 
-        # Add the force to the system
-        self._hybrid_system.addForce(custom_core_force)
-        self._hybrid_system_forces['custom_torsion_force'] = custom_core_force
+        # This force changes between state A and B, and this force can be controlled by REST2
+        self._hybrid_system.addForce(custom_torsion_force)
+        self._hybrid_system_forces['custom_torsion_force'] = custom_torsion_force
 
-        # Create and add the torsion term for unique/environment atoms
-        unique_atom_torsion_force = openmm.PeriodicTorsionForce()
-        self._hybrid_system.addForce(unique_atom_torsion_force)
-        self._hybrid_system_forces['unique_atom_torsion_force'] = unique_atom_torsion_force
+        # This force does not change between state A and B
+        standard_torsion_force = openmm.PeriodicTorsionForce()
+        self._hybrid_system.addForce(standard_torsion_force)
+        self._hybrid_system_forces['standard_torsion_force'] = standard_torsion_force
 
     def _has_CMAPs(self):
         """
@@ -4130,128 +4190,239 @@ class HybridTopologyFactoryREST2:
 
         return torsion_params_list
 
-    def _handle_periodic_torsion_force(self):
+    @staticmethod
+    def classify_torsion(old_torsion_dict, new_torsion_dict):
+        """
+        Classify the torsions into three categories: intersection, old, new
+
+        Parameters
+        ----------
+        old_torsion_dict : dict
+            key: (idx1, idx2, idx3, idx4, periodicity), value: [index_list, periodicity, phase, k, torsion_type]
+            torsions in the old system
+        new_torsion_dict : dict
+            key: (idx1, idx2, idx3, idx4, periodicity), value: [index_list, periodicity, phase, k, torsion_type]
+            torsions in the new system
+
+        Returns
+        -------
+        itersect_torsion : set
+            key: (idx1, idx2, idx3, idx4, periodicity),
+            value: [periodicity_old, phase_old, k_old, torsion_type_old, periodicity_new, phase_new, k_new, torsion_type_new]
+            torsions only in the new system
+        old_only_torsion : dict
+            key: (idx1, idx2, idx3, idx4, periodicity), value: [periodicity, phase, k, torsion_type]
+            torsions only in the old system
+        new_only_torsion : dict
+            key: (idx1, idx2, idx3, idx4, periodicity), value: [periodicity, phase, k, torsion_type]
+            torsions only in the new system
+
+        """
+        itersection_dict = {}
+        old_only_dict = {}
+        new_only_dict = {}
+
+        # be careful of 1-2-3-4 and 4-3-2-1
+        for torsion_key, params in old_torsion_dict.items():
+            at0, at1, at2, at3, periodicity = torsion_key
+            index_old, periodicity_old, phase_old, k_old, torsion_type_old = params
+
+            if torsion_key in new_torsion_dict:
+                periodicity_new, phase_new, k_new, torsion_type_new = new_torsion_dict[torsion_key][1:]
+                itersection_dict[torsion_key] = [
+                    periodicity_old, phase_old, k_old, torsion_type_old,
+                    periodicity_new, phase_new, k_new, torsion_type_new
+                ]
+            elif (at3, at2, at1, at0, periodicity) in new_torsion_dict:
+                periodicity_new, phase_new, k_new, torsion_type_new = new_torsion_dict[(at3, at2, at1, at0, periodicity)][1:]
+                itersection_dict[torsion_key] = [
+                    periodicity_old, phase_old, k_old, torsion_type_old,
+                    periodicity_new, phase_new, k_new, torsion_type_new
+                ]
+            else:
+                old_only_dict[torsion_key] = [periodicity_old, phase_old, k_old, torsion_type_old]
+
+        for torsion_key, params in new_torsion_dict.items():
+            at0, at1, at2, at3, periodicity = torsion_key
+            index_new, periodicity_new, phase_new, k_new, torsion_type_new = params
+            if torsion_key in itersection_dict:
+                continue
+            elif (at3, at2, at1, at0, periodicity) in itersection_dict:
+                continue
+            else:
+                new_only_dict[torsion_key] = [periodicity_new, phase_new, k_new, torsion_type_new]
+
+        return itersection_dict, old_only_dict, new_only_dict
+
+
+
+    def _handle_torsion_force_terms(self):
         """
         Handle the torsions defined in the new and old systems as such:
 
-        If there is rest2 atoms included, `custom_torsion_force`
-        If there is not rest2 atoms
-            1. old system torsions will enter the ``custom_torsion_force`` if they
-               do not contain ``unique_old_atoms`` and will interpolate from ``on``
-               to ``off`` from ``lambda_torsions`` = 0 to 1, respectively.
-            2. new system torsions will enter the ``custom_torsion_force`` if they
-               do not contain ``unique_new_atoms`` and will interpolate from
-               ``off`` to ``on`` from ``lambda_torsions`` = 0 to 1, respectively.
-            3. old *and* new system torsions will enter the
-               ``unique_atom_torsion_force`` (``standard_torsion_force``) and will
-               *not* be interpolated.
+        1. dihedral classification
+            a. normal: 0-1-2-3 with periodicity in [1, 3, 4]
+            b. double: 0-1-2-3 with periodicity == 2
+            c. improper: 0-1-3 or 0-2-3 with periodicity in [1,2]
 
-        Notes
-        -----
-        * Torsion flattening logic has been removed for now.
+        2. A torsion goes into the CustomTorsionForce if both a and b are true:
+            a. There is at least 1 REST2(hot) atom
+            b. If dummy(unique_new/unique_old) atom is included, it should not be
+            double or improper.
+
+        3. The rest of the torsions go into the standard PeriodicTorsionForce if either a and b.
+            a. There is not REST2(hot) atoms
+            b. There is at least 1 dummy(unique_new/unique_old) atom, and it is double or improper.
+
         """
         old_system_torsion_force = self._old_system_forces['PeriodicTorsionForce']
         new_system_torsion_force = self._new_system_forces['PeriodicTorsionForce']
+        bond_const_list_old = find_bond_const(self._old_system)
+        bond_const_list_new = find_bond_const(self._new_system)
 
-        auxiliary_custom_torsion_force = []
-        old_custom_torsions_to_standard = []
+        old_torsion_dict = {} # key: (idx1, idx2, idx3, idx4), value: [periodicity, phase, k, torsion_type]
+        new_torsion_dict = {}
 
         for torsion_index in range(old_system_torsion_force.getNumTorsions()):
-
-            torsion_parameters = old_system_torsion_force.getTorsionParameters(
-                                     torsion_index)
-
-            # Get the indices in the hybrid system
-            hybrid_index_list = [
-                self._old_to_hybrid_map[old_index] for old_index in torsion_parameters[:4]
-            ]
-            hybrid_index_set = set(hybrid_index_list)
-
-            # If all atoms are in the core, we'll need to find the
-            # corresponding parameters in the old system and interpolate
-            hot_index_set = hybrid_index_set.intersection(self._atom_classes['rest2_atoms'])
-            unique_old_index = hybrid_index_set.intersection(self._atom_classes['unique_old_atoms'])
-            if len(hot_index_set) ==0 and len(unique_old_index) > 0:
-                # Then it goes to a standard force...
-                self._hybrid_system_forces['unique_atom_torsion_force'].addTorsion(
-                    hybrid_index_list[0], hybrid_index_list[1],
-                    hybrid_index_list[2], hybrid_index_list[3],
-                    torsion_parameters[4], torsion_parameters[5],
-                    torsion_parameters[6]
-                )
-            else:
-                # It is a core-only term, an environment-only term, or a
-                # core/env term; in any case, it goes to the core torsion_force
-                # TODO - why are we even adding the 0.0, 0.0, 0.0 section?
-                hybrid_force_parameters = [
-                    torsion_parameters[4], torsion_parameters[5],
-                    torsion_parameters[6], len(hot_index_set)/4,
-                    0.0, 0.0, 0.0, 0.0
-                ]
-                auxiliary_custom_torsion_force.append(
-                    [hybrid_index_list[0], hybrid_index_list[1],
-                     hybrid_index_list[2], hybrid_index_list[3],
-                     hybrid_force_parameters[:4]]
-                )
+            torsion_parm = old_system_torsion_force.getTorsionParameters(torsion_index)
+            idx1, idx2, idx3, idx4, periodicity, phase, k = torsion_parm
+            index_list = [idx1, idx2, idx3, idx4]
+            torsion_key = (self._old_to_hybrid_map[idx1],
+                           self._old_to_hybrid_map[idx2],
+                           self._old_to_hybrid_map[idx3],
+                           self._old_to_hybrid_map[idx4],
+                           periodicity
+                           )
+            torsion_type = check_dihe_type(bond_const_list_old, torsion_parm)
+            if torsion_type == "unseen":
+                raise ValueError(f"Unseen torsion type detected in the old system. {index_list}")
+            if torsion_key in old_torsion_dict:
+                msg = (f"Duplicate torsion detected in the old system.\n"
+                       f"{index_list}\n"
+                       f"{old_torsion_dict[torsion_key][1:]}\n"
+                       f"{periodicity, phase, k, torsion_type}\n")
+                raise ValueError(msg)
+            old_torsion_dict[torsion_key] = [index_list, periodicity, phase, k, torsion_type]
 
         for torsion_index in range(new_system_torsion_force.getNumTorsions()):
-            torsion_parameters = new_system_torsion_force.getTorsionParameters(torsion_index)
+            torsion_parm = new_system_torsion_force.getTorsionParameters(torsion_index)
+            idx1, idx2, idx3, idx4, periodicity, phase, k = torsion_parm
+            index_list = [idx1, idx2, idx3, idx4]
+            torsion_key = (self._new_to_hybrid_map[idx1],
+                           self._new_to_hybrid_map[idx2],
+                           self._new_to_hybrid_map[idx3],
+                           self._new_to_hybrid_map[idx4],
+                           periodicity
+                           )
+            torsion_type = check_dihe_type(bond_const_list_new, torsion_parm)
+            if torsion_type == "unseen":
+                raise ValueError(f"Unseen torsion type detected in the new system. {index_list}")
+            if torsion_key in new_torsion_dict:
+                msg = (f"Duplicate torsion detected in the new system.\n"
+                       f"{index_list}\n"
+                       f"{new_torsion_dict[torsion_key][1:]}\n"
+                       f"{periodicity, phase, k, torsion_type}\n")
+                raise ValueError(msg)
+            new_torsion_dict[torsion_key] = [index_list, periodicity, phase, k, torsion_type]
 
-            # Get the indices in the hybrid system:
-            hybrid_index_list = [
-                self._new_to_hybrid_map[new_index] for new_index in torsion_parameters[:4]]
-            hybrid_index_set = set(hybrid_index_list)
+        standard_torsion_dict = {} # no alchemical changes, identical in state A and B
+        custom_torsion_dict = {} # interpolation between A and B with REST2 scaling
 
-            hot_index_set = hybrid_index_set.intersection(self._atom_classes['rest2_atoms'])
-            unique_new_index = hybrid_index_set.intersection(self._atom_classes['unique_new_atoms'])
-            if len(hot_index_set) ==0 and len(unique_new_index) > 0:
-                # Then it goes to a standard force...
-                self._hybrid_system_forces['unique_atom_torsion_force'].addTorsion(
-                    hybrid_index_list[0], hybrid_index_list[1],
-                    hybrid_index_list[2], hybrid_index_list[3],
-                    torsion_parameters[4], torsion_parameters[5],
-                    torsion_parameters[6]
-                )
+        itersection_dict, old_only_dict, new_only_dict = self.classify_torsion(old_torsion_dict, new_torsion_dict)
+
+        for torsion_key, paramAB in itersection_dict.items():
+            idx1, idx2, idx3, idx4, periodicity = torsion_key
+            periodicity_old, phase_old, k_old, torsion_type_old, periodicity_new, phase_new, k_new, torsion_type_new = paramAB
+            index_list = [idx1, idx2, idx3, idx4]
+            assert torsion_type_old == torsion_type_new, \
+                f"torsion type {index_list} should be identical in state A and B."
+
+            # if no core atoms, should be identical
+            is_core = [idx in self._atom_classes["core_atoms"] for idx in index_list]
+            is_hot  = [idx in self._atom_classes["rest2_atoms"] for idx in index_list]
+            assert sum(is_core) <= sum(is_hot), f"All core atoms {index_list} should be in hot region."
+
+            if not any(is_core):
+                assert k_old == k_new, \
+                    f"torsion k {index_list} should be identical in state A and B."
+                assert phase_old == phase_new, \
+                    f"torsion phase {index_list} should be identical in state A and B."
+
+
+            if sum(is_hot) in [ 1, 2, 3, 4 ]: # at least one hot atom
+                if torsion_type_old == "normal":
+                    # rest2 scaling
+                    custom_torsion_dict[torsion_key] = [periodicity_old, phase_old, k_old,
+                                                        periodicity_new, phase_new, k_new, sum(is_hot)]
+                elif torsion_type_old in ["double", "improper"]:
+                    # no rest2 scaling
+                    custom_torsion_dict[torsion_key] = [periodicity_old, phase_old, k_old,
+                                                        periodicity_new, phase_new, k_new, 0]
+            elif sum(is_hot) == 0: # no hot atom
+                # is_hot==0 means is_core==0, state A/B should be identical (checked already). This goes to standard_torsion
+                standard_torsion_dict[torsion_key] = [periodicity_old, phase_old, k_old]
             else:
-                hybrid_force_parameters = [
-                    0.0, 0.0, 0.0,
-                    torsion_parameters[4], torsion_parameters[5],
-                    torsion_parameters[6], len(hot_index_set) / 4
-                ]
+                raise ValueError(f"The number of hat atoms in {index_list} is invalid. {is_hot}")
 
-                # Check to see if this term is in the olds...
-                term = [hybrid_index_list[0], hybrid_index_list[1],
-                        hybrid_index_list[2], hybrid_index_list[3],
-                        hybrid_force_parameters]
-                if term in auxiliary_custom_torsion_force:
-                    # Then this terms has to go to standard and be deleted...
-                    old_index = auxiliary_custom_torsion_force.index(term)
-                    old_custom_torsions_to_standard.append(old_index)
-                    self._hybrid_system_forces['unique_atom_torsion_force'].addTorsion(
-                        hybrid_index_list[0], hybrid_index_list[1],
-                        hybrid_index_list[2], hybrid_index_list[3],
-                        torsion_parameters[4], torsion_parameters[5],
-                        torsion_parameters[6]
-                    )
-                else:
-                    # Then this term has to go to the core force...
-                    self._hybrid_system_forces['custom_torsion_force'].addTorsion(
-                        hybrid_index_list[0], hybrid_index_list[1],
-                        hybrid_index_list[2], hybrid_index_list[3],
-                        hybrid_force_parameters
-                    )
+        for torsion_key, param in old_only_dict.items():
+            idx1, idx2, idx3, idx4, periodicity = torsion_key
+            periodicity, phase, k, torsion_type = param
+            # this torsion only appears in state A, it must contain at least one old unique atom, which means at least one hot atom
+            index_list = [idx1, idx2, idx3, idx4]
+            is_old = [idx in self._atom_classes["unique_old_atoms"] for idx in index_list]
+            is_hot  = [idx in self._atom_classes["rest2_atoms"] for idx in index_list]
+            assert sum(is_old) <= sum(is_hot), f"All unique old atoms {index_list} should be in hot region."
+            assert sum(is_old) >= 1, f"At least one old unique atom should be in this old only torsion. {index_list}."
 
-        # Now we have to loop through the aux custom torsion force
-        for index in [q for q in range(len(auxiliary_custom_torsion_force))
-                      if q not in old_custom_torsions_to_standard]:
-            terms = auxiliary_custom_torsion_force[index]
-            hybrid_index_list = terms[:4]
-            hybrid_force_parameters = terms[4][:3] + [0., 0., 0.] + [terms[4][3]]
-            self._hybrid_system_forces['custom_torsion_force'].addTorsion(
-                hybrid_index_list[0], hybrid_index_list[1],
-                hybrid_index_list[2], hybrid_index_list[3],
-                hybrid_force_parameters
+            if torsion_type == "normal":
+                # rest2 scaling
+                custom_torsion_dict[torsion_key] = [periodicity, phase, k,
+                                                    0, 0, k * 0.0, sum(is_hot)]
+            elif torsion_type in ["double", "improper"]:
+                # no rest2 scaling, no lambda control
+                standard_torsion_dict[torsion_key] = [periodicity, phase, k]
+            else:
+                raise ValueError(f"The type of this old only torsion cannot be understood. {index_list}")
+
+        for torsion_key, param in new_only_dict.items():
+            idx1, idx2, idx3, idx4, periodicity = torsion_key
+            periodicity, phase, k, torsion_type = param
+            # this torsion only appears in state A, it must contain at least one old unique atom, which means at least one hot atom
+            index_list = [idx1, idx2, idx3, idx4]
+            is_old = [idx in self._atom_classes["unique_new_atoms"] for idx in index_list]
+            is_hot  = [idx in self._atom_classes["rest2_atoms"] for idx in index_list]
+            assert sum(is_old) <= sum(is_hot), f"All unique new atoms {index_list} should be in hot region."
+            assert sum(is_old) >= 1, f"At least one new unique atom should be in this new only torsion. {index_list}."
+
+            if torsion_type == "normal":
+                # rest2 scaling
+                custom_torsion_dict[torsion_key] = [0, 0, k * 0.0,
+                                                    periodicity, phase, k, sum(is_hot)]
+            elif torsion_type in ["double", "improper"]:
+                # no rest2 scaling, no lambda control
+                standard_torsion_dict[torsion_key] = [periodicity, phase, k]
+            else:
+                raise ValueError(f"The type of this new only torsion cannot be understood. {index_list}")
+
+        # add torsion
+        for torsion_key, param in standard_torsion_dict.items():
+            idx1, idx2, idx3, idx4, periodicity = torsion_key
+            periodicity, phase, k = param
+            self._hybrid_system_forces['standard_torsion_force'].addTorsion(
+                idx1, idx2, idx3, idx4, periodicity, phase, k
             )
+        for torsion_key, param in custom_torsion_dict.items():
+            idx1, idx2, idx3, idx4, periodicity = torsion_key
+            periodicity_old, phase_old, k_old, periodicity_new, phase_new, k_new, n_hot = param
+            self._hybrid_system_forces['custom_torsion_force'].addTorsion(
+                idx1, idx2, idx3, idx4,
+                [
+                    periodicity_old, phase_old, k_old,
+                    periodicity_new, phase_new, k_new, n_hot
+                ]
+            )
+
+
 
     def _handle_nonbonded(self):
         """
