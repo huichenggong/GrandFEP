@@ -91,7 +91,7 @@ def test_RE():
         npt.simulation.step(50)
         l_vdw_old = npt.simulation.context.getParameter("lambda_gc_vdw")
         l_chg_old = npt.simulation.context.getParameter("lambda_gc_coulomb")
-        re_decision, exchange = npt.replica_exchange_global_param(calc_neighbor_only=i%3==0)
+        red_energy_matrix, re_decision, exchange = npt.replica_exchange_global_param(calc_neighbor_only=i%3==0)
         l_vdw_new = npt.simulation.context.getParameter("lambda_gc_vdw")
         l_chg_new = npt.simulation.context.getParameter("lambda_gc_coulomb")
         state = npt.simulation.context.getState(getForces=True, enforcePeriodicBox=True)

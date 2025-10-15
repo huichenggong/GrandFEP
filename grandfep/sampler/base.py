@@ -2149,6 +2149,9 @@ class _ReplicaExchangeMixin:
             The exchange decision between all the pairs. e.g., ``{(0,1):(True, ratio_0_1), (2,3):(True, ratio_2_3)}``.
             The key is the MPI rank pairs, and the value is the decision and the acceptance ratio.
 
+        exchange : bool
+            Whether this replica has exchanged its state with another replica.
+
         """
         # re_step has to be the same across all replicas. If not, raise an error.
         re_step_all = self.comm.allgather(self.re_step)
@@ -2231,7 +2234,7 @@ class _ReplicaExchangeMixin:
         self.set_lambda_state(new_state)
 
         self.re_step += 1
-        return re_decision, exchange
+        return reduced_energy_all, re_decision, exchange
 
 
 

@@ -147,7 +147,7 @@ def test_GC_RE():
         ngcmc.simulation.step(50)
         l_angle_old = ngcmc.simulation.context.getParameter("lambda_angles")
         l_bonds_old = ngcmc.simulation.context.getParameter("lambda_bonds")
-        re_decision, exchange = ngcmc.replica_exchange_global_param(calc_neighbor_only=i % 3 == 0)
+        red_energy_matrix, re_decision, exchange = ngcmc.replica_exchange_global_param(calc_neighbor_only=i % 3 == 0)
         l_angle_new = ngcmc.simulation.context.getParameter("lambda_angles")
         l_bonds_new = ngcmc.simulation.context.getParameter("lambda_bonds")
         state = ngcmc.simulation.context.getState(getForces=True, enforcePeriodicBox=True)
