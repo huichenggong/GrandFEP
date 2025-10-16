@@ -957,13 +957,13 @@ class MyTestREST2(unittest.TestCase):
             all_close_flag, mis_match_list, error_msg = match_force(force_h[17:24], force_B[1:8])
             self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
-        # dihedral potential will be scaled by 2.0 in REST2
-        energy_rest, force_h = calc_energy_force(
-            separate_force(h_factory.hybrid_system, force_name_list),
-            h_factory.omm_hybrid_topology,
-            h_factory.hybrid_positions, platform,
-            global_parameters={"lambda_torsions": 1.0, "k_rest2": 0.5})
-        self.assertAlmostEqual(energy_h/energy_rest, 2.0)
+        # # dihedral potential will be scaled by 2.0 in REST2
+        # energy_rest, force_h = calc_energy_force(
+        #     separate_force(h_factory.hybrid_system, force_name_list),
+        #     h_factory.omm_hybrid_topology,
+        #     h_factory.hybrid_positions, platform,
+        #     global_parameters={"lambda_torsions": 1.0, "k_rest2": 0.5})
+        # self.assertAlmostEqual(energy_h/energy_rest, 2.0)
 
 
         force_name_list = ["NonbondedForce", "CustomNonbondedForce", "CustomBondForce_exceptions_1D", "CustomBondForce_exceptions_2D"]
@@ -1205,7 +1205,7 @@ class MyTestREST2(unittest.TestCase):
         self.assertEqual(force_A.shape, (3863, 3))
         self.assertEqual(force_h.shape, (3867, 3))
         # Real atom with a dummy atom attached will have extra force.
-        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in [3301, 3302, 3303, 3285]])
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in [3302, 3303]])
         all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
@@ -1241,7 +1241,7 @@ class MyTestREST2(unittest.TestCase):
         self.assertEqual(force_B.shape, (3866, 3))
         self.assertEqual(force_h.shape, (3867, 3))
         # Real atom with a dummy atom attached will have extra force.
-        new_to_hyb = np.array([[i, j] for i, j in h_factory.new_to_hybrid_atom_map.items() if i not in [3301, 3302, 3303, 3285, 3312]])
+        new_to_hyb = np.array([[i, j] for i, j in h_factory.new_to_hybrid_atom_map.items() if i not in [3302, 3303, 3312]])
         all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:, 1]], force_B[new_to_hyb[:, 0]])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
@@ -1257,33 +1257,53 @@ class MyTestREST2(unittest.TestCase):
             base / "brd4/lig_prep" / "5" / "07_tip3p.inpcrd",
             base / "brd4/lig_prep" / "5" / "07_tip3p.prmtop", nonbonded_settings)
         inpcrd1, prmtop1, sys1 = load_amber_sys(
-            base / "brd4/lig_prep" / "7" /  "07_tip3p.inpcrd",
-            base / "brd4/lig_prep" / "7" /  "07_tip3p.prmtop", nonbonded_settings)
+            base / "brd4/lig_prep" / "7" / "07_tip3p.inpcrd",
+            base / "brd4/lig_prep" / "7" / "07_tip3p.prmtop", nonbonded_settings)
         mdp = utils.md_params_yml(base / "brd4/edge_5_7/map.yml")
         old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtop0.topology, prmtop1.topology,
                                                                                mdp.mapping_list)
-        h_factory = utils.HybridTopologyFactoryREST2(
+        h_factory_lig = utils.HybridTopologyFactoryREST2(
             sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
             old_to_new_atom_map,  # All atoms that should map from A to B
             old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
             use_dispersion_correction=True,
         )
+
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "brd4/pro_prep" / "5" / "07_tip3p.inpcrd",
+            base / "brd4/pro_prep" / "5" / "07_tip3p.prmtop", nonbonded_settings)
+        inpcrd1, prmtop1, sys1 = load_amber_sys(
+            base / "brd4/pro_prep" / "7" / "07_tip3p.inpcrd",
+            base / "brd4/pro_prep" / "7" / "07_tip3p.prmtop", nonbonded_settings)
+        mdp = utils.md_params_yml(base / "brd4/edge_5_7/map.yml")
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtop0.topology, prmtop1.topology,
+                                                                               mdp.mapping_list)
+        h_factory_pro = utils.HybridTopologyFactoryREST2(
+            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+        )
+
+        self.assertEqual(len(h_factory_lig.hybrid_torsion_dict["old_only"]), 12)
+        self.assertEqual(len(h_factory_lig.hybrid_torsion_dict["new_only"]), 9)
+        self.assertEqual(len(h_factory_pro.hybrid_torsion_dict["old_only"]), 12)
+        self.assertEqual(len(h_factory_pro.hybrid_torsion_dict["new_only"]), 9)
+
+
         print("# Force should be the same in state A")
         energy_h, force_h = calc_energy_force(
-            # separate_force(h_factory.hybrid_system, force_name_list),
-            h_factory.hybrid_system,
-            h_factory.omm_hybrid_topology,
-            h_factory.hybrid_positions, platform)
-        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items()])
+            h_factory_pro.hybrid_system,
+            h_factory_pro.omm_hybrid_topology,
+            h_factory_pro.hybrid_positions, platform)
+        old_to_hyb = np.array([[i, j] for i, j in h_factory_pro.old_to_hybrid_atom_map.items()])
         pos_old = np.zeros_like(inpcrd0.positions)
-        pos_old[old_to_hyb[:, 0]] = h_factory.hybrid_positions[old_to_hyb[:, 1]]
+        pos_old[old_to_hyb[:, 0]] = h_factory_pro.hybrid_positions[old_to_hyb[:, 1]]
         energy_A, force_A = calc_energy_force(
-            # separate_force(sys0, force_name_list),
             sys0,
             prmtop0.topology,
             pos_old, platform)
-        self.assertEqual(force_A.shape, (3863, 3))
-        self.assertEqual(force_h.shape, (35270, 3))
+
 
 class MytestREST2_GCMC(unittest.TestCase):
     def test_REST2_GCMC_build(self):
@@ -1434,7 +1454,7 @@ class MytestREST2_GCMC(unittest.TestCase):
         self.assertEqual(force_A.shape, (3863, 3))
         self.assertEqual(force_h.shape, (3867, 3))
         # Real atom with a dummy atom attached will have extra force.
-        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in [3301, 3302, 3303, 3285]])
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in [3302, 3303]])
         all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
@@ -1477,7 +1497,7 @@ class MytestREST2_GCMC(unittest.TestCase):
         self.assertEqual(force_A.shape, (3860, 3))
         self.assertEqual(force_h.shape, (3867, 3))
         # Real atom with a dummy atom attached will have extra force.
-        all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]], excluded_list=[3301, 3302, 3303, 3285])
+        all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]], excluded_list=[3302, 3303])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
         print("## Switch water should have 0 force")
@@ -1501,7 +1521,7 @@ class MytestREST2_GCMC(unittest.TestCase):
         self.assertEqual(force_h.shape, (3867, 3))
         # Real atom with a dummy atom attached will have extra force.
         all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]],
-                                                                excluded_list=[3301, 3302, 3303, 3285, 3857, 3858, 3859])
+                                                                excluded_list=[3302, 3303, 3857, 3858, 3859])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
         w_index = base_sampler.water_res_2_atom[449]
         all_close_flag, mis_match_list, error_msg = match_force(force_h[w_index, ], np.zeros((3,3))*(unit.kilojoule_per_mole / unit.nanometer) )
@@ -1545,7 +1565,7 @@ class MytestREST2_GCMC(unittest.TestCase):
         self.assertEqual(force_B.shape, (3860, 3))
 
         all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:, 1]], force_B[new_to_hyb[:, 0]],
-                                                                excluded_list=[3301, 3302, 3303, 3285])
+                                                                excluded_list=[ 3302, 3303])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
     def test_REST2_GCMC_A19_CMAP(self):

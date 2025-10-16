@@ -4208,7 +4208,7 @@ class HybridTopologyFactoryREST2:
         -------
         itersect_torsion : set
             key: (idx1, idx2, idx3, idx4, periodicity),
-            value: [periodicity_old, phase_old, k_old, torsion_type_old, periodicity_new, phase_new, k_new, torsion_type_new]
+            value: [index_list_new/old, periodicity_old, phase_old, k_old, torsion_type_old, periodicity_new, phase_new, k_new, torsion_type_new]
             torsions only in the new system
         old_only_torsion : dict
             key: (idx1, idx2, idx3, idx4, periodicity), value: [periodicity, phase, k, torsion_type]
@@ -4227,7 +4227,9 @@ class HybridTopologyFactoryREST2:
             at0, at1, at2, at3, periodicity = torsion_key
             index_old, periodicity_old, phase_old, k_old, torsion_type_old = params
 
-            if torsion_key in new_torsion_dict:
+            if torsion_key in new_torsion_dict and (at3, at2, at1, at0, periodicity) in new_torsion_dict:
+                raise ValueError(f"Duplicate torsion detected in the new system.\n{torsion_key}\n")
+            elif torsion_key in new_torsion_dict:
                 periodicity_new, phase_new, k_new, torsion_type_new = new_torsion_dict[torsion_key][1:]
                 itersection_dict[torsion_key] = [
                     periodicity_old, phase_old, k_old, torsion_type_old,
@@ -4245,13 +4247,15 @@ class HybridTopologyFactoryREST2:
         for torsion_key, params in new_torsion_dict.items():
             at0, at1, at2, at3, periodicity = torsion_key
             index_new, periodicity_new, phase_new, k_new, torsion_type_new = params
-            if torsion_key in itersection_dict:
+            if torsion_key in old_torsion_dict and (at3, at2, at1, at0, periodicity) in old_torsion_dict:
+                raise ValueError(f"Duplicate torsion detected in the intersection of old systems.\n{torsion_key}\n")
+            elif torsion_key in old_torsion_dict:
                 continue
-            elif (at3, at2, at1, at0, periodicity) in itersection_dict:
+            elif (at3, at2, at1, at0, periodicity) in old_torsion_dict:
                 continue
             else:
                 new_only_dict[torsion_key] = [periodicity_new, phase_new, k_new, torsion_type_new]
-
+        # print(len(itersection_dict), len(old_only_dict), len(new_only_dict))
         return itersection_dict, old_only_dict, new_only_dict
 
 
@@ -4280,8 +4284,8 @@ class HybridTopologyFactoryREST2:
         bond_const_list_old = find_bond_const(self._old_system)
         bond_const_list_new = find_bond_const(self._new_system)
 
-        old_torsion_dict = {} # key: (idx1, idx2, idx3, idx4), value: [periodicity, phase, k, torsion_type]
-        new_torsion_dict = {}
+        old_torsion_dict = {} # (idx1, idx2, idx3, idx4, periodicity) : [old_index_list, periodicity, phase, k, torsion_type]
+        new_torsion_dict = {} # (idx1, idx2, idx3, idx4, periodicity) : [new_index_list, periodicity, phase, k, torsion_type]
 
         for torsion_index in range(old_system_torsion_force.getNumTorsions()):
             torsion_parm = old_system_torsion_force.getTorsionParameters(torsion_index)
@@ -4330,6 +4334,12 @@ class HybridTopologyFactoryREST2:
 
         itersection_dict, old_only_dict, new_only_dict = self.classify_torsion(old_torsion_dict, new_torsion_dict)
 
+        self.hybrid_torsion_dict = {
+            "intersection" : itersection_dict,
+            "old_only"     : old_only_dict,
+            "new_only"     : new_only_dict
+        }
+
         for torsion_key, paramAB in itersection_dict.items():
             idx1, idx2, idx3, idx4, periodicity = torsion_key
             periodicity_old, phase_old, k_old, torsion_type_old, periodicity_new, phase_new, k_new, torsion_type_new = paramAB
@@ -4337,11 +4347,11 @@ class HybridTopologyFactoryREST2:
             assert torsion_type_old == torsion_type_new, \
                 f"torsion type {index_list} should be identical in state A and B."
 
-            # if no core atoms, should be identical
             is_core = [idx in self._atom_classes["core_atoms"] for idx in index_list]
             is_hot  = [idx in self._atom_classes["rest2_atoms"] for idx in index_list]
             assert sum(is_core) <= sum(is_hot), f"All core atoms {index_list} should be in hot region."
 
+            # if no core atoms, should be identical
             if not any(is_core):
                 assert k_old == k_new, \
                     f"torsion k {index_list} should be identical in state A and B."
@@ -4350,17 +4360,20 @@ class HybridTopologyFactoryREST2:
 
 
             if sum(is_hot) in [ 1, 2, 3, 4 ]: # at least one hot atom
-                if torsion_type_old == "normal":
+                if torsion_type_old in [ "normal", "double"]:
                     # rest2 scaling
                     custom_torsion_dict[torsion_key] = [periodicity_old, phase_old, k_old,
                                                         periodicity_new, phase_new, k_new, sum(is_hot)]
-                elif torsion_type_old in ["double", "improper"]:
+                    self.hybrid_torsion_dict["intersection"][torsion_key].append(f"c{sum(is_hot)}")
+                elif torsion_type_old == "improper":
                     # no rest2 scaling
                     custom_torsion_dict[torsion_key] = [periodicity_old, phase_old, k_old,
                                                         periodicity_new, phase_new, k_new, 0]
+                    self.hybrid_torsion_dict["intersection"][torsion_key].append(f"c0")
             elif sum(is_hot) == 0: # no hot atom
                 # is_hot==0 means is_core==0, state A/B should be identical (checked already). This goes to standard_torsion
                 standard_torsion_dict[torsion_key] = [periodicity_old, phase_old, k_old]
+                self.hybrid_torsion_dict["intersection"][torsion_key].append("s")
             else:
                 raise ValueError(f"The number of hat atoms in {index_list} is invalid. {is_hot}")
 
@@ -4374,13 +4387,15 @@ class HybridTopologyFactoryREST2:
             assert sum(is_old) <= sum(is_hot), f"All unique old atoms {index_list} should be in hot region."
             # assert sum(is_old) >= 1, f"At least one old unique atom should be in this old only torsion. {index_list}."
 
-            if torsion_type == "normal":
+            if torsion_type in ["normal", "double"]:
                 # rest2 scaling
                 custom_torsion_dict[torsion_key] = [periodicity, phase, k,
-                                                    0, 0, k * 0.0, sum(is_hot)]
-            elif torsion_type in ["double", "improper"]:
+                                                    periodicity, phase, k * 0.0, sum(is_hot)]
+                self.hybrid_torsion_dict["old_only"][torsion_key].append(f"c{sum(is_hot)}")
+            elif torsion_type == "improper":
                 # no rest2 scaling, no lambda control
                 standard_torsion_dict[torsion_key] = [periodicity, phase, k]
+                self.hybrid_torsion_dict["old_only"][torsion_key].append("s")
             else:
                 raise ValueError(f"The type of this old only torsion cannot be understood. {index_list}")
 
@@ -4394,13 +4409,15 @@ class HybridTopologyFactoryREST2:
             assert sum(is_new) <= sum(is_hot), f"All unique new atoms {index_list} should be in hot region."
             # assert sum(is_new) >= 1, f"At least one new unique atom should be in this new only torsion. {index_list}."
 
-            if torsion_type == "normal":
+            if torsion_type in ["normal", "double"]:
                 # rest2 scaling
-                custom_torsion_dict[torsion_key] = [0, 0, k * 0.0,
+                custom_torsion_dict[torsion_key] = [periodicity, phase, k * 0.0,
                                                     periodicity, phase, k, sum(is_hot)]
-            elif torsion_type in ["double", "improper"]:
+                self.hybrid_torsion_dict["new_only"][torsion_key].append(f"c{sum(is_hot)}")
+            elif torsion_type == "improper":
                 # no rest2 scaling, no lambda control
                 standard_torsion_dict[torsion_key] = [periodicity, phase, k]
+                self.hybrid_torsion_dict["new_only"][torsion_key].append("s")
             else:
                 raise ValueError(f"The type of this new only torsion cannot be understood. {index_list}")
 
