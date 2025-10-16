@@ -3413,7 +3413,7 @@ class HybridTopologyFactoryREST2:
           now.
         * REST2 scaling is implemented.
         """
-        energy_expression =  'U * k_rest2^is_hot;'
+        energy_expression =  'U * k_rest2^(is_hot/4);'
         energy_expression += 'U = (1-lambda_torsions)*U1 + lambda_torsions*U2;'
         energy_expression += 'U1 = K1*(1+cos(periodicity1*theta-phase1));'
         energy_expression += 'U2 = K2*(1+cos(periodicity2*theta-phase2));'
