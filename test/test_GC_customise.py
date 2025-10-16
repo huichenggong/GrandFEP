@@ -1171,6 +1171,8 @@ class MyTestREST2(unittest.TestCase):
         )
 
         print("# Force should be the same in state A")
+        bond_atoms = [3302, 3303,]
+        dihe_atoms = [3301, 3285]
         global_param = {
             'lam_ele_coreA_x_k_rest2_sqrt': 1.0,
             'lam_ele_coreB_x_k_rest2_sqrt': 0.0,
@@ -1205,7 +1207,7 @@ class MyTestREST2(unittest.TestCase):
         self.assertEqual(force_A.shape, (3863, 3))
         self.assertEqual(force_h.shape, (3867, 3))
         # Real atom with a dummy atom attached will have extra force.
-        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in [3302, 3303]])
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in bond_atoms + dihe_atoms])
         all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
@@ -1241,7 +1243,7 @@ class MyTestREST2(unittest.TestCase):
         self.assertEqual(force_B.shape, (3866, 3))
         self.assertEqual(force_h.shape, (3867, 3))
         # Real atom with a dummy atom attached will have extra force.
-        new_to_hyb = np.array([[i, j] for i, j in h_factory.new_to_hybrid_atom_map.items() if i not in [3302, 3303, 3312]])
+        new_to_hyb = np.array([[i, j] for i, j in h_factory.new_to_hybrid_atom_map.items() if i not in bond_atoms + dihe_atoms + [3312]])
         all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:, 1]], force_B[new_to_hyb[:, 0]])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 

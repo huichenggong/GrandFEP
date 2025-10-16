@@ -4387,11 +4387,17 @@ class HybridTopologyFactoryREST2:
             assert sum(is_old) <= sum(is_hot), f"All unique old atoms {index_list} should be in hot region."
             # assert sum(is_old) >= 1, f"At least one old unique atom should be in this old only torsion. {index_list}."
 
-            if torsion_type in ["normal", "double"]:
-                # rest2 scaling
+            if torsion_type in "normal":
+                # rest2 scaling + removed in dummy state
                 custom_torsion_dict[torsion_key] = [periodicity, phase, k,
                                                     periodicity, phase, k * 0.0, sum(is_hot)]
-                self.hybrid_torsion_dict["old_only"][torsion_key].append(f"c{sum(is_hot)}")
+                self.hybrid_torsion_dict["old_only"][torsion_key].append(f"c{sum(is_hot)}_dum0")
+
+            elif torsion_type == "double":
+                # rest2 scaling
+                custom_torsion_dict[torsion_key] = [periodicity, phase, k,
+                                                    periodicity, phase, k, sum(is_hot)]
+                self.hybrid_torsion_dict["old_only"][torsion_key].append(f"c{sum(is_hot)}_dum1")
             elif torsion_type == "improper":
                 # no rest2 scaling, no lambda control
                 standard_torsion_dict[torsion_key] = [periodicity, phase, k]
@@ -4409,11 +4415,16 @@ class HybridTopologyFactoryREST2:
             assert sum(is_new) <= sum(is_hot), f"All unique new atoms {index_list} should be in hot region."
             # assert sum(is_new) >= 1, f"At least one new unique atom should be in this new only torsion. {index_list}."
 
-            if torsion_type in ["normal", "double"]:
-                # rest2 scaling
+            if torsion_type in "normal":
+                # rest2 scaling + removed in dummy state
                 custom_torsion_dict[torsion_key] = [periodicity, phase, k * 0.0,
                                                     periodicity, phase, k, sum(is_hot)]
-                self.hybrid_torsion_dict["new_only"][torsion_key].append(f"c{sum(is_hot)}")
+                self.hybrid_torsion_dict["new_only"][torsion_key].append(f"c{sum(is_hot)}_dum0")
+            elif torsion_type == "double":
+                # rest2 scaling
+                custom_torsion_dict[torsion_key] = [periodicity, phase, k,
+                                                    periodicity, phase, k, sum(is_hot)]
+                self.hybrid_torsion_dict["new_only"][torsion_key].append(f"c{sum(is_hot)}_dum1")
             elif torsion_type == "improper":
                 # no rest2 scaling, no lambda control
                 standard_torsion_dict[torsion_key] = [periodicity, phase, k]
