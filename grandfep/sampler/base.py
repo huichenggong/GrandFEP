@@ -819,16 +819,6 @@ class BaseGrandCanonicalMonteCarloSampler:
         If the system is Hybrid, this function will add perParticleParameters ``is_real`` and ``is_switching``
         to the custom_nonbonded_force (openmm.openmm.CustomNonbondedForce) for vdw.
 
-        Parameters
-        ----------
-        system :
-            The system to be converted.
-
-        optimization :
-            Level of optimization. It can be `O3` or `O1`. When `O3` is selected, We will try to hard code sigma and epsilon
-            into the energy expression for wat-wat interaction if there is only one water atom has LJ. This can be applied to
-            TIP3P, OPC. `O3` will make no difference if charmm TIP3P is used, because H also has LJ parameters.
-
         +----------+--------+--------+--------+--------+--------+--------+--------+
         | Groups   | core   | new    | old    | envh   | envc   | wat    | swit   |
         +==========+========+========+========+========+========+========+========+
@@ -858,8 +848,6 @@ class BaseGrandCanonicalMonteCarloSampler:
 
         - C_wat3
             CustomNonbondedForce for
-
-
 
         The most basic energy expression for vdw is the following. All the other forces are simplified from this one.:
 
@@ -919,17 +907,20 @@ class BaseGrandCanonicalMonteCarloSampler:
                 "sigmaB = 0.5*(sigmaB1 + sigmaB2);"
                 )
 
-
         Parameters
         ----------
         system :
             The system to be converted.
 
+        optimization :
+            Level of optimization. It can be `O3` or `O1`. When `O3` is selected, We will try to hard code sigma and epsilon
+            into the energy expression for wat-wat interaction if there is only one water atom has LJ. This can be applied to
+            TIP3P, OPC. `O3` will make no difference if charmm TIP3P is used, because H also has LJ parameters.
+
         Returns
         -------
         None
         """
-        # check if the system is Hybrid
         if self.system_type != "Hybrid_REST2":
             raise ValueError("The system is not Hybrid_REST2. Please check the system.")
         self.logger.info("Try to customise a native Hybrid_REST2 system")
