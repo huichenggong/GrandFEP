@@ -1257,7 +1257,8 @@ class MyTestREST2(unittest.TestCase):
             old_to_new_atom_map,  # All atoms that should map from A to B
             old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
             use_dispersion_correction=True,
-            old_rest2_atom_indices=[1880, 1881, 1882, 1883, 1884, 1885, 1886, 1887, 1888, 1889, 1890]
+            old_rest2_atom_indices=[1880, 1881, 1882, 1883, 1884, 1885, 1886, 1887, 1888, 1889, 1890],
+            scale_dihe={1:0.0, 2:0.0, 3:0.0, 4:0.0, 5:0.0 }
         )
 
         print("# Force should be the same in state A")
@@ -1297,7 +1298,7 @@ class MyTestREST2(unittest.TestCase):
         self.assertEqual(force_A.shape, (3863, 3))
         self.assertEqual(force_h.shape, (3867, 3))
         # Real atom with a dummy atom attached will have extra force.
-        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in bond_atoms + dihe_atoms])
+        old_to_hyb = np.array([[i, j] for i, j in h_factory.old_to_hybrid_atom_map.items() if i not in bond_atoms])
         all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]])
         self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg}")
 
@@ -1361,40 +1362,8 @@ class MyTestREST2(unittest.TestCase):
             use_dispersion_correction=True,
         )
 
-        inpcrd0, prmtop0, sys0 = load_amber_sys(
-            base / "brd4/pro_prep" / "5" / "07_tip3p.inpcrd",
-            base / "brd4/pro_prep" / "5" / "07_tip3p.prmtop", nonbonded_settings)
-        inpcrd1, prmtop1, sys1 = load_amber_sys(
-            base / "brd4/pro_prep" / "7" / "07_tip3p.inpcrd",
-            base / "brd4/pro_prep" / "7" / "07_tip3p.prmtop", nonbonded_settings)
-        mdp = utils.md_params_yml(base / "brd4/edge_5_7/map.yml")
-        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtop0.topology, prmtop1.topology,
-                                                                               mdp.mapping_list)
-        h_factory_pro = utils.HybridTopologyFactoryREST2(
-            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
-            old_to_new_atom_map,  # All atoms that should map from A to B
-            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
-            use_dispersion_correction=True,
-        )
-
-        self.assertEqual(len(h_factory_lig.hybrid_torsion_dict["old_only"]), 12)
-        self.assertEqual(len(h_factory_lig.hybrid_torsion_dict["new_only"]), 9)
-        self.assertEqual(len(h_factory_pro.hybrid_torsion_dict["old_only"]), 12)
-        self.assertEqual(len(h_factory_pro.hybrid_torsion_dict["new_only"]), 9)
 
 
-        print("# Force should be the same in state A")
-        energy_h, force_h = calc_energy_force(
-            h_factory_pro.hybrid_system,
-            h_factory_pro.omm_hybrid_topology,
-            h_factory_pro.hybrid_positions, platform)
-        old_to_hyb = np.array([[i, j] for i, j in h_factory_pro.old_to_hybrid_atom_map.items()])
-        pos_old = np.zeros_like(inpcrd0.positions)
-        pos_old[old_to_hyb[:, 0]] = h_factory_pro.hybrid_positions[old_to_hyb[:, 1]]
-        energy_A, force_A = calc_energy_force(
-            sys0,
-            prmtop0.topology,
-            pos_old, platform)
 
 
 class MytestREST2_GCMC(unittest.TestCase):

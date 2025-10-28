@@ -2836,7 +2836,9 @@ class HybridTopologyFactoryREST2:
                  old_to_new_core_atom_map,
                  old_rest2_atom_indices=None,
                  use_dispersion_correction=False,
-                 softcore_alpha=0.5):
+                 softcore_alpha=0.5,
+                 scale_dihe: dict=None
+                 ):
         """
         Parameters
         ----------
@@ -2845,27 +2847,43 @@ class HybridTopologyFactoryREST2:
 
         old_positions :
             The positions of the old state (state A).
+
         old_topology :
             The OpenMM Topology object of the old state (state A).
+
         new_system :
             The OpenMM System object of the new state (state B).
+
         new_positions :
             The positions of the new state (state B).
+
         new_topology :
             The OpenMM Topology object of the new state (state B).
+
         old_to_new_atom_map :
             All atoms that should map from the old state (A) to new state (B).
+
         old_to_new_core_atom_map :
             Alchemical Atoms that should map from A to B
+
         old_rest2_atom_indices :
             The indices of the atoms in the old system that should be considered as hot in REST2.
+
         use_dispersion_correction : bool, default False
             Whether to use the long range correction in the custom sterics
             force. This can be very expensive for derivative.
+
         softcore_alpha: float, default None
             "alpha" parameter of softcore sterics, default 0.5.
 
+        scale_dihe:
+            A dictionary defining the dummy atom scaling factors for dihedrals with different periodicities.
+            Keys are periodicities (1, 2, 3, etc.), and values are the corresponding scaling factors.
+            default is {1:1.0, 2:1.0, 3:1.0, 4:1.0, 5:1.0}, meaning no scaling.
+
         """
+        if scale_dihe is None:
+            scale_dihe = {1:1.0, 2:1.0, 3:1.0, 4:1.0, 5:1.0 }
         # Assign system positions and force
         self._old_system = copy.deepcopy(old_system)
         self._old_positions = old_positions
@@ -2927,7 +2945,7 @@ class HybridTopologyFactoryREST2:
         # Adding forces object and add parameters into each force
         self._handle_harmonic_bonds()
         self._handle_harmonic_angles()
-        self._handle_torsion_force_terms()
+        self._handle_torsion_force_terms(scale_dihe)
 
         has_CMAPs = self._has_CMAPs()
         if has_CMAPs:
@@ -4260,7 +4278,7 @@ class HybridTopologyFactoryREST2:
 
 
 
-    def _handle_torsion_force_terms(self):
+    def _handle_torsion_force_terms(self, scale_dihe:dict):
         """
         Handle the torsions defined in the new and old systems as such:
 
@@ -4277,6 +4295,11 @@ class HybridTopologyFactoryREST2:
         3. The rest of the torsions go into the standard PeriodicTorsionForce if either a and b.
             a. There is not REST2(hot) atoms
             b. There is at least 1 dummy(unique_new/unique_old) atom, and it is double or improper.
+
+        Parameters
+        ----------
+        scale_dihe :
+            scaling factors for dihedral types
 
         """
         old_system_torsion_force = self._old_system_forces['PeriodicTorsionForce']
@@ -4388,15 +4411,15 @@ class HybridTopologyFactoryREST2:
             # assert sum(is_old) >= 1, f"At least one old unique atom should be in this old only torsion. {index_list}."
 
             if torsion_type in "normal":
-                # rest2 scaling + removed in dummy state
+                # rest2 scaling + scaling in dummy state
                 custom_torsion_dict[torsion_key] = [periodicity, phase, k,
-                                                    periodicity, phase, k * 0.0, sum(is_hot)]
+                                                    periodicity, phase, k * scale_dihe[periodicity], sum(is_hot)]
                 self.hybrid_torsion_dict["old_only"][torsion_key].append(f"c{sum(is_hot)}_dum0")
 
             elif torsion_type == "double":
-                # rest2 scaling
+                # rest2 scaling + scaling in dummy state
                 custom_torsion_dict[torsion_key] = [periodicity, phase, k,
-                                                    periodicity, phase, k, sum(is_hot)]
+                                                    periodicity, phase, k * scale_dihe[periodicity], sum(is_hot)]
                 self.hybrid_torsion_dict["old_only"][torsion_key].append(f"c{sum(is_hot)}_dum1")
             elif torsion_type == "improper":
                 # no rest2 scaling, no lambda control
@@ -4416,13 +4439,13 @@ class HybridTopologyFactoryREST2:
             # assert sum(is_new) >= 1, f"At least one new unique atom should be in this new only torsion. {index_list}."
 
             if torsion_type in "normal":
-                # rest2 scaling + removed in dummy state
-                custom_torsion_dict[torsion_key] = [periodicity, phase, k * 0.0,
+                # rest2 scaling + scaling in dummy state
+                custom_torsion_dict[torsion_key] = [periodicity, phase, k * scale_dihe[periodicity],
                                                     periodicity, phase, k, sum(is_hot)]
                 self.hybrid_torsion_dict["new_only"][torsion_key].append(f"c{sum(is_hot)}_dum0")
             elif torsion_type == "double":
-                # rest2 scaling
-                custom_torsion_dict[torsion_key] = [periodicity, phase, k,
+                # rest2 scaling + scaling in dummy state
+                custom_torsion_dict[torsion_key] = [periodicity, phase, k * scale_dihe[periodicity],
                                                     periodicity, phase, k, sum(is_hot)]
                 self.hybrid_torsion_dict["new_only"][torsion_key].append(f"c{sum(is_hot)}_dum1")
             elif torsion_type == "improper":
