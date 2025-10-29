@@ -35,7 +35,10 @@ def calc_energy_force(system, topology, positions, platform=openmm.Platform.getP
     simulation.context.setPositions(positions)
     if global_parameters:
         for key, value in global_parameters.items():
-            simulation.context.setParameter(key, value)
+            if key in simulation.context.getParameters():
+                simulation.context.setParameter(key, value)
+            # else:
+            #     print(f"Global Parameter {key} not found in the system.")
     state = simulation.context.getState(getEnergy=True, getForces=True)
     energy = state.getPotentialEnergy()
     force = state.getForces(asNumpy=True)
@@ -1340,27 +1343,149 @@ class MyTestREST2(unittest.TestCase):
 
     def test_hybridFF_REST2_brd4(self):
         print()
-        print("# Test HybridFF_REST2, Can we hybrid 2 ligands in Protein (brd4). 5 -> 7")
+        print("# Test HybridFF_REST2, Can we hybrid 2 ligands in Protein (brd4).")
         nonbonded_settings = nonbonded_Amber
         platform = platform_ref
+        global_param_B = {
+            'lam_ele_coreA_x_k_rest2_sqrt': 0.0,
+            'lam_ele_coreB_x_k_rest2_sqrt': 1.0,
+            "lam_ele_del_x_k_rest2_sqrt": 0.0,
+            "lam_ele_ins_x_k_rest2_sqrt": 1.0,
+            "lambda_electrostatics_core": 1.0,
+            "lambda_electrostatics_insert": 1.0,
+            "lambda_electrostatics_delete": 1.0,
+            "lambda_sterics_core": 1.0,
+            "lambda_sterics_insert": 1.0,
+            "lambda_sterics_delete": 1.0,
+            "lambda_bonds": 1.0,
+            "lambda_angles": 1.0,
+            "lambda_torsions": 1.0,
+            "k_rest2_sqrt": 1.0,
+            "k_rest2": 1.0,
+        }
 
         base = Path(__file__).resolve().parent
 
         inpcrd0, prmtop0, sys0 = load_amber_sys(
-            base / "brd4/lig_prep" / "5" / "07_tip3p.inpcrd",
-            base / "brd4/lig_prep" / "5" / "07_tip3p.prmtop", nonbonded_settings)
+            base / "brd4/lig_prep" / "2" / "07_tip3p.inpcrd",
+            base / "brd4/lig_prep" / "2" / "07_tip3p.prmtop", nonbonded_settings)
         inpcrd1, prmtop1, sys1 = load_amber_sys(
-            base / "brd4/lig_prep" / "7" / "07_tip3p.inpcrd",
-            base / "brd4/lig_prep" / "7" / "07_tip3p.prmtop", nonbonded_settings)
-        mdp = utils.md_params_yml(base / "brd4/edge_5_7/map.yml")
+            base / "brd4/lig_prep" / "8" / "07_tip3p.inpcrd",
+            base / "brd4/lig_prep" / "8" / "07_tip3p.prmtop", nonbonded_settings)
+        self.assertListEqual(sys0.getDefaultPeriodicBoxVectors(), sys1.getDefaultPeriodicBoxVectors())
+        mdp = utils.md_params_yml(base / "brd4/edge_2_8/map.yml")
         old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtop0.topology, prmtop1.topology,
                                                                                mdp.mapping_list)
-        h_factory_lig = utils.HybridTopologyFactoryREST2(
-            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
+        h_factory_lig1 = utils.HybridTopologyFactoryREST2(
+            sys0, inpcrd0.getPositions(), prmtop0.topology,
+            sys1, inpcrd1.getPositions(), prmtop1.topology,
             old_to_new_atom_map,  # All atoms that should map from A to B
             old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
             use_dispersion_correction=True,
+            scale_dihe={
+                1: 0.0, "i1": 0.0,
+                2: 0.0, "i2": 0.0,
+                3: 0.0, "i3": 0.0,
+                4: 0.0, "i4": 0.0,
+                5: 0.0, "i5": 0.0,
+            }
         )
+        h_factory_lig2 = utils.HybridTopologyFactoryREST2(
+            sys0, inpcrd0.getPositions(), prmtop0.topology,
+            sys1, inpcrd1.getPositions(), prmtop1.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            scale_dihe={
+                1: 0.1, "i1": 0.1,
+                2: 1.0, "i2": 1.0,
+                3: 0.1, "i3": 0.1,
+                4: 0.1, "i4": 0.1,
+                5: 0.1, "i5": 0.1,
+            }
+        )
+
+        bond_atoms_2  = [i - 1 for i in [ 8,  9, 15, 16]]
+        angle_atoms_2 = [i - 1 for i in [ 6, 12, 14, 17]]
+        dihe_atom_2   = [i - 1 for i in [11, 13, 18, 34]]
+        bond_atoms_8  = [i - 1 for i in [ 1,  3,  6,  7]]
+        angle_atoms_8 = [i - 1 for i in [ 4,  5, 12, 13]]
+        dihe_atom_8   = [i - 1 for i in [ 2,  8, 15, 38]]
+        f_list_nb = [
+            "NonbondedForce",
+            "CustomNonbondedForce",
+            "CustomBondForce_exceptions_1D",
+        ]
+        f2 = [
+            "CustomBondForce",
+            "HarmonicBondForce",
+            "CustomAngleForce",
+            "HarmonicAngleForce",
+        ]
+        f3 = [
+            "CustomTorsionForce",
+            "PeriodicTorsionForce",
+        ]
+        for test_name, h_factory_lig, force_list, atom_exclusion in [
+            ("nonbonded",          h_factory_lig1, f_list_nb,           ([], [])),
+            ("bond+angle+nb",      h_factory_lig1, f_list_nb + f2,      (bond_atoms_2 + angle_atoms_2, bond_atoms_8 + angle_atoms_8)),
+            ("bond+angle+dihe+nb", h_factory_lig1, f_list_nb + f2 + f3, (bond_atoms_2 + angle_atoms_2, bond_atoms_8 + angle_atoms_8)),
+            ("Real no dihe",       h_factory_lig2, f_list_nb + f2,      (bond_atoms_2 + angle_atoms_2, bond_atoms_8 + angle_atoms_8)),
+            ("Real"              , h_factory_lig2, f_list_nb + f2 + f3, (bond_atoms_2 + angle_atoms_2 + dihe_atom_2, bond_atoms_8 + angle_atoms_8 + dihe_atom_8)),
+        ]:
+            print(f"# {test_name}")
+
+            exclude_A, exclude_B = atom_exclusion
+            print("## Force should be the same in state A")
+            energy_h, force_h = calc_energy_force(
+                separate_force(h_factory_lig.hybrid_system, force_list),
+                h_factory_lig.omm_hybrid_topology,
+                h_factory_lig.hybrid_positions, platform,
+            )
+
+            old_to_hyb = np.array([[i, j] for i, j in h_factory_lig.old_to_hybrid_atom_map.items()])
+            pos_old = np.zeros_like(inpcrd0.positions)
+            pos_old[old_to_hyb[:, 0]] = h_factory_lig.hybrid_positions[old_to_hyb[:, 1]]
+            energy_A, force_A = calc_energy_force(
+                separate_force(sys0,force_list),
+                prmtop0.topology,
+                pos_old, platform)
+            # Real atom with a dummy atom attached will have extra force.
+            old_to_hyb = np.array([[i, j] for i, j in h_factory_lig.old_to_hybrid_atom_map.items() if i not in exclude_A])
+            all_close_flag, mis_match_list, error_msg = match_force(force_h[old_to_hyb[:, 1]], force_A[old_to_hyb[:, 0]])
+            self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg} {[old_to_hyb[i] for i, f1,f2, in mis_match_list]}")
+            if len(exclude_A) > 0:
+                # exclude atom should have different forces
+                old_to_hyb_excl = np.array([[i, j] for i, j in h_factory_lig.old_to_hybrid_atom_map.items() if i in exclude_A])
+                f_h, f_A = force_h[old_to_hyb_excl[:, 1]], force_A[old_to_hyb_excl[:, 0]]
+                for i, f_1, f_2 in zip(exclude_A, f_h, f_A):
+                    self.assertFalse(np.all(f_1==f_2), f"Atom {i} force should not match.\n    {f_1}\n    {f_2}")
+
+            print("## Force should be the same in state B")
+            energy_h, force_h = calc_energy_force(
+                separate_force(h_factory_lig.hybrid_system, force_list),
+                h_factory_lig.omm_hybrid_topology,
+                h_factory_lig.hybrid_positions, platform,
+                global_parameters=global_param_B
+            )
+            new_to_hyb = np.array([[i, j] for i, j in h_factory_lig.new_to_hybrid_atom_map.items()])
+            pos_new = np.zeros_like(inpcrd1.positions)
+            pos_new[new_to_hyb[:, 0]] = h_factory_lig.hybrid_positions[new_to_hyb[:, 1]]
+            energy_B, force_B = calc_energy_force(
+                separate_force(sys1,force_list),
+                prmtop1.topology,
+                pos_new, platform,
+                global_parameters=global_param_B)
+            # Real atom with a dummy atom attached will have extra force.
+            new_to_hyb = np.array([[i, j] for i, j in h_factory_lig.new_to_hybrid_atom_map.items() if i not in exclude_B])
+            all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:, 1]], force_B[new_to_hyb[:, 0]])
+            self.assertTrue(all_close_flag, f"In total {len(mis_match_list)} atom does not match. \n{error_msg} {[new_to_hyb[i] for i, f1,f2, in mis_match_list]}")
+            if len(exclude_B) > 0:
+                # exclude atom should have different forces
+                new_to_hyb_excl = np.array([[i, j] for i, j in h_factory_lig.new_to_hybrid_atom_map.items() if i in exclude_B])
+                f_h, f_B = force_h[new_to_hyb_excl[:, 1]], force_B[new_to_hyb_excl[:, 0]]
+                for i, f_1, f_2 in zip(exclude_B, f_h, f_B):
+                    self.assertFalse(np.all(f_1==f_2), f"Atom {i} force should not match.\n    {f_1}\n    {f_2}")
 
 
 
