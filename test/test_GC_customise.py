@@ -1404,6 +1404,23 @@ class MyTestREST2(unittest.TestCase):
                 5: 0.1, "i5": 1.0,
             }
         )
+        mdp = utils.md_params_yml(base / "brd4/edge_2_8/map_rev.yml")
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtop1.topology, prmtop0.topology,
+                                                                               mdp.mapping_list)
+        h_factory_lig3 = utils.HybridTopologyFactoryREST2(
+            sys1, inpcrd1.getPositions(), prmtop1.topology,
+            sys0, inpcrd0.getPositions(), prmtop0.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            scale_dihe={
+                1: 0.1, "i1": 1.0,
+                2: 1.0, "i2": 1.0,
+                3: 0.1, "i3": 1.0,
+                4: 0.1, "i4": 1.0,
+                5: 0.1, "i5": 1.0,
+            }
+        )
 
         bond_atoms_2  = [i - 1 for i in [ 8,  9, 15, 16]]
         angle_atoms_2 = [i - 1 for i in [ 6, 12, 14, 17]]
@@ -1426,12 +1443,13 @@ class MyTestREST2(unittest.TestCase):
             "CustomTorsionForce",
             "PeriodicTorsionForce",
         ]
-        for test_name, h_factory_lig, force_list, atom_exclusion in [
-            ("nonbonded",          h_factory_lig1, f_list_nb,           ([], [])),
-            ("bond+angle+nb",      h_factory_lig1, f_list_nb + f2,      (bond_atoms_2 + angle_atoms_2, bond_atoms_8 + angle_atoms_8)),
-            ("bond+angle+dihe+nb", h_factory_lig1, f_list_nb + f2 + f3, (bond_atoms_2 + angle_atoms_2, bond_atoms_8 + angle_atoms_8)),
-            ("Real no dihe",       h_factory_lig2, f_list_nb + f2,      (bond_atoms_2 + angle_atoms_2, bond_atoms_8 + angle_atoms_8)),
-            ("Real"              , h_factory_lig2, f_list_nb + f2 + f3, (bond_atoms_2 + angle_atoms_2 + dihe_atom_2, bond_atoms_8 + angle_atoms_8 + dihe_atom_8)),
+        for test_name, h_factory_lig, sysA, sysB, force_list, atom_exclusion in [
+            ("nonbonded",          h_factory_lig1, sys0, sys1, f_list_nb,           ([], [])),
+            ("bond+angle+nb",      h_factory_lig1, sys0, sys1, f_list_nb + f2,      (bond_atoms_2 + angle_atoms_2, bond_atoms_8 + angle_atoms_8)),
+            ("bond+angle+dihe+nb", h_factory_lig1, sys0, sys1, f_list_nb + f2 + f3, (bond_atoms_2 + angle_atoms_2, bond_atoms_8 + angle_atoms_8)),
+            ("Real no dihe",       h_factory_lig2, sys0, sys1, f_list_nb + f2,      (bond_atoms_2 + angle_atoms_2, bond_atoms_8 + angle_atoms_8)),
+            ("Real"              , h_factory_lig2, sys0, sys1, f_list_nb + f2 + f3, (bond_atoms_2 + angle_atoms_2 + dihe_atom_2, bond_atoms_8 + angle_atoms_8 + dihe_atom_8)),
+            ("Real Reverse AB",    h_factory_lig3, sys1, sys0, f_list_nb + f2 + f3, (bond_atoms_8 + angle_atoms_8 + dihe_atom_8, bond_atoms_2 + angle_atoms_2 + dihe_atom_2)),
         ]:
             print(f"# {test_name}")
 
@@ -1444,10 +1462,10 @@ class MyTestREST2(unittest.TestCase):
             )
 
             old_to_hyb = np.array([[i, j] for i, j in h_factory_lig.old_to_hybrid_atom_map.items()])
-            pos_old = np.zeros_like(inpcrd0.positions)
+            pos_old = np.zeros((len(h_factory_lig.old_to_hybrid_atom_map), 3))
             pos_old[old_to_hyb[:, 0]] = h_factory_lig.hybrid_positions[old_to_hyb[:, 1]]
             energy_A, force_A = calc_energy_force(
-                separate_force(sys0,force_list),
+                separate_force(sysA,force_list),
                 prmtop0.topology,
                 pos_old, platform)
             # Real atom with a dummy atom attached will have extra force.
@@ -1469,10 +1487,10 @@ class MyTestREST2(unittest.TestCase):
                 global_parameters=global_param_B
             )
             new_to_hyb = np.array([[i, j] for i, j in h_factory_lig.new_to_hybrid_atom_map.items()])
-            pos_new = np.zeros_like(inpcrd1.positions)
+            pos_new = np.zeros((len(h_factory_lig.new_to_hybrid_atom_map), 3))
             pos_new[new_to_hyb[:, 0]] = h_factory_lig.hybrid_positions[new_to_hyb[:, 1]]
             energy_B, force_B = calc_energy_force(
-                separate_force(sys1,force_list),
+                separate_force(sysB,force_list),
                 prmtop1.topology,
                 pos_new, platform,
                 global_parameters=global_param_B)
