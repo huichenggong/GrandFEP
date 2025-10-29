@@ -1397,11 +1397,11 @@ class MyTestREST2(unittest.TestCase):
             old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
             use_dispersion_correction=True,
             scale_dihe={
-                1: 0.1, "i1": 0.1,
+                1: 0.1, "i1": 1.0,
                 2: 1.0, "i2": 1.0,
-                3: 0.1, "i3": 0.1,
-                4: 0.1, "i4": 0.1,
-                5: 0.1, "i5": 0.1,
+                3: 0.1, "i3": 1.0,
+                4: 0.1, "i4": 1.0,
+                5: 0.1, "i5": 1.0,
             }
         )
 

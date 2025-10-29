@@ -2879,7 +2879,7 @@ class HybridTopologyFactoryREST2:
         scale_dihe:
             A dictionary defining the dummy atom scaling factors for dihedrals with different periodicities.
             Keys are periodicities (1, 2, 3, etc.), and values are the corresponding scaling factors.
-            default is {1:1.0, 2:1.0, 3:1.0, 4:1.0, 5:1.0}, meaning no scaling.
+            default is scale_dihe={ 1: 0.1, "i1": 0.1, 2: 1.0, "i2": 1.0, 3: 0.1, "i3": 0.1, 4: 0.1, "i4": 0.1, 5: 0.1, "i5": 0.1,}.
 
         """
         if scale_dihe is None:
