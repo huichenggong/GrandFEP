@@ -1448,7 +1448,6 @@ class BaseGrandCanonicalMonteCarloSampler:
         if updateContext:
             custom_nb_force.updateParametersInContext(self.simulation.context)
 
-
     def set_ghost_list(self, ghost_list: list, check_system: bool = True) -> None:
         """
         Update the water residues in `ghost_list` to ghost.
