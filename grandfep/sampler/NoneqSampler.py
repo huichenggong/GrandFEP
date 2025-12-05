@@ -408,7 +408,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
                     explosion = True
 
         if explosion:
-            self.logger.info(f"Insertion failed at (vdw,Coulomb)=({l_vdw},{l_chg})")
+            self.logger.info(f"GC failed at (vdw,Coulomb)=({l_vdw},{l_chg})")
 
         # change integrator back
         self.compound_integrator.setCurrentIntegrator(0)
