@@ -1,0 +1,23 @@
+source leaprc.water.tip3p
+source leaprc.gaff2
+
+MOL = loadmol2 04_MOL.mol2
+loadamberparams 03.frcmod
+
+BOX = loadpdb 06_box.pdb
+setBox BOX "vdw"
+saveamberparm BOX 07_tip3p.prmtop 07_tip3p.inpcrd
+savepdb       BOX 07_tip3p.pdb
+
+BOX = loadpdb 06_box-1.pdb
+setBox BOX "vdw"
+saveamberparm BOX 07_tip3p-1.prmtop 07_tip3p-1.inpcrd
+savepdb       BOX 07_tip3p-1.pdb
+
+BOX = loadpdb 06_box-2.pdb
+setBox BOX "vdw"
+saveamberparm BOX 07_tip3p-2.prmtop 07_tip3p-2.inpcrd
+savepdb       BOX 07_tip3p-2.pdb
+
+
+quit

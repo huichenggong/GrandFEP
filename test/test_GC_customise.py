@@ -2064,7 +2064,7 @@ class MytestREST2_GCMC(unittest.TestCase):
                 300 * unit.kelvin,
                 1.0 / unit.picosecond,
                 2.0 * unit.femtosecond,
-                "test_REST2_GCMC.log",
+                "test_REST2_GCMC_brd4.log",
                 platform=openmm.Platform.getPlatformByName('CUDA'),
                 create_simulation=True,
                 optimization="O3",
@@ -2111,7 +2111,7 @@ class MytestREST2_GCMC(unittest.TestCase):
                                                                     force_A[old_to_hyb[:-6, 0]])
             self.assertTrue(all_close_flag,
                             f"In total {len(mis_match_list)} atom does not match. \n{error_msg} {[old_to_hyb[i] for i, f1, f2, in mis_match_list]}")
-
+            self.assertTrue(np.allclose(force_h[old_to_hyb[-6:, 1]], 0.0))
             base_sampler.set_ghost_list([])
 
 
@@ -2158,8 +2158,8 @@ class MytestREST2_GCMC(unittest.TestCase):
             all_close_flag, mis_match_list, error_msg = match_force(force_h[new_to_hyb[:-6, 1]],
                                                                     force_B[new_to_hyb[:-6, 0]])
             self.assertTrue(all_close_flag,
-                            f"In total {len(mis_match_list)} atom does not match. \n{error_msg} {[old_to_hyb[i] for i, f1, f2, in mis_match_list]}")
-
+                            f"In total {len(mis_match_list)} atom does not match. \n{error_msg} {[new_to_hyb[i] for i, f1, f2, in mis_match_list]}")
+            self.assertTrue(np.allclose(force_h[new_to_hyb[-6:, 1]], 0.0))
             base_sampler.set_ghost_list([])
 
 
