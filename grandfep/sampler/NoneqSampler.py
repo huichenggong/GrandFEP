@@ -737,7 +737,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
         # update gc_count
         self.update_gc_count(0, protocol_work, 1, n_water, accept, acc_prob)
-        self.logger.info(f"GC_Insertion_Sphere {min(1, acc_prob):.3f}, Accept={accept}, N={n_water}, Water_in_s={sw_water_inside}")
+        self.logger.info(f"GC_Insertion_Sphere Acc_prob={min(1, acc_prob):.3f}, Accept={accept}, N={n_water}, Water_in_s={sw_water_inside}")
 
         return accept, acc_prob, protocol_work, protocol_work_list, n_water, sw_water_inside
 
@@ -842,7 +842,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         # update gc_count
         self.update_gc_count(1, protocol_work, 1, n_water, accept, acc_prob)
         self.logger.info(
-            f"GC_Deletion_Sphere {min(1, acc_prob):.3f}, Accept={accept}, N={n_water}, Water_in_s={sw_water_inside}")
+            f"GC_Deletion_Sphere Acc_prob={min(1, acc_prob):.3f}, Accept={accept}, N={n_water}, Water_in_s={sw_water_inside}")
 
         return accept, acc_prob, protocol_work, protocol_work_list, n_water, sw_water_inside
 
