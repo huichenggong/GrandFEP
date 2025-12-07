@@ -7,6 +7,7 @@ from pathlib import Path
 import math
 
 import numpy as np
+from mpi4py import MPI
 
 from openmm import unit, app, openmm
 from openmmtools.integrators import BAOABIntegrator
@@ -2105,6 +2106,15 @@ class _ReplicaExchangeMixin:
         lambda_state_index_old = self.lambda_state_index
         reduced_energy = np.zeros(self.n_lambda_states, dtype=np.float64)
         state = self.simulation.context.getState(getEnergy=True)
+        e_i = state.getPotentialEnergy() / self.kBT
+        err_flag =  np.isnan(e_i)
+        if err_flag:
+            self.logger.error(f"The potential energy is NaN at lambda state {lambda_state_index_old}.")
+        any_err = self.comm.allreduce(err_flag, op=MPI.LOR)
+        if any_err:
+            self.comm.Barrier()
+            self.comm.Abort(1)
+
         reduced_energy[lambda_state_index_old] = state.getPotentialEnergy() / self.kBT
 
         for i in range(self.n_lambda_states):
@@ -2187,7 +2197,10 @@ class _ReplicaExchangeMixin:
 
                 delta_energy = (reduced_energy_matrix[  rank_i, state_j] + reduced_energy_matrix[rank_j, state_i]
                                 - reduced_energy_matrix[rank_i, state_i] - reduced_energy_matrix[rank_j, state_j])
-                accept_prob = math.exp(-delta_energy)
+                if not np.isnan(delta_energy):
+                    accept_prob = math.exp(-delta_energy)
+                else:
+                    accept_prob = 0.0
                 acc = min(1.0, accept_prob)
                 if np.random.rand() < accept_prob:
                     re_decision[rank_i] = (True, state_j)
