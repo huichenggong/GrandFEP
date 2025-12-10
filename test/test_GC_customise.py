@@ -2162,6 +2162,72 @@ class MytestREST2_GCMC(unittest.TestCase):
             self.assertTrue(np.allclose(force_h[new_to_hyb[-6:, 1]], 0.0))
             base_sampler.set_ghost_list([])
 
+    def test_REST2_GCMC_brd4_pro_split_wat(self):
+        print()
+        print("# Test REST2_GCMC, Can we get the same force with different water splitting?")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+
+        base = Path(__file__).resolve().parent
+
+        # ligand
+        inpcrdA, prmtopA, systemA = load_amber_sys(
+            base / "brd4/lig_prep" / "2" / "07_tip3p.inpcrd",
+            base / "brd4/lig_prep" / "2" / "07_tip3p.prmtop", nonbonded_settings)
+        inpcrdB, prmtopB, systemB = load_amber_sys(
+            base / "brd4/lig_prep" / "8" / "07_tip3p.inpcrd",
+            base / "brd4/lig_prep" / "8" / "07_tip3p.prmtop", nonbonded_settings)
+        mdp = utils.md_params_yml(base / "brd4/edge_2_8/map.yml")
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtopA.topology, prmtopB.topology,
+                                                                               mdp.mapping_list)
+        h_factory_lig1 = utils.HybridTopologyFactoryREST2(
+            systemA, inpcrdA.getPositions(), prmtopA.topology,
+            systemB, inpcrdB.getPositions(), prmtopB.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            scale_dihe={
+                1: 0.0, "i1": 0.5,
+                2: 0.0, "i2": 0.5,
+                3: 0.0, "i3": 0.5,
+                4: 0.0, "i4": 0.5,
+                5: 0.0, "i5": 0.5,
+            }
+        )
+        sampler_list = [sampler.BaseGrandCanonicalMonteCarloSampler(
+            h_factory_lig1.hybrid_system,
+            h_factory_lig1.omm_hybrid_topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_REST2_GCMC_brd4.log",
+            platform=platform,
+            create_simulation=True,
+            optimization="O3",
+            n_split_water=i
+        ) for i in [1,2,3,4,5]]
+
+        # random a list of ghost water, pick some out of a list of int
+        for run_i in range(3):
+            print(f"## Run {run_i}")
+            g_list = np.random.choice(list(range(5, 500)), size=15+run_i, replace=False).tolist()
+            for samp in sampler_list:
+                samp.simulation.context.setPositions(h_factory_lig1.hybrid_positions)
+                samp.set_ghost_list(g_list, check_system=False)
+
+            force_list = [calc_energy_force(
+                sampler_list[0].system,
+                h_factory_lig1.omm_hybrid_topology,
+                h_factory_lig1.hybrid_positions, platform,
+            )[1]]
+            for samp in sampler_list:
+                force_list.append(samp.simulation.context.getState(getEnergy=True, getForces=True).getForces(asNumpy=True))
+
+            for idx, force_i in enumerate(force_list[1:]):
+                all_close_flag, mis_match_list, error_msg = match_force(force_list[0],force_i)
+                self.assertTrue(
+                    all_close_flag,
+                    f"Between 0 and {idx+1}, {len(mis_match_list)} atom does not match. \n{error_msg}")
 
 
 if __name__ == '__main__':
