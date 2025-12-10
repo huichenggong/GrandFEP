@@ -80,6 +80,11 @@ class BaseGrandCanonicalMonteCarloSampler:
         create_simulation :
             Whether to create a system inside this class. When you only want to customize the system using this class,
             you can set this to False, in order to avoid unnecessary memory usage.
+        optimization :
+            The optimization level for this system. Options are 'O1' and 'O3'. Default is 'O3'. In 'O3', we will try to
+            hardcode water-water vdw if only Oxygen has vdw parameters.
+        n_split_water :
+            Number of split water for Hybrid_REST2 system. If 'log', will use log10(N_water).
         """
 
         # prepare logger

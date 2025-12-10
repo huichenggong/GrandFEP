@@ -45,6 +45,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
                  dcd_file: str = None,
                  append_dcd: bool = True,
                  jsonl_file: str = "md.jsonl",
+                 n_split_water: Union[int, str] = "log",
                  ):
         """
         Parameters
@@ -91,6 +92,8 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         jsonl_file :
             File name for the JSONL file. Default is "md.jsonl". This file saves the ghost_list. rst7 file needs this jsonl
             to restart the ghost list, and dcd file needs this jsonl to remove the ghost water.
+        n_split_water :
+            Number of split water for Hybrid_REST2 system. If 'log', will use log10(N_water).
 
         """
         # safety check
@@ -106,7 +109,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
 
         super().__init__(system, topology, temperature, collision_rate,
-                         timestep, log, platform, water_resname, water_O_name, create_simulation=True)
+                         timestep, log, platform, water_resname, water_O_name, create_simulation=True, n_split_water=n_split_water)
 
         self.logger.info("Initializing NoneqGrandCanonicalMonteCarloSampler")
 
@@ -994,6 +997,8 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
         log_dict = json.loads(l)
         self.gc_count["current_move"] = log_dict["GC_count"]
         self.set_ghost_list(log_dict["ghost_list"])
+        if "RE_step" in log_dict:
+            self.re_step = log_dict["RE_step"]
 
     def load_rst(self, rst_input: Union[str, Path]):
         """
@@ -1047,7 +1052,8 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
                  append_dcd: bool = False,
                  jsonl_file: str = "md.jsonl",
                  init_lambda_state: int = None,
-                 lambda_dict: dict = None
+                 lambda_dict: dict = None,
+                 n_split_water: Union[int, str] = "log",
                  ):
         """
         Parameters
@@ -1097,11 +1103,12 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
             Lambda state index for this replica, counting from 0
         lambda_dict : dict
             A dictionary of mapping from global parameters to their values in all the sampling states.
-
+        n_split_water :
+            Number of split water for Hybrid_REST2 system. If 'log', will use log10(N_water).
         """
         super().__init__(system, topology, temperature, collision_rate, timestep, log, platform,
                          water_resname, water_O_name, position, chemical_potential, standard_volume,
-                         sphere_radius, reference_atoms, rst_file, dcd_file, append_dcd, jsonl_file)
+                         sphere_radius, reference_atoms, rst_file, dcd_file, append_dcd, jsonl_file, n_split_water=n_split_water)
 
         # MPI related properties
         #: MPI communicator
@@ -1275,6 +1282,7 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
                     json.dump(
                         {
                             "GC_count": self.gc_count["current_move"],
+                            "RE_step": self.re_step,
                             "ghost_list": ghost_list,
                             "dcd": dcd
                         }, f)
