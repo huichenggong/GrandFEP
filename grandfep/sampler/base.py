@@ -2127,7 +2127,6 @@ class _ReplicaExchangeMixin:
         if any_err:
             self.comm.Barrier()
             self.comm.Abort(1)
-
         reduced_energy[lambda_state_index_old] = state.getPotentialEnergy() / self.kBT
 
         for i in range(self.n_lambda_states):
