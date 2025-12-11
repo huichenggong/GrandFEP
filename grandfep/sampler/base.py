@@ -2075,6 +2075,14 @@ class _ReplicaExchangeMixin:
         lambda_state_index_old = self.lambda_state_index
         reduced_energy = np.zeros(self.n_lambda_states, dtype=np.float64)
         state = self.simulation.context.getState(getEnergy=True)
+        e_i = state.getPotentialEnergy() / self.kBT
+        err_flag = np.isnan(e_i)
+        if err_flag:
+            self.logger.error(f"The potential energy is NaN at lambda state {lambda_state_index_old}.")
+        any_err = self.comm.allreduce(err_flag, op=MPI.LOR)
+        if any_err:
+            self.comm.Barrier()
+            self.comm.Abort(1)
         reduced_energy[lambda_state_index_old] = state.getPotentialEnergy() / self.kBT
 
         # when there is left neighbor
