@@ -1,0 +1,12 @@
+k_rest2                     : [1.0, 0.5, 0.5, 1.0, 0.5, 1.0]
+# window Indices            : 0     1     2     3,   4,   5
+lambda_angles               : [0.0, 0.0, 1.0, 1.0, 0.5, 0.5]
+lambda_bonds                : [0.0, 0.0, 1.0, 1.0, 0.5, 0.5]
+lambda_sterics_core         : [0.0, 0.0, 1.0, 1.0, 0.5, 0.5]
+lambda_electrostatics_core  : [0.0, 0.0, 1.0, 1.0, 0.5, 0.5]
+lambda_torsions             : [0.0, 0.0, 1.0, 1.0, 0.5, 0.5]
+#
+lambda_electrostatics_delete: [0.0, 0.0, 1.0, 1.0, 0.5, 0.5]
+lambda_sterics_delete       : [0.0, 0.0, 1.0, 1.0, 0.5, 0.5]
+lambda_sterics_insert       : [0.0, 0.0, 1.0, 1.0, 0.5, 0.5]
+lambda_electrostatics_insert: [0.0, 0.0, 1.0, 1.0, 0.5, 0.5]
