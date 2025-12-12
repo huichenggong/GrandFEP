@@ -1507,9 +1507,6 @@ class MyTestREST2(unittest.TestCase):
                     self.assertFalse(np.all(f_1==f_2), f"Atom {i} force should not match.\n    {f_1}\n    {f_2}")
 
 
-
-
-
 class MytestREST2_GCMC(unittest.TestCase):
     def test_REST2_GCMC_build(self):
         print()
@@ -2269,7 +2266,7 @@ class MytestREST2_GCMC(unittest.TestCase):
             energy, force = calc_energy_force(
                 separate_force(
                     h_factory.hybrid_system,
-                    [ 'NonbondedForce', 'CustomNonbondedForce' ]
+                    [ 'NonbondedForce', "CustomNonbondedForce" ],
                 ),
                 # h_factory.hybrid_system,
                 h_factory.omm_hybrid_topology,

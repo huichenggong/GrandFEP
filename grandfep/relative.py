@@ -2828,6 +2828,21 @@ class HybridTopologyFactoryREST2:
             interpolate_14s is True, otherwise the electrostatics/sterics exception is in the NonbondedForce
 
     where `interactions` refers to any pair of atoms that is not 1-2, 1-3, 1-4
+
+    vdW table
+    +----------+--------+--------+--------+--------+--------+
+    | Groups   | core   | new    | old    | envh   | envc   |
+    +==========+========+========+========+========+========+
+    | 0 core   | C_alc  |        |        |        |        |
+    +----------+--------+--------+--------+--------+--------+
+    | 1 new    | C_alc  | C_alc  |        |        |        |
+    +----------+--------+--------+--------+--------+--------+
+    | 2 old    | C_alc  | None   | C_alc  |        |        |
+    +----------+--------+--------+--------+--------+--------+
+    | 3 envh   | C_alc  | C_alc  | C_alc  | C_alc  |        |
+    +----------+--------+--------+--------+--------+--------+
+    | 4 envc   | C_alc  | C_alc  | C_alc  | C_alc  | NonB   |
+    +----------+--------+--------+--------+--------+--------+
     """
 
     def __init__(self, old_system, old_positions, old_topology,
@@ -4629,6 +4644,7 @@ class HybridTopologyFactoryREST2:
         self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("lam_ele_del_x_k_rest2_sqrt",   1.0)
         self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("lam_ele_ins_x_k_rest2_sqrt",   0.0)
         self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("k_rest2_sqrt", 1.0)
+        self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("k_rest2", 1.0) # for later use in 1-4 scaling (exceptions)
 
         # self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter('lam_vdw_core_x_k_rest2',  0.0)
 
@@ -4742,8 +4758,8 @@ class HybridTopologyFactoryREST2:
                 old_index = hybrid_to_old_map[particle_index]
                 [charge, sigma, epsilon] = old_system_nonbonded_force.getParticleParameters(old_index)
 
-                # Add the particle to the hybrid custom sterics, but they dont
-                # change; electrostatics are ignored
+                # Add the particle to the hybrid custom sterics, and they don't change
+                assert grp_ind == 3
                 self._hybrid_system_forces['core_sterics_force'].addParticle(
                     [sigma, epsilon, sigma, epsilon, grp_ind]
                 )
@@ -4755,7 +4771,7 @@ class HybridTopologyFactoryREST2:
                 self._hybrid_system_forces['standard_nonbonded_force'].addParticleParameterOffset(
                     'k_rest2_sqrt', particle_index,
                     charge, 0*sigma, 0*epsilon
-                )
+                ) # the vdw will be handled by custom nonbonded force
 
             # Otherwise, the particle is in the environment and it's cold
             else:
@@ -4764,8 +4780,8 @@ class HybridTopologyFactoryREST2:
                 old_index = hybrid_to_old_map[particle_index]
                 [charge, sigma, epsilon] = old_system_nonbonded_force.getParticleParameters(old_index)
 
-                # Add the particle to the hybrid custom sterics, but they dont
-                # change; electrostatics are ignored
+                # Add the particle to the hybrid custom sterics, and they don't change
+                assert grp_ind == 4
                 self._hybrid_system_forces['core_sterics_force'].addParticle(
                     [sigma, epsilon, sigma, epsilon, grp_ind]
                 )
@@ -5336,6 +5352,7 @@ class HybridTopologyFactoryREST2:
         TODO: we should also be adding the following interaction groups...
         7) Unique-new - Unique-new
         8) Unique-old - Unique-old
+        9) EnvH - EnvH
         """
         # Get the force objects for convenience:
         sterics_custom_force = self._hybrid_system_forces['core_sterics_force']
@@ -5345,6 +5362,8 @@ class HybridTopologyFactoryREST2:
         unique_old_atoms = self._atom_classes['unique_old_atoms']
         unique_new_atoms = self._atom_classes['unique_new_atoms']
         environment_atoms = self._atom_classes['environment_atoms']
+        env_hot = self._atom_classes['environment_atoms'].intersection(self._atom_classes['rest2_atoms'])
+        env_cold = self._atom_classes['environment_atoms'] - self._atom_classes['rest2_atoms']
 
         sterics_custom_force.addInteractionGroup(unique_old_atoms, core_atoms)
 
@@ -5366,6 +5385,10 @@ class HybridTopologyFactoryREST2:
 
         sterics_custom_force.addInteractionGroup(unique_old_atoms,
                                                  unique_old_atoms)
+
+        sterics_custom_force.addInteractionGroup(env_hot, env_hot)
+        sterics_custom_force.addInteractionGroup(env_hot, env_cold)
+
 
     def _handle_hybrid_exceptions(self):
         """

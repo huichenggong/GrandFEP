@@ -1103,7 +1103,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         self.nonbonded_force.addGlobalParameter("lam_ele_del_x_k_rest2_sqrt", 1.0)   # [1.0,0.0]
         self.nonbonded_force.addGlobalParameter("lam_ele_ins_x_k_rest2_sqrt", 0.0)   # [0.0,1.0]
         self.nonbonded_force.addGlobalParameter("k_rest2_sqrt", 1.0)
-        # self.nonbonded_force.addGlobalParameter("k_rest2", 1.0)
+        self.nonbonded_force.addGlobalParameter("k_rest2", 1.0) # for later use in 1-4 scaling (exceptions)
         self.nonbonded_force.addGlobalParameter("lambda_gc_coulomb", 0.0)  # lambda for coulomb part of TI insertion/deletion
 
         # 3.4.2. NonbondedForce
@@ -1297,6 +1297,9 @@ class BaseGrandCanonicalMonteCarloSampler:
                 self.nonbonded_force.addParticle(chgA*0.0, sigA, 0.0*epsA)
                 self.nonbonded_force.addParticleParameterOffset(
                     "k_rest2_sqrt", at_ind, chgA, 0.0, 0.0
+                )
+                self.nonbonded_force.addParticleParameterOffset(
+                    "k_rest2", at_ind, 0.0, 0.0, epsA
                 )
             elif group == 4:
                 # this is envc atom
@@ -2028,6 +2031,13 @@ class _ReplicaExchangeMixin:
             state = self.simulation.context.getState(getPositions=True, enforcePeriodicBox=True)
         positions = state.getPositions(asNumpy=True)
         # Nan Check
+        any_nan = np.any(np.isnan(positions._value))
+        any_err = self.comm.allreduce(any_nan, op=MPI.LOR)
+        if any_err:
+            if any_nan:
+                self.logger.error(f"The positions contain NaN at lambda state {self.lambda_state_index}.")
+            self.comm.Barrier()
+            self.comm.Abort(1)
         box_vec = state.getPeriodicBoxVectors(asNumpy=True)
 
         positions_all = self.comm.gather(positions, root=0)
@@ -2055,6 +2065,14 @@ class _ReplicaExchangeMixin:
         positions = state.getPositions(asNumpy=True)
         velocities = state.getVelocities(asNumpy=True)
         # Nan Check
+        for name, arr in [("positions", positions), ("velocities", velocities)]:
+            any_nan = np.any(np.isnan(arr._value))
+            any_err = self.comm.allreduce(any_nan, op=MPI.LOR)
+            if any_err:
+                if any_nan:
+                    self.logger.error(f"The {name} contain NaN at lambda state {self.lambda_state_index}.")
+                self.comm.Barrier()
+                self.comm.Abort(1)
         box_vec = state.getPeriodicBoxVectors(asNumpy=True)
 
         self.lambda_states_list = self.comm.gather(self.lambda_state_index, root=0)
