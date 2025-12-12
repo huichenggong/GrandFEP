@@ -4581,7 +4581,7 @@ class HybridTopologyFactoryREST2:
 
         3. Core atoms (atoms that are present in both states A and B).
             chg = (chgA * (1-λ) + chgB * λ) * k_rest2_sqrt
-            = chgA * (1-λ) * k_rest2 + chgB * λ * k_rest2_sqrt
+            = chgA * (1-λ) * k_rest2_sqrt + chgB * λ * k_rest2_sqrt
             Two offsets are needed:
 
         4. EnvH atoms (atoms that are not alchemically modified, but included in hot region).
@@ -4629,7 +4629,6 @@ class HybridTopologyFactoryREST2:
         self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("lam_ele_del_x_k_rest2_sqrt",   1.0)
         self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("lam_ele_ins_x_k_rest2_sqrt",   0.0)
         self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("k_rest2_sqrt", 1.0)
-        self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter("k_rest2", 1.0)
 
         # self._hybrid_system_forces['standard_nonbonded_force'].addGlobalParameter('lam_vdw_core_x_k_rest2',  0.0)
 
@@ -4660,8 +4659,8 @@ class HybridTopologyFactoryREST2:
                 _check_indices(particle_index, check_index)
 
                 # lambda_electrostatics_delete ∈ [0,1]
-                # chg = chgA *  (1-lambda_electrostatics_delete) * k_rest2
-                #     = chgA * (   lam_ele_del_x_k_rest2                  )
+                # chg = chgA *  (1-lambda_electrostatics_delete) * k_rest2_sqrt
+                #     = chgA * (   lam_ele_del_x_k_rest2_sqrt             )
                 self._hybrid_system_forces['standard_nonbonded_force'].addParticleParameterOffset(
                     'lam_ele_del_x_k_rest2_sqrt', particle_index,
                     charge, 0*sigma, 0*epsilon
@@ -4693,7 +4692,7 @@ class HybridTopologyFactoryREST2:
                 #     = chgA *  lam_ele_ins_x_k_rest2
                 self._hybrid_system_forces['standard_nonbonded_force'].addParticleParameterOffset(
                     'lam_ele_ins_x_k_rest2_sqrt', particle_index,
-                    charge, 0, 0
+                    charge, 0*sigma, 0*epsilon
                 )
 
             elif particle_index in self._atom_classes['core_atoms']:
@@ -4730,11 +4729,11 @@ class HybridTopologyFactoryREST2:
                 #     = chgA * (1-λ) * k_rest2 + chgB * λ * k_rest2
                 self._hybrid_system_forces['standard_nonbonded_force'].addParticleParameterOffset(
                     'lam_ele_coreA_x_k_rest2_sqrt', particle_index,
-                    charge_old, 0, 0
+                    charge_old, 0*sigma_old, 0*epsilon_old
                     )
                 self._hybrid_system_forces['standard_nonbonded_force'].addParticleParameterOffset(
                     'lam_ele_coreB_x_k_rest2_sqrt', particle_index,
-                    charge_new, 0, 0
+                    charge_new, 0*sigma_new, 0*epsilon_new
                 )
 
             elif particle_index in self._atom_classes['rest2_atoms']:
@@ -4755,7 +4754,7 @@ class HybridTopologyFactoryREST2:
                 )
                 self._hybrid_system_forces['standard_nonbonded_force'].addParticleParameterOffset(
                     'k_rest2_sqrt', particle_index,
-                    charge, 0, epsilon
+                    charge, 0*sigma, 0*epsilon
                 )
 
             # Otherwise, the particle is in the environment and it's cold

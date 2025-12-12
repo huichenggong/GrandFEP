@@ -6,6 +6,7 @@ import copy
 from typing import Union, List, Tuple
 
 import numpy as np
+import pandas as pd
 
 from openmm import app, unit, openmm
 
@@ -2228,6 +2229,92 @@ class MytestREST2_GCMC(unittest.TestCase):
                 self.assertTrue(
                     all_close_flag,
                     f"Between 0 and {idx+1}, {len(mis_match_list)} atom does not match. \n{error_msg}")
+
+    def test_REST2_scale(self):
+        print("# When k_rest2 is given, force/energy should be scaled correctly")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+
+        base = Path(__file__).resolve().parent
+
+        inpcrd_A_r1, prmtop_A_r1, sys_A_r1 = load_amber_sys(
+            base / "CH4_C2H6" / "lig0" / "MOL_3wat.inpcrd",
+            base / "CH4_C2H6" / "lig0" / "MOL_3wat.prmtop", nonbonded_settings)
+        inpcrd_B_r1, prmtop_B_r1, sys_B_r1 = load_amber_sys(
+            base / "CH4_C2H6" / "lig1" / "MOL_3wat.inpcrd",
+            base / "CH4_C2H6" / "lig1" / "MOL_3wat.prmtop", nonbonded_settings)
+        inpcrd_A, prmtop_A, sys_A = load_amber_sys(
+            base / "CH4_C2H6" / "lig0" / "06_solv.inpcrd",
+            base / "CH4_C2H6" / "lig0" / "06_solv.prmtop", nonbonded_settings)
+        inpcrd_B, prmtop_B, sys_B = load_amber_sys(
+            base / "CH4_C2H6" / "lig1" / "06_solv.inpcrd",
+            base / "CH4_C2H6" / "lig1" / "06_solv.prmtop", nonbonded_settings)
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(
+            prmtop_A_r1.topology,
+            prmtop_B_r1.topology,
+            [{'res_nameA': 'MOL', 'res_nameB': 'MOL', 'index_map': {0: 0}}]
+        )
+        h_factory = utils.HybridTopologyFactoryREST2(
+            sys_A_r1, inpcrd_A_r1.getPositions(), prmtop_A_r1.topology,
+            sys_B_r1, inpcrd_B_r1.getPositions(), prmtop_B_r1.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+            old_rest2_atom_indices=[5, 6, 7, 8, 9, 10, 11, 12, 13],
+        )
+        mdp = utils.md_params_yml(base / "REST2/rest_scale.yml")
+        lam_df = pd.DataFrame(mdp.get_lambda_dict())
+        force_list = []
+        for i in range(6):
+            energy, force = calc_energy_force(
+                separate_force(
+                    h_factory.hybrid_system,
+                    [ 'NonbondedForce', 'CustomNonbondedForce' ]
+                ),
+                # h_factory.hybrid_system,
+                h_factory.omm_hybrid_topology,
+                h_factory.hybrid_positions, platform,
+                global_parameters=lam_df.loc[i].to_dict()
+            )
+            force_list.append(force)
+        self.assertTrue(np.allclose(force_list[4] / force_list[5], 0.5), "With k_rest2=0.5, force should be halfed.")
+
+        print(f"# Add GCMC on top of REST2")
+        h_factory = utils.HybridTopologyFactoryREST2(
+            sys_A_r1, inpcrd_A_r1.getPositions(), prmtop_A_r1.topology,
+            sys_B_r1, inpcrd_B_r1.getPositions(), prmtop_B_r1.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+        )
+        samp = sampler.BaseGrandCanonicalMonteCarloSampler(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_REST2_GCMC_scale.log",
+            platform=platform,
+            create_simulation=True,
+            optimization="O3",
+            n_split_water=3)
+        samp.set_ghost_list([1,2])
+        force_list = []
+        for i in range(6):
+            energy, force = calc_energy_force(
+                separate_force(
+                    samp.system,
+                    ['NonbondedForce', "CustomNonbondedForce"]
+                ),
+                # h_factory.hybrid_system,
+                h_factory.omm_hybrid_topology,
+                h_factory.hybrid_positions, platform,
+                global_parameters=lam_df.loc[i].to_dict()
+            )
+            force_list.append(force)
+        non_water_list = [0, 1, 2, 3, 4,
+                          14, 15, 16, 17, 18, 19, 20]
+        self.assertTrue(np.allclose(force_list[4][non_water_list] / force_list[5][non_water_list], 0.5), "With k_rest2=0.5, force should be halfed.")
 
 
 if __name__ == '__main__':

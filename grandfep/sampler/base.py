@@ -994,18 +994,22 @@ class BaseGrandCanonicalMonteCarloSampler:
             sigB *= unit.nanometer
             epsA *= unit.kilojoule_per_mole
             epsB *= unit.kilojoule_per_mole
-            atoms_params[at_ind] = [0.0, sigA, epsA, 0.0, sigB, epsB, round(at_group)]  # charge, sigmaA, epsilonA, chargeB, sigmaB, epsilonB, group
+            atoms_params[at_ind] = [0.0 * unit.elementary_charge, sigA, epsA,
+                                    0.0 * unit.elementary_charge, sigB, epsB,
+                                    round(at_group)]  # charge, sigmaA, epsilonA, chargeB, sigmaB, epsilonB, group
 
         for res, at_list in self.water_res_2_atom.items():
             for at_ind in at_list:
+                assert atoms_params[at_ind][-1]==4, f"Water should be in envc group. But res {at_ind}, atom {at_ind} is in group {atoms_params[at_ind][-1]}"
                 atoms_params[at_ind][-1] = 5
         for at_ind in self.water_res_2_atom[self.switching_water]:
             atoms_params[at_ind][-1] = 6
 
+        # construct the charge parameters from NonbondedForce
         for at_ind in range(npt_force_dict["NonbondedForce"].getNumParticles()):
             (chg, sig, eps) = npt_force_dict["NonbondedForce"].getParticleParameters(at_ind)
-            atoms_params[at_ind][0] = chg  # charge
-            atoms_params[at_ind][3] = chg  #
+            atoms_params[at_ind][0] = chg  # charge A
+            atoms_params[at_ind][3] = chg  # charge B
         for param_offset_ind in range(npt_force_dict["NonbondedForce"].getNumParticleParameterOffsets()):
             (param_name, at_ind, chg_offset, sig_offset, eps_offset) = npt_force_dict["NonbondedForce"].getParticleParameterOffset(param_offset_ind)
             if param_name == "lambda_electrostatics_delete":
@@ -1099,7 +1103,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         self.nonbonded_force.addGlobalParameter("lam_ele_del_x_k_rest2_sqrt", 1.0)   # [1.0,0.0]
         self.nonbonded_force.addGlobalParameter("lam_ele_ins_x_k_rest2_sqrt", 0.0)   # [0.0,1.0]
         self.nonbonded_force.addGlobalParameter("k_rest2_sqrt", 1.0)
-        self.nonbonded_force.addGlobalParameter("k_rest2", 1.0)
+        # self.nonbonded_force.addGlobalParameter("k_rest2", 1.0)
         self.nonbonded_force.addGlobalParameter("lambda_gc_coulomb", 0.0)  # lambda for coulomb part of TI insertion/deletion
 
         # 3.4.2. NonbondedForce
@@ -1287,9 +1291,12 @@ class BaseGrandCanonicalMonteCarloSampler:
                     'lam_ele_del_x_k_rest2_sqrt', at_ind, chgA, 0.0, 0.0)
             elif group == 3:
                 # this is envh atom
+                assert np.allclose(chgA._value, chgB._value)
+                assert np.allclose(sigA._value, sigB._value)
+                assert np.allclose(epsA._value, epsB._value)
                 self.nonbonded_force.addParticle(chgA*0.0, sigA, 0.0*epsA)
                 self.nonbonded_force.addParticleParameterOffset(
-                    "k_rest2_sqrt", at_ind, chgA, 0.0, epsA
+                    "k_rest2_sqrt", at_ind, chgA, 0.0, 0.0
                 )
             elif group == 4:
                 # this is envc atom
@@ -2020,6 +2027,7 @@ class _ReplicaExchangeMixin:
         if not state:
             state = self.simulation.context.getState(getPositions=True, enforcePeriodicBox=True)
         positions = state.getPositions(asNumpy=True)
+        # Nan Check
         box_vec = state.getPeriodicBoxVectors(asNumpy=True)
 
         positions_all = self.comm.gather(positions, root=0)
@@ -2046,6 +2054,7 @@ class _ReplicaExchangeMixin:
             state = self.simulation.context.getState(getPositions=True, getVelocities=True, enforcePeriodicBox=True)
         positions = state.getPositions(asNumpy=True)
         velocities = state.getVelocities(asNumpy=True)
+        # Nan Check
         box_vec = state.getPeriodicBoxVectors(asNumpy=True)
 
         self.lambda_states_list = self.comm.gather(self.lambda_state_index, root=0)
