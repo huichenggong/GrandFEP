@@ -2212,20 +2212,28 @@ class MytestREST2_GCMC(unittest.TestCase):
             for samp in sampler_list:
                 samp.simulation.context.setPositions(h_factory_lig1.hybrid_positions)
                 samp.set_ghost_list(g_list, check_system=False)
+                samp.simulation.context.setParameter("lambda_gc_vdw", run_i * 0.1)
 
             force_list = [calc_energy_force(
                 sampler_list[0].system,
                 h_factory_lig1.omm_hybrid_topology,
                 h_factory_lig1.hybrid_positions, platform,
+                global_parameters={"lambda_gc_vdw": run_i * 0.1}
             )[1]]
             for samp in sampler_list:
                 force_list.append(samp.simulation.context.getState(getEnergy=True, getForces=True).getForces(asNumpy=True))
 
+            # all the ghost water should have zero force
+            ghost_atoms_list = []
+            for gw in g_list:
+                ghost_atoms_list.extend(samp.water_res_2_atom[gw])
+            ghost_atoms_list = np.array(ghost_atoms_list)
             for idx, force_i in enumerate(force_list[1:]):
                 all_close_flag, mis_match_list, error_msg = match_force(force_list[0],force_i)
                 self.assertTrue(
                     all_close_flag,
                     f"Between 0 and {idx+1}, {len(mis_match_list)} atom does not match. \n{error_msg}")
+                self.assertTrue(np.allclose(force_i[ghost_atoms_list], 0.0), f"Ghost water should have zero force.")
 
     def test_REST2_scale(self):
         print("# When k_rest2 is given, force/energy should be scaled correctly")

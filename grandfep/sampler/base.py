@@ -1121,7 +1121,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             "U_sterics = 4*epsilon*x*(x-1.0) * lambda_gc * is_real1 * is_real2;"
 
             # 7. introduce softcore when new/old/switching atoms are involved
-            "x = 1 / ((softcore_alpha*lambda_alpha + (r/sigma)^6));"
+            "x = 1 / (softcore_alpha*lambda_alpha + ((r + (1 - is_real1*is_real2)) / sigma)^6);"
             "lambda_alpha = new_X*(1-lambda_sterics_insert) + old_X*lambda_sterics_delete + swit_X*(1-lambda_gc_vdw);"
 
             # 6. Interpolating between states A and B
@@ -1184,8 +1184,8 @@ class BaseGrandCanonicalMonteCarloSampler:
             "is_hot = step(3-atom_group1) + step(3-atom_group2);"
 
             # 2. vdw with water real/dummy
-            "U_sterics = 4*epsilon*x*(x-1.0) * is_real1 * is_real2;"
-            "x = (sigma/r)^6;"
+            "U_sterics = 4*epsilon*x*(x-1.0) * is_real1 * is_real1;"
+            "x = (sigma/(r + (1 - is_real1*is_real2)))^6;" # shift r by when one of the particles is dummy, to avoid singularity
 
             # 1. LJ mixing rules
             "epsilon = sqrt(epsilon1*epsilon2);"
@@ -1208,7 +1208,7 @@ class BaseGrandCanonicalMonteCarloSampler:
 
             # 2. vdw with water real/dummy
             "U_sterics = 4*epsilon*x*(x-1.0) * is_real1 * is_real2;"
-            "x = (sigma/r)^6;"
+            "x = (sigma/(r + (1 - is_real1*is_real2)))^6;" # shift r by when one of the particles is dummy, to avoid singularity
 
             # 1. LJ mixing rules
             "epsilon = sqrt(epsilon1*epsilon2);"
@@ -1236,7 +1236,7 @@ class BaseGrandCanonicalMonteCarloSampler:
 
                 # 2. vdw with water real/dummy
                 "U_sterics = 4*epsilon*x*(x-1.0) * is_real1 * is_real2;"
-                "x = (sigma/r)^6;"
+                "x = (sigma/(r + (1 - is_real1*is_real2)))^6;" # shift r by when one of the particles is dummy, to avoid singularity
 
                 # 1. LJ mixing rules
                 f"epsilon = {wat_epsilon};"
@@ -1252,7 +1252,7 @@ class BaseGrandCanonicalMonteCarloSampler:
 
                 # 2. vdw with water real/dummy
                 "U_sterics = 4*epsilon*x*(x-1.0) * is_real1 * is_real2;"
-                "x = (sigma/r)^6;"
+                "x = (sigma/(r + (1 - is_real1*is_real2)))^6;" # shift r by when one of the particles is dummy, to avoid singularity
 
                 # 1. LJ mixing rules
                 "epsilon = sqrt(epsilon1*epsilon2);"
@@ -1279,14 +1279,14 @@ class BaseGrandCanonicalMonteCarloSampler:
                 # this is new atom
                 assert np.allclose(chgA._value, 0.0)
                 assert np.allclose(epsA._value, 0.0)
-                self.nonbonded_force.addParticle(chgA*0.0, sigA, 0.0*epsA)
+                self.nonbonded_force.addParticle(chgA*0.0, sigB, 0.0*epsA)
                 self.nonbonded_force.addParticleParameterOffset(
                     'lam_ele_ins_x_k_rest2_sqrt', at_ind, chgB, 0.0, 0.0)
             elif group == 2:
                 # this is old atom
                 assert np.allclose(chgB._value, 0.0)
                 assert np.allclose(epsB._value, 0.0)
-                self.nonbonded_force.addParticle(chgB*0.0, sigB, 0.0*epsB)
+                self.nonbonded_force.addParticle(chgB*0.0, sigA, 0.0*epsB)
                 self.nonbonded_force.addParticleParameterOffset(
                     'lam_ele_del_x_k_rest2_sqrt', at_ind, chgA, 0.0, 0.0)
             elif group == 3:
