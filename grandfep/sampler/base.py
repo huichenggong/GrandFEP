@@ -1184,7 +1184,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             "is_hot = step(3-atom_group1) + step(3-atom_group2);"
 
             # 2. vdw with water real/dummy
-            "U_sterics = 4*epsilon*x*(x-1.0) * is_real1 * is_real1;"
+            "U_sterics = 4*epsilon*x*(x-1.0) * is_real1 * is_real2;"
             "x = (sigma/(r + (1 - is_real1*is_real2)))^6;" # shift r by when one of the particles is dummy, to avoid singularity
 
             # 1. LJ mixing rules
