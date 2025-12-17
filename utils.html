@@ -238,17 +238,6 @@ it does not guarantee the correct usage of the parameters anywhere else. The bui
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="grandfep.utils.md_params_yml.maxh">
-<span class="sig-name descname"><span class="pre">maxh</span></span><a class="headerlink" href="#grandfep.utils.md_params_yml.maxh" title="Link to this definition">¶</a></dt>
-<dd><p>The maximum run time. Unit in hour</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.utils.md_params_yml.nsteps">
 <span class="sig-name descname"><span class="pre">nsteps</span></span><a class="headerlink" href="#grandfep.utils.md_params_yml.nsteps" title="Link to this definition">¶</a></dt>
 <dd><p>Number of steps.</p>
@@ -834,6 +823,23 @@ to define the box. Without setting the box, trajectory files may lack box inform
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.period_from_k_mu">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">period_from_k_mu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.period_from_k_mu" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the period T from spring constant k and reduced mass mu. Please make sure k and mu have the proper units.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> (<em>spring constant</em><em> (</em><em>energy/distance^2</em><em>)</em><em>, </em><em>e.g. kJ/mol/nm^2</em>)</p></li>
+<li><p><strong>mu</strong> (<em>reduced mass</em><em> (</em><em>mass</em><em>)</em><em>, </em><em>e.g. dalton</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>T</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="grandfep.utils.prepare_atom_map">
 <span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">prepare_atom_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topologyA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topologyB</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.prepare_atom_map" title="Link to this definition">¶</a></dt>
 <dd><p>With given topology A and B, prepare the atom mapping.</p>
@@ -865,7 +871,7 @@ to define the box. Without setting the box, trajectory files may lack box inform
 
 <dl class="py function">
 <dt class="sig sig-object py" id="grandfep.utils.prepare_restraints_force">
-<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">prepare_restraints_force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_resname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'HOH'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.prepare_restraints_force" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">prepare_restraints_force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_resname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.prepare_restraints_force" title="Link to this definition">¶</a></dt>
 <dd><p>Prepare a force to add position restraints to heavy atoms. 1/2 * k * (x - x0)^2</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -873,8 +879,16 @@ to define the box. Without setting the box, trajectory files may lack box inform
 <li><p><strong>topology</strong> (<em>openmm.app.Topology</em>) – The OpenMM topology object.</p></li>
 <li><p><strong>positions</strong> (<em>openmm.unit.Quantity</em>) – The reference positions of the atoms in the system.</p></li>
 <li><p><strong>fc</strong> (<em>openmm.unit.Quantity</em>) – The force constant for the position restraints. Unit in kJ/mol/nm^2.</p></li>
-<li><p><strong>water_resname</strong> (<em>str</em>) – The residue name of water molecules to be excluded from the restraints. Default is “HOH”.</p></li>
+<li><p><strong>solvent_resname</strong> (<em>list</em>) – The residue name of water molecules to be excluded from the restraints. Default is “HOH”, “Na+”, “K+”, “Cl-“.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>posres</em> – An OpenMM CustomExternalForce object for position restraints.</p></li>
+<li><p><strong>res_atom_count</strong> (<em>int</em>) – The number of atoms in the system that are restrained.</p></li>
+<li><p><strong>res_residue_list</strong> (<em>list</em>) – A list of residue names that are restrained.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -931,6 +945,23 @@ to define the box. Without setting the box, trajectory files may lack box inform
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.reduced_mass">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">reduced_mass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.reduced_mass" title="Link to this definition">¶</a></dt>
+<dd><p>(m1*m2)/(m1+m2). Reduced mass for frequency calculation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m1</strong> (<em>mass</em><em> of </em><em>particle 1</em>)</p></li>
+<li><p><strong>m2</strong> (<em>mass</em><em> of </em><em>particle 2</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>reduced_mass</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="grandfep.utils.seconds_to_hms">
 <span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">seconds_to_hms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seconds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.seconds_to_hms" title="Link to this definition">¶</a></dt>
 <dd><p>Convert seconds to hours, minutes, and seconds.</p>
@@ -950,6 +981,227 @@ to define the box. Without setting the box, trajectory files may lack box inform
 </p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandfep.utils.HybridTopologyFactoryREST2">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">HybridTopologyFactoryREST2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old_system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_to_new_atom_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_to_new_core_atom_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_rest2_atom_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_dispersion_correction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softcore_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_dihe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.HybridTopologyFactoryREST2" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class can add REST2 when creating a hybrid topology.</p>
+<p>Atoms in the resulting hybrid system are treated as being from one
+of four possible types:</p>
+<dl class="simple">
+<dt>unique_old_atom<span class="classifier">These atoms are not mapped and only present in the old</span></dt><dd><p>system. Their interactions will be on for lambda=0, off for lambda=1</p>
+</dd>
+<dt>unique_new_atom<span class="classifier">These atoms are not mapped and only present in the new</span></dt><dd><p>system. Their interactions will be off for lambda=0, on for lambda=1</p>
+</dd>
+<dt>core_atom<span class="classifier">These atoms are mapped between the two end states, and are</span></dt><dd><p>part of a residue that is changing alchemically. Their interactions
+will be those corresponding to the old system at lambda=0, and those
+corresponding to the new system at lambda=1</p>
+</dd>
+<dt>environment_atom<span class="classifier">These atoms are mapped between the two end states, and</span></dt><dd><p>are not part of a residue undergoing an alchemical change. Their
+interactions are always on and are alchemically unmodified.</p>
+</dd>
+</dl>
+<p>All the alchemically changed atoms (core, unique_old, unique_new) will be considered “hot” in REST2.
+Other atoms in the environment can also be added by <cite>old_rest2_region_atom_indices</cite></p>
+<section id="properties">
+<h2>Properties<a class="headerlink" href="#properties" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>hybrid_system<span class="classifier">openmm.System</span></dt><dd><p>The hybrid system for simulation</p>
+</dd>
+<dt>new_to_hybrid_atom_map<span class="classifier">dict of int</span><span class="classifier">int</span></dt><dd><p>The mapping of new system atoms to hybrid atoms</p>
+</dd>
+<dt>old_to_hybrid_atom_map<span class="classifier">dict of int</span><span class="classifier">int</span></dt><dd><p>The mapping of old system atoms to hybrid atoms</p>
+</dd>
+<dt>hybrid_positions<span class="classifier">[n, 3] np.ndarray</span></dt><dd><p>The positions of the hybrid system</p>
+</dd>
+<dt>hybrid_topology<span class="classifier">mdtraj.Topology</span></dt><dd><p>The topology of the hybrid system</p>
+</dd>
+<dt>omm_hybrid_topology<span class="classifier">openmm.app.Topology</span></dt><dd><p>The OpenMM topology object corresponding to the hybrid system</p>
+</dd>
+<dt>Here are the forces in the hybrid system:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>CustomBondForce</dt><dd><p>handles bonds involving <cite>core_atoms</cite> (these are interpolated). REST2 does not change bonds</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>HarmonicBondForce</dt><dd><p>handles bonds involving <cite>environment_atoms</cite>, <cite>unique_old_atoms</cite> and <cite>unique_new_atoms</cite> (these are never scaled)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>CustomAngleForce</dt><dd><p>handles angles involving <cite>core_atoms</cite> (these are interpolated). REST2 does not change angles</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>HarmonicAngleForce</dt><dd><p>handles angles involving <cite>environment_atoms</cite>, <cite>unique_old_atoms</cite> and <cite>unique_new_atoms</cite> (these are never scaled)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>CustomTorsionForce</dt><dd><p>handles torsions involving <cite>core_atoms</cite>, <cite>rest2_atoms</cite>, <cite>unique_old_atoms</cite> and <cite>unique_new_atoms</cite> (these are interpolated).
+We are planning to scale d-d-d-d, r-d-d-d and r-r-d-d to 0 in the future</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>PeriodicTorsionForce</dt><dd><p>handles torsions involving <cite>environment_atoms</cite> (these are never scaled)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>NonbondedForce</dt><dd><p>handles all electrostatic interactions, non-rest2 environment-environment steric interactions</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>CustomNonbondedForce</dt><dd><p>handle all non environment-environment sterics</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>CustomBondForce_exceptions</dt><dd><p>handles all electrostatics and sterics exceptions involving unique old/new atoms when
+interpolate_14s is True, otherwise the electrostatics/sterics exception is in the NonbondedForce</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<p>where <cite>interactions</cite> refers to any pair of atoms that is not 1-2, 1-3, 1-4</p>
+<p>vdW table
++———-+——–+——–+——–+——–+——–+
+| Groups   | core   | new    | old    | envh   | envc   |
++==========+========+========+========+========+========+
+| 0 core   | C_alc  |        |        |        |        |
++———-+——–+——–+——–+——–+——–+
+| 1 new    | C_alc  | C_alc  |        |        |        |
++———-+——–+——–+——–+——–+——–+
+| 2 old    | C_alc  | None   | C_alc  |        |        |
++———-+——–+——–+——–+——–+——–+
+| 3 envh   | C_alc  | C_alc  | C_alc  | C_alc  |        |
++———-+——–+——–+——–+——–+——–+
+| 4 envc   | C_alc  | C_alc  | C_alc  | C_alc  | NonB   |
++———-+——–+——–+——–+——–+——–+</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.HybridTopologyFactoryREST2.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old_system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_to_new_atom_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_to_new_core_atom_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_rest2_atom_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_dispersion_correction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softcore_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_dihe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.HybridTopologyFactoryREST2.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>old_system</strong> – The OpenMM System object of the old state (state A).</p></li>
+<li><p><strong>old_positions</strong> – The positions of the old state (state A).</p></li>
+<li><p><strong>old_topology</strong> – The OpenMM Topology object of the old state (state A).</p></li>
+<li><p><strong>new_system</strong> – The OpenMM System object of the new state (state B).</p></li>
+<li><p><strong>new_positions</strong> – The positions of the new state (state B).</p></li>
+<li><p><strong>new_topology</strong> – The OpenMM Topology object of the new state (state B).</p></li>
+<li><p><strong>old_to_new_atom_map</strong> – All atoms that should map from the old state (A) to new state (B).</p></li>
+<li><p><strong>old_to_new_core_atom_map</strong> – Alchemical Atoms that should map from A to B</p></li>
+<li><p><strong>old_rest2_atom_indices</strong> – The indices of the atoms in the old system that should be considered as hot in REST2.</p></li>
+<li><p><strong>use_dispersion_correction</strong> (<em>bool</em><em>, </em><em>default False</em>) – Whether to use the long range correction in the custom sterics
+force. This can be very expensive for derivative.</p></li>
+<li><p><strong>softcore_alpha</strong> (<em>float</em><em>, </em><em>default None</em>) – “alpha” parameter of softcore sterics, default 0.5.</p></li>
+<li><p><strong>scale_dihe</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span>) – A dictionary defining the dummy atom scaling factors for dihedrals with different periodicities.
+Keys are periodicities (1, 2, 3, etc.), and values are the corresponding scaling factors.
+default is scale_dihe={ 1: 0.1, “i1”: 0.1, 2: 1.0, “i2”: 1.0, 3: 0.1, “i3”: 0.1, 4: 0.1, “i4”: 0.1, 5: 0.1, “i5”: 0.1,}.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.HybridTopologyFactoryREST2._handle_nonbonded">
+<span class="sig-name descname"><span class="pre">_handle_nonbonded</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.HybridTopologyFactoryREST2._handle_nonbonded" title="Link to this definition">¶</a></dt>
+<dd><p>Handle the nonbonded interactions defined in the new and old systems.
+k_rest2 = T_cold / T_hot</p>
+<section id="coulomb">
+<h3>Coulomb<a class="headerlink" href="#coulomb" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt>Old atoms (atoms that only show in state A).</dt><dd><p>chg = chgA * (1-λ) * k_rest2_sqrt
+One offsets are needed:</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>New atoms (atoms that only show in state B).</dt><dd><p>chg = chgB * λ * k_rest2_sqrt
+One offset is needed:</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Core atoms (atoms that are present in both states A and B).</dt><dd><p>chg = (chgA * (1-λ) + chgB * λ) * k_rest2_sqrt
+= chgA * (1-λ) * k_rest2_sqrt + chgB * λ * k_rest2_sqrt
+Two offsets are needed:</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>EnvH atoms (atoms that are not alchemically modified, but included in hot region).</dt><dd><p>chg = chg * k_rest2_sqrt
+One offset is needed:</p>
+</dd>
+</dl>
+</li>
+<li><p>remove all 1-4 involving hot atoms</p></li>
+</ol>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>X</p></th>
+<th class="head"><p>param</p></th>
+<th class="head"><p>math</p></th>
+<th class="head"><p>chargeScale</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Old</p></td>
+<td><p>lam_ele_del_x_k_rest2_sqrt</p></td>
+<td><p>(1-λ) * k_rest2_sqrt</p></td>
+<td><p>chgA</p></td>
+</tr>
+<tr class="row-odd"><td><p>New</p></td>
+<td><p>lam_ele_ins_x_k_rest2_sqrt</p></td>
+<td><p>λ     * k_rest2_sqrt</p></td>
+<td><p>chgB</p></td>
+</tr>
+<tr class="row-even"><td><p>Core</p></td>
+<td><p>lam_ele_coreA_x_k_rest2_sqrt</p></td>
+<td><p>(1-λ) * k_rest2_sqrt</p></td>
+<td><p>chgA</p></td>
+</tr>
+<tr class="row-odd"><td><p>Core</p></td>
+<td><p>lam_ele_coreB_x_k_rest2_sqrt</p></td>
+<td><p>λ     * k_rest2_sqrt</p></td>
+<td><p>chgB</p></td>
+</tr>
+<tr class="row-even"><td><p>EnvH</p></td>
+<td><p>k_rest2_sqrt</p></td>
+<td><p>k_rest2_sqrt</p></td>
+<td><p>chg</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="vdw">
+<h3>vdW<a class="headerlink" href="#vdw" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt>NonbondedForce</dt><dd><p>env-env vdW</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>CustomNonbondedForce</dt><dd><p>non env-env vdW. U_rest2 = U_sterics*k_rest2_sqrt^(is_hot1+is_hot2)</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+</dd></dl>
+
+</section>
 </dd></dl>
 
 </section>

@@ -102,6 +102,10 @@
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.sampler.</span></span><span class="sig-name descname"><span class="pre">NPTSamplerMPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_lambda_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_dict=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_ReplicaExchangeMixin</span></code>, <a class="reference internal" href="NPTSampler.html#grandfep.sampler.NPTSampler" title="grandfep.sampler.NPT.NPTSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NPTSampler</span></code></a></p>
 <p>NPT Sampler class with MPI (replica exchange) support. Only Hamiltonian is allowed to be different.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_lambda_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_dict=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialize the NPT sampler with MPI support</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -119,6 +123,8 @@
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.check_temperature">
 <span class="sig-name descname"><span class="pre">check_temperature</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.check_temperature" title="Link to this definition">¶</a></dt>
@@ -143,6 +149,17 @@
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NPTSamplerMPI.rank_0_print_log">
+<span class="sig-name descname"><span class="pre">rank_0_print_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NPTSamplerMPI.rank_0_print_log" title="Link to this definition">¶</a></dt>
+<dd><p>Print log message only on rank 0, and log on all ranks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg</strong> – The message to be printed.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -183,6 +200,7 @@ position/boxVector/velocity</p>
 <li><p><strong>reduced_energy_matrix</strong> (<em>np.array</em>) – A numpy array with the size of (n_lambda_states, n_simulated_states)</p></li>
 <li><p><strong>re_decision</strong> (<em>dict</em>) – The exchange decision between all the pairs. e.g., <code class="docutils literal notranslate"><span class="pre">{(0,1):(True,</span> <span class="pre">ratio_0_1),</span> <span class="pre">(2,3):(True,</span> <span class="pre">ratio_2_3)}</span></code>.
 The key is the MPI rank pairs, and the value is the decision and the acceptance ratio.</p></li>
+<li><p><strong>exchange</strong> (<em>bool</em>) – Whether this replica has exchanged its state with another replica.</p></li>
 </ul>
 </p>
 </dd>

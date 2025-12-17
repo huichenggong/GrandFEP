@@ -99,14 +99,36 @@
 <h1>NoneqGrandCanonicalMonteCarloSampler<a class="headerlink" href="#noneqgrandcanonicalmontecarlosampler" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.sampler.</span></span><span class="sig-name descname"><span class="pre">NoneqGrandCanonicalMonteCarloSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_resname='HOH'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_O_name='O'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chemical_potential=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standard_volume=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sphere_radius=Quantity(value=10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit=angstrom)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_atoms=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_dcd=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jsonl_file='md.jsonl'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.sampler.</span></span><span class="sig-name descname"><span class="pre">NoneqGrandCanonicalMonteCarloSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_resname='HOH'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_O_name='O'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chemical_potential=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standard_volume=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sphere_radius=Quantity(value=10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit=angstrom)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_atoms=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_dcd=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jsonl_file='md.jsonl'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_split_water='log'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="BaseGrandCanonicalMonteCarloSampler.html#grandfep.sampler.BaseGrandCanonicalMonteCarloSampler" title="grandfep.sampler.base.BaseGrandCanonicalMonteCarloSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseGrandCanonicalMonteCarloSampler</span></code></a></p>
 <p>Nonequilibrium Grand Canonical Monte Carlo (Noneq-GCMC) sampler.</p>
 <p>In this class, GCMC is achieved by performing insertion/deletion in a nonequilibrium candidate Monte Carlo manner.
 The work value of the insertion/deletion will be used to evaluate the acceptance ratio. Insertion/deletion can
 either be performed in the whole box or in a sub-volume (active site) of the box. In an equilibrium sampling, when
 the water is free to move in/out of the sub-volume, I recommend alternating between GCMC and box.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_particle_parameter_index_cust_nb_force">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_particle_parameter_index_cust_nb_force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">custom_nonbonded_force</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_particle_parameter_index_cust_nb_force" title="Link to this definition">¶</a></dt>
+<dd><p>Get the indices of <cite>is_real</cite> and <cite>is_switching</cite> parameters in the perParticleParameters
+of <cite>self.custom_nonbonded_force</cite>.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>custom_nonbonded_force</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.CustomNonbondedForce</span></code></span>) – The CustomNonbondedForce to be checked.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple <cite>(is_real_index, is_switching_index)</cite> indicating the indices of the corresponding
+parameters in <cite>self.custom_nonbonded_force.getPerParticleParameterName(i)</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_resname='HOH'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_O_name='O'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chemical_potential=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standard_volume=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sphere_radius=Quantity(value=10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit=angstrom)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_atoms=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_dcd=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jsonl_file='md.jsonl'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_split_water='log'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>system</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.System</span></code></span>) – The OpenMM System object. Must include <cite>CustomNonbondedForce</cite> and <cite>NonbondedForce</cite> with
@@ -132,24 +154,8 @@ the correct boxVector. Only a rectangular box is supported.</p></li>
 <li><p><strong>append_dcd</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Whether to append to the DCD file. Default is True.</p></li>
 <li><p><strong>jsonl_file</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – File name for the JSONL file. Default is “md.jsonl”. This file saves the ghost_list. rst7 file needs this jsonl
 to restart the ghost list, and dcd file needs this jsonl to remove the ghost water.</p></li>
+<li><p><strong>n_split_water</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">typing.Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>) – Number of split water for Hybrid_REST2 system. If ‘log’, will use log10(N_water).</p></li>
 </ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_particle_parameter_index_cust_nb_force">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_particle_parameter_index_cust_nb_force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">custom_nonbonded_force</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_particle_parameter_index_cust_nb_force" title="Link to this definition">¶</a></dt>
-<dd><p>Get the indices of <cite>is_real</cite> and <cite>is_switching</cite> parameters in the perParticleParameters
-of <cite>self.custom_nonbonded_force</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>custom_nonbonded_force</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.CustomNonbondedForce</span></code></span>) – The CustomNonbondedForce to be checked.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A tuple <cite>(is_real_index, is_switching_index)</cite> indicating the indices of the corresponding
-parameters in <cite>self.custom_nonbonded_force.getPerParticleParameterName(i)</cite>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple of int</p>
 </dd>
 </dl>
 </dd></dl>
@@ -162,7 +168,7 @@ the current ghost and switching water configuration.</p>
 <ul class="simple">
 <li><dl class="simple">
 <dt>Ghost water:</dt><dd><ol class="arabic simple">
-<li><p><cite>is_real = 0.0</cite> and <cite>is_switching = 0.0</cite> in every CustomNonbondedForce in <cite>self.custom_nonbonded_force_list</cite></p></li>
+<li><p><cite>is_real = 0.0</cite> and <cite>is_switching = 0.0</cite> in every CustomNonbondedForce in <cite>self.custom_nonbonded_force_dict</cite></p></li>
 <li><p>Charge = 0.0 in <cite>self.nonbonded_force</cite></p></li>
 </ol>
 </dd>
@@ -170,7 +176,7 @@ the current ghost and switching water configuration.</p>
 </li>
 <li><dl class="simple">
 <dt>Real and not switching water:</dt><dd><ol class="arabic simple">
-<li><p><cite>is_real = 1.0</cite> in every CustomNonbondedForce in <cite>self.custom_nonbonded_force_list</cite></p></li>
+<li><p><cite>is_real = 1.0</cite> in every CustomNonbondedForce in <cite>self.custom_nonbonded_force_dict</cite></p></li>
 <li><p>Charge = Proper_water_charge in <cite>self.nonbonded_force</cite></p></li>
 </ol>
 </dd>
@@ -178,7 +184,7 @@ the current ghost and switching water configuration.</p>
 </li>
 <li><dl class="simple">
 <dt>Switching water:</dt><dd><ol class="arabic simple">
-<li><p><cite>is_real = 1.0</cite> in every CustomNonbondedForce in <cite>self.custom_nonbonded_force_list</cite></p></li>
+<li><p><cite>is_real = 1.0</cite> in every CustomNonbondedForce in <cite>self.custom_nonbonded_force_dict</cite></p></li>
 <li><p>Charge = 0.0 in <cite>self.nonbonded_force</cite></p></li>
 </ol>
 </dd>
@@ -355,6 +361,181 @@ to the custom_nonbonded_force (openmm.openmm.CustomNonbondedForce) for vdw.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.customise_force_hybridREST2">
+<span class="sig-name descname"><span class="pre">customise_force_hybridREST2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'log'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.customise_force_hybridREST2" title="Link to this definition">¶</a></dt>
+<dd><p>If the system is Hybrid, this function will add perParticleParameters <code class="docutils literal notranslate"><span class="pre">is_real</span></code> and <code class="docutils literal notranslate"><span class="pre">is_switching</span></code>
+to the custom_nonbonded_force (openmm.openmm.CustomNonbondedForce) for vdw.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Groups</p></th>
+<th class="head"><p>core</p></th>
+<th class="head"><p>new</p></th>
+<th class="head"><p>old</p></th>
+<th class="head"><p>envh</p></th>
+<th class="head"><p>envc</p></th>
+<th class="head"><p>wat</p></th>
+<th class="head"><p>swit</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0 core</p></td>
+<td><p>C_alc</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>1 new</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>2 old</p></td>
+<td><p>C_alc</p></td>
+<td><p>None</p></td>
+<td><p>C_alc</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>3 envh</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>NonB</p></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>4 envc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>NonB</p></td>
+<td><p>NonB</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>5 wat</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_wat1</p></td>
+<td><p>C_wat2</p></td>
+<td><p>C_wat3</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>6 swit</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><dl class="simple">
+<dt>C_alc</dt><dd><p>CustomNonbondedForce for Alchemical atoms</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>C_wat1</dt><dd><p>CustomNonbondedForce for</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>C_wat2</dt><dd><p>CustomNonbondedForce for</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>C_wat3</dt><dd><p>CustomNonbondedForce for</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>The most basic energy expression for vdw is the following. All the other forces are simplified from this one.:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="n">energy</span>  <span class="o">=</span> <span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="s2">&quot;U_rest2;&quot;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span>    <span class="c1"># 9. REST2</span>
+<span class="linenos"> 5</span>    <span class="s2">&quot;U_rest2 = U_sterics * k_rest2_sqrt^is_hot;&quot;</span>
+<span class="linenos"> 6</span>    <span class="s2">&quot;is_hot = step(3-atom_group1) + step(3-atom_group2);&quot;</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span>    <span class="c1"># 8. vdw with 1. switching water 2. water real/dummy</span>
+<span class="linenos"> 9</span>    <span class="s2">&quot;U_sterics = 4*epsilon*x*(x-1.0) * lambda_gc * is_real1 * is_real2;&quot;</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span>    <span class="c1"># 7. introduce softcore when new/old/switching atoms are involved</span>
+<span class="linenos">12</span>    <span class="s2">&quot;x = 1 / ((softcore_alpha*lambda_alpha + (r/sigma)^6));&quot;</span>
+<span class="linenos">13</span>    <span class="s2">&quot;lambda_alpha = (new_X*(1-lambda_sterics_insert) + old_X*lambda_sterics_delete + swit_X*lambda_gc_vdw) / (swit_X + 1);&quot;</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span>    <span class="c1"># 6. Interpolating between states A and B</span>
+<span class="linenos">16</span>    <span class="s2">&quot;epsilon = (1-lambda_sterics)*epsilonA + lambda_sterics*epsilonB;&quot;</span>
+<span class="linenos">17</span>    <span class="s2">&quot;sigma = (1-lambda_sterics)*sigmaA + lambda_sterics*sigmaB;&quot;</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span>    <span class="c1"># 5. select lambda</span>
+<span class="linenos">20</span>    <span class="s2">&quot;lambda_sterics = (new_X*lambda_sterics_insert + old_X*lambda_sterics_delete + core_cew*lambda_sterics_core);&quot;</span> <span class="c1"># only one lambda_XXX will take effect</span>
+<span class="linenos">21</span>    <span class="s2">&quot;lambda_gc = ((1 - swit_X) + lambda_gc_vdw * swit_X);&quot;</span> <span class="c1"># if swit_X=0 -&gt; lambda_gc=1, if swit_X=1 -&gt; lambda_gc=lambda_gc_vdw</span>
+<span class="linenos">22</span>
+<span class="linenos">23</span>    <span class="c1"># 4. determine interaction types</span>
+<span class="linenos">24</span>    <span class="s2">&quot;swit_X   = max(is_swit1, is_swit2);&quot;</span>
+<span class="linenos">25</span>    <span class="s2">&quot;core_cew = delta(old_X + new_X);&quot;</span>    <span class="c1"># core-core + core-envh + core-envc + core-wat + core-swit</span>
+<span class="linenos">26</span>    <span class="s2">&quot;new_X    = max(is_new1, is_new2);&quot;</span>
+<span class="linenos">27</span>    <span class="s2">&quot;old_X    = max(is_old1, is_old2);&quot;</span>
+<span class="linenos">28</span>
+<span class="linenos">29</span>    <span class="c1"># 3. determine atom groups</span>
+<span class="linenos">30</span>    <span class="c1">## 3.1 check atom1</span>
+<span class="linenos">31</span>    <span class="s2">&quot;is_core1 = delta(0-atom_group1);&quot;</span>
+<span class="linenos">32</span>    <span class="s2">&quot;is_new1  = delta(1-atom_group1);&quot;</span>
+<span class="linenos">33</span>    <span class="s2">&quot;is_old1  = delta(2-atom_group1);&quot;</span>
+<span class="linenos">34</span>    <span class="s2">&quot;is_envh1 = delta(3-atom_group1);&quot;</span>
+<span class="linenos">35</span>    <span class="s2">&quot;is_envc1 = delta(4-atom_group1);&quot;</span>
+<span class="linenos">36</span>    <span class="s2">&quot;is_wat1  = delta(5-atom_group1);&quot;</span>
+<span class="linenos">37</span>    <span class="s2">&quot;is_swit1 = delta(6-atom_group1);&quot;</span>
+<span class="linenos">38</span>    <span class="c1">## 3.2 check atom2</span>
+<span class="linenos">39</span>    <span class="s2">&quot;is_core2 = delta(0-atom_group2);&quot;</span>
+<span class="linenos">40</span>    <span class="s2">&quot;is_new2  = delta(1-atom_group2);&quot;</span>
+<span class="linenos">41</span>    <span class="s2">&quot;is_old2  = delta(2-atom_group2);&quot;</span>
+<span class="linenos">42</span>    <span class="s2">&quot;is_envh2 = delta(3-atom_group2);&quot;</span>
+<span class="linenos">43</span>    <span class="s2">&quot;is_envc2 = delta(4-atom_group2);&quot;</span>
+<span class="linenos">44</span>    <span class="s2">&quot;is_wat2  = delta(5-atom_group2);&quot;</span>
+<span class="linenos">45</span>    <span class="s2">&quot;is_swit2 = delta(6-atom_group2);&quot;</span>
+<span class="linenos">46</span>
+<span class="linenos">47</span>    <span class="c1"># 1. LJ mixing rules</span>
+<span class="linenos">48</span>    <span class="s2">&quot;epsilonA = sqrt(epsilonA1*epsilonA2);&quot;</span>
+<span class="linenos">49</span>    <span class="s2">&quot;epsilonB = sqrt(epsilonB1*epsilonB2);&quot;</span>
+<span class="linenos">50</span>    <span class="s2">&quot;sigmaA = 0.5*(sigmaA1 + sigmaA2);&quot;</span>
+<span class="linenos">51</span>    <span class="s2">&quot;sigmaB = 0.5*(sigmaB1 + sigmaB2);&quot;</span>
+<span class="linenos">52</span>    <span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.System</span></code></span>) – The system to be converted.</p></li>
+<li><p><strong>optimization</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">typing.Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'O3'</span></code>, <code class="docutils literal notranslate"><span class="pre">'O1'</span></code>]</span>) – Level of optimization. It can be <cite>O3</cite> or <cite>O1</cite>. When <cite>O3</cite> is selected, We will try to hard code sigma and epsilon
+into the energy expression for wat-wat interaction if there is only one water atom has LJ. This can be applied to
+TIP3P, OPC. <cite>O3</cite> will make no difference if charmm TIP3P is used, because H also has LJ parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_ghost_list">
 <span class="sig-name descname"><span class="pre">get_ghost_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">check_system</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.get_ghost_list" title="Link to this definition">¶</a></dt>
 <dd><p>Get a copy of the current ghost water list.</p>
@@ -427,8 +608,8 @@ epsilonScale
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
-<li><p><strong>water_state_dict</strong> (<em>dict</em>) – A dictionary label whether the water molecule is inside the box (1) or not (0).</p></li>
-<li><p><strong>dist_all_o</strong> (<em>np.array</em>) – All the distance bewteen water oxygen and the center of the sphere.</p></li>
+<li><p><strong>water_state_dict</strong> (<em>dict</em>) – A dictionary label whether the water molecule is inside the sphere (1) or not (0).</p></li>
+<li><p><strong>dist_all_o</strong> (<em>np.array</em>) – The distance between all the water oxygen and the center of the sphere. Value in nanometers.</p></li>
 </ul>
 </p>
 </dd>
@@ -787,7 +968,7 @@ the updated <cite>ghost_list</cite>. Default is True.</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.custom_nonbonded_force_list">
-<span class="sig-name descname"><span class="pre">custom_nonbonded_force_list</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.CustomNonbondedForce</span></code><span class="pre">]</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.custom_nonbonded_force_list" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">custom_nonbonded_force_list</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><span class="pre">]</span></em><a class="headerlink" href="#grandfep.sampler.NoneqGrandCanonicalMonteCarloSampler.custom_nonbonded_force_list" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">

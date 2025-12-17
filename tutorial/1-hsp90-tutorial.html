@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>HSP90 &#8212; GrandFEP  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=3f530b75" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=fd3c8104" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Chemical Potential and Standard State Volume" href="2-StandardV-Chemical-Potential.html" />
+    <link rel="prev" title="Tutorials" href="tutorial.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">GrandFEP</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=huichenggong&repo=GrandFEP&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="tutorial.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">HSP90</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2-StandardV-Chemical-Potential.html">Chemical Potential and Standard State Volume</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">GrandFEP API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../commandline.html">GrandFEP CLI</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="tutorial.html">Tutorials</a><ul>
+      <li>Previous: <a href="tutorial.html" title="previous chapter">Tutorials</a></li>
+      <li>Next: <a href="2-StandardV-Chemical-Potential.html" title="next chapter">Chemical Potential and Standard State Volume</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="hsp90">
+<h1>HSP90<a class="headerlink" href="#hsp90" title="Link to this heading">¶</a></h1>
+<section id="introduction">
+<h2>1. Introduction<a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h2>
+<p>This tutorial will use the hsp90 woodhead data set from Schrodinger. The input file is adapted from the paper of
+Ross et al.:ref:<cite>1 &lt;reference&gt;</cite> The hsp90 woodhead data set shows significant improvement in sampling efficiency when
+using Grand Canonical Monte Carlo (GCMC) water sampling.</p>
+</section>
+<section id="preparation">
+<h2>2. Preparation<a class="headerlink" href="#preparation" title="Link to this heading">¶</a></h2>
+<section id="environment-setup">
+<h3>2.1. Environment setup<a class="headerlink" href="#environment-setup" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
+mamba<span class="w"> </span>activate<span class="w"> </span>grandfep_dev
+<span class="nb">export</span><span class="w"> </span><span class="nv">script_dir</span><span class="o">=</span><span class="s2">&quot;/GrandFEP_Gitdir/Script/&quot;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">GrandFEP_Gitdir</span></code> should be replaced by your <code class="docutils literal notranslate"><span class="pre">GrandFEP</span></code> git repository directory. The scripts in <code class="docutils literal notranslate"><span class="pre">Script/</span></code> will be used
+throughout the tutorial.</p>
+</section>
+<section id="ligand-preparation">
+<h3>2.2. Ligand preparation<a class="headerlink" href="#ligand-preparation" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
+<span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/lig_prep
+</pre></div>
+</div>
+<p>All of the ligands have been prepared by <code class="docutils literal notranslate"><span class="pre">Antechamber</span></code>. <code class="docutils literal notranslate"><span class="pre">02.mol2</span></code> has the AM1-BCC charges and <code class="docutils literal notranslate"><span class="pre">03.frcmod</span></code> has the
+missing parameters. <code class="docutils literal notranslate"><span class="pre">tleap</span></code> script <code class="docutils literal notranslate"><span class="pre">04_tip3p_150mmol.in</span></code>. The solvated water box <code class="docutils literal notranslate"><span class="pre">03_all_ligands_solvated.pdb</span></code> are also
+provided.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="mi">04</span><span class="n">_build_box</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>After running <code class="docutils literal notranslate"><span class="pre">04_build_box.sh</span></code>, Amber top and coordinate file will be generated in each ligand folder. Those files
+are : <code class="docutils literal notranslate"><span class="pre">07_tip3p.pdb</span></code>, <code class="docutils literal notranslate"><span class="pre">07_tip3p.prmtop</span></code>,``07_tip3p.inpcrd`` for tip3p water and <code class="docutils literal notranslate"><span class="pre">08_opc.pdb</span></code>, <code class="docutils literal notranslate"><span class="pre">08_opc.prmtop</span></code>,
+<code class="docutils literal notranslate"><span class="pre">08_opc.inpcrd</span></code> for OPC water.</p>
+</section>
+<section id="protein-preparation">
+<h3>2.3. Protein preparation<a class="headerlink" href="#protein-preparation" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
+<span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/pro_prep
+</pre></div>
+</div>
+<p>Files are provided.</p>
+</section>
+<section id="check-atom-mapping">
+<h3>2.4. Check atom mapping<a class="headerlink" href="#check-atom-mapping" title="Link to this heading">¶</a></h3>
+<p>The atom mapping is provided in each edge (<code class="docutils literal notranslate"><span class="pre">edge_LigX_to_LigY</span></code>) folder. You can visualize the mapping by excuting the
+following script.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
+<span class="nb">cd</span><span class="w"> </span>JOB/atom_mapping/
+./run_check_all.sh
+</pre></div>
+</div>
+<p>The pymol script <code class="docutils literal notranslate"><span class="pre">$script_dir/color_map_pairs.py</span></code> will be called to load and color the mapped atoms. Mapped atoms will
+have the same color showing in sphere. <span class="raw-html-md"><br /></span></p>
+<a class="reference external image-reference" href="../../docs/picture/edge_1_to_2.png"><img alt="mapping" src="../_images/edge_1_to_2.png" />
+</a>
+</section>
+<section id="hybrid-system-preparation">
+<h3>2.5. Hybrid system preparation<a class="headerlink" href="#hybrid-system-preparation" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
+<span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/JOB/tip3p_REST2
+./run_01_hybrid.sh
+</pre></div>
+</div>
+<p>This will take a while. This script prepares the hybrid topologies (the <code class="docutils literal notranslate"><span class="pre">system</span></code> object in openmm), and save the
+<code class="docutils literal notranslate"><span class="pre">system</span></code> to a serialized file <code class="docutils literal notranslate"><span class="pre">system.xml.gz</span></code>. This can save time in the later simulations. Here is a quick explanation
+of the script for doing this hybrid system preparation.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$script_dir</span>/hybrid.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-prmtopA<span class="w"> </span>A.prmtop<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-prmtopB<span class="w"> </span>B.prmtop<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-inpcrdA<span class="w"> </span>A.inpcrd<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-inpcrdB<span class="w"> </span>B.inpcrd<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-yml<span class="w"> </span>../hybrid_map.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-pdb<span class="w"> </span>system.pdb<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-system<span class="w"> </span>system.xml.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-REST2<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-dum_dihe_scale<span class="w"> </span><span class="m">0</span>.0<span class="w">  </span><span class="m">1</span>.0<span class="w">  </span><span class="m">0</span>.0<span class="w">  </span><span class="m">0</span>.0<span class="w">  </span><span class="m">0</span>.0
+</pre></div>
+</div>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">prmtop</span></code> and <code class="docutils literal notranslate"><span class="pre">inpcrd</span></code> are the Amber topology and coordinate files.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">yml</span></code> is the yaml file that contains the atom mapping and nonbonded settings. An example is given below.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">system.pdb</span></code> is the output pdb file for saving the hybrid topology (<code class="docutils literal notranslate"><span class="pre">openmm.topology</span></code> has atom, bond and residue
+information).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">system.xml.gz</span></code> is the compressed serialized hybrid system file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-REST2</span></code> uses REST2.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-dum_dihe_scale</span></code> scales the dummy dihedral terms in the hybrid system. Here we set the scaling factors for dummy
+dihedrals with periodicity 1, 2, 3, 4, 5 to be <code class="docutils literal notranslate"><span class="pre">0.0</span> <span class="pre">1.0</span> <span class="pre">0.0</span> <span class="pre">0.0</span> <span class="pre">0.0</span></code>, meaning only the periodicity 2 dummy dihedrals are
+kept. This can give flexibility to the dummy atoms but stop double bond from isomerization.</p></li>
+</ol>
+<p>yaml example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">mapping_list</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">index_map</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">0</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">    </span><span class="nt">3</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">  </span><span class="nt">res_nameA</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MOL</span>
+<span class="w">  </span><span class="nt">res_nameB</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MOL</span>
+<span class="c1"># map res MOL in state A to res MOL in state B with the above atom index mapping</span>
+
+<span class="c1"># nonbonded settings for HMR (hydrogen mass repartitioning). They will be passed to AmberPrmtopFile.createSystem()</span>
+<span class="nt">system_setting</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">nonbondedMethod</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;app.PME&quot;</span>
+<span class="w">  </span><span class="nt">nonbondedCutoff</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.0</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">unit.nanometer&quot;</span>
+<span class="w">  </span><span class="nt">constraints    </span><span class="p">:</span><span class="w"> </span><span class="s">&quot;app.HBonds&quot;</span>
+<span class="w">  </span><span class="nt">hydrogenMass   </span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.0</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">unit.amu&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="center-selection">
+<h3>2.6. Center selection<a class="headerlink" href="#center-selection" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
+<span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/JOB/tip3p_REST2/protein/center_selection
+pymol<span class="w"> </span>run_check.py
+</pre></div>
+</div>
+<p>There are 2 types of GC moves: GC_sphere and GC_box. GC_sphere tries to insert/delete water molecules within a sphere
+centered at a specified atom. GC_box tries to insert/delete water molecules in the whole simulation box. GC_sphere
+actively samples water molecules in the binding site, while GC_box generates density fluctuations. GC_sphere needs a
+center atom to define the sphere. We check this center selection here. The selected center atom will be shown in
+sphere.</p>
+<p>Please change the 2nd C19 atom in <code class="docutils literal notranslate"><span class="pre">edge_3_to_2/tip3p_REST2/protein/system.pdb</span></code> to something else (e.g., C99)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span> <span class="n">HETATM41019</span>  <span class="n">C19</span> <span class="n">MOL</span> <span class="n">B</span>   <span class="mi">1</span>      <span class="mf">38.771</span>  <span class="mf">38.915</span>  <span class="mf">39.837</span>  <span class="mf">1.00</span>  <span class="mf">0.00</span>           <span class="n">C</span>
+<span class="o">---</span>
+<span class="o">&gt;</span> <span class="n">HETATM41019</span>  <span class="n">C99</span> <span class="n">MOL</span> <span class="n">B</span>   <span class="mi">1</span>      <span class="mf">38.771</span>  <span class="mf">38.915</span>  <span class="mf">39.837</span>  <span class="mf">1.00</span>  <span class="mf">0.00</span>           <span class="n">C</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="water-leg-npt">
+<h2>3. Water leg NPT<a class="headerlink" href="#water-leg-npt" title="Link to this heading">¶</a></h2>
+<section id="id1">
+<h3>3.1. Preparation<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<p>Only one edge will be demonstrated.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
+<span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/
+cat<span class="w"> </span>../OPT_lam.yml
+</pre></div>
+</div>
+<p>An optimized lambda schedule for 16 window FEP is provided in <code class="docutils literal notranslate"><span class="pre">OPT_lam.yml</span></code>. We will use this lambda schedule to run
+the water leg NPT simulations.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># window Indices                            0,             1,             2,             3,</span>
+<span class="nt">lambda_angles               </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.066667</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.133333</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.200000</span><span class="p p-Indicator">,]</span><span class="w"> </span><span class="c1"># ... linear</span>
+<span class="nt">lambda_bonds                </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.066667</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.133333</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.200000</span><span class="p p-Indicator">,]</span><span class="w"> </span><span class="c1"># ... linear</span>
+<span class="nt">lambda_sterics_core         </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.066667</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.133333</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.200000</span><span class="p p-Indicator">,]</span><span class="w"> </span><span class="c1"># ... linear</span>
+<span class="nt">lambda_electrostatics_core  </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.066667</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.133333</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.200000</span><span class="p p-Indicator">,]</span><span class="w"> </span><span class="c1"># ... linear</span>
+<span class="nt">lambda_torsions             </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.066667</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.133333</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.200000</span><span class="p p-Indicator">,]</span><span class="w"> </span><span class="c1"># ... linear</span>
+<span class="nt">k_rest2                     </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="nv">1.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.904286</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.808571</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.712857</span><span class="p p-Indicator">,]</span><span class="w"> </span><span class="c1"># 1.0 ~ 0.33 ~ 1.0</span>
+<span class="c1">#</span>
+<span class="c1"># lambda_total                  0.00000000000, 0.03895141349, 0.08555498164, 0.14334167206,</span>
+<span class="c1"># = lambda_electrostatics_delete + lambda_sterics_delete + lambda_electrostatics_insert</span>
+<span class="nt">lambda_electrostatics_delete</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.116854</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.256665</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.430025</span><span class="p p-Indicator">,]</span>
+<span class="c1"># lambda_sterics_delete = lambda_sterics_insert</span>
+<span class="nt">lambda_sterics_delete       </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,]</span>
+<span class="nt">lambda_sterics_insert       </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,]</span>
+<span class="nt">lambda_electrostatics_insert</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000</span><span class="p p-Indicator">,]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">lambda_angles</span></code>, <code class="docutils literal notranslate"><span class="pre">lambda_bonds</span></code>, <code class="docutils literal notranslate"><span class="pre">lambda_torsions</span></code>, <code class="docutils literal notranslate"><span class="pre">lambda_sterics_core</span></code>, <code class="docutils literal notranslate"><span class="pre">lambda_electrostatics_core</span></code> are linearly
+spaced from 0 to 1. <code class="docutils literal notranslate"><span class="pre">k_rest2</span></code> scales down the interaction of REST2 (hot) atoms. The interaction is scaled down to 0.33
+at the middle windows (window 7 and 8), which is effectivly increasing the temperature to <code class="docutils literal notranslate"><span class="pre">298.15K</span> <span class="pre">/</span> <span class="pre">0.33</span> <span class="pre">=</span> <span class="pre">903.5K</span></code>.</p>
+<p>These 4 lambda values are optimized (non-linear)</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">lambda_electrostatics_delete</span></code> turns off the charges on atoms that exist in state A but become dummy atoms in
+state B.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lambda_sterics_delete</span></code> turns off the vdW interaction on atoms that exist in state A but become dummy atoms in
+state B.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lambda_sterics_insert</span></code> turns on the vdW interaction on atoms that exist in state B but stay dummy in state A.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lambda_electrostatics_insert</span></code> turns on the charges on atoms that exist in state B but stay dummy in state A.</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">lambda_sterics_delete</span></code> and <code class="docutils literal notranslate"><span class="pre">lambda_sterics_insert</span></code> are set with the same values, and the total process is defined
+as <code class="docutils literal notranslate"><span class="pre">lambda_electrostatics_delete</span></code> + <code class="docutils literal notranslate"><span class="pre">lambda_sterics_delete</span></code> + <code class="docutils literal notranslate"><span class="pre">lambda_electrostatics_insert</span></code>. This gives us a
+1-dimensional path optimization problem. The lambda schedule optimization is not covered in this tutorial.</p>
+<p>We are going to prepare the simulation parameter yaml files here:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
+<span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/
+mkdir<span class="w"> </span>-p<span class="w"> </span>water/NPT/
+cp<span class="w"> </span>../../JOB/tip3p_REST2/water/NPT/rep_999<span class="w"> </span>./water/NPT/<span class="w"> </span>-r
+
+<span class="nb">cd</span><span class="w"> </span>water/NPT/rep_999/
+
+sed<span class="w"> </span><span class="s1">&#39;s/GEN_VEL/true/&#39;</span><span class="w">  </span>npt_tmp.yml<span class="w"> </span>&gt;<span class="w"> </span>./npt_eq.yml
+sed<span class="w"> </span><span class="s1">&#39;s/GEN_VEL/false/&#39;</span><span class="w"> </span>npt_tmp.yml<span class="w"> </span>&gt;<span class="w"> </span>./npt.yml
+
+<span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
+<span class="k">do</span>
+<span class="w">    </span>mkdir<span class="w"> </span><span class="nv">$win</span><span class="w"> </span>-p
+<span class="w">    </span>sed<span class="w"> </span><span class="s2">&quot;s/INIT_LAMBDA_STATE/</span><span class="nv">$win</span><span class="s2">/&quot;</span><span class="w"> </span>npt_eq.yml<span class="w"> </span>&gt;<span class="w"> </span><span class="nv">$win</span>/npt_eq.yml
+<span class="w">    </span>sed<span class="w"> </span><span class="s2">&quot;s/INIT_LAMBDA_STATE/</span><span class="nv">$win</span><span class="s2">/&quot;</span><span class="w"> </span>npt.yml<span class="w">    </span>&gt;<span class="w"> </span><span class="nv">$win</span>/npt.yml
+<span class="w">    </span>cat<span class="w"> </span>../../../OPT_lam.yml<span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="nv">$win</span>/npt_eq.yml
+<span class="w">    </span>cat<span class="w"> </span>../../../OPT_lam.yml<span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="nv">$win</span>/npt.yml
+<span class="k">done</span>
+<span class="nb">cd</span><span class="w"> </span>../
+</pre></div>
+</div>
+<p>These yaml files contain the simulation parameters for each window.</p>
+</section>
+<section id="equilibration-3-2-equilibration">
+<h3>3.2. Equilibration {#3-2-equilibration}<a class="headerlink" href="#equilibration-3-2-equilibration" title="Link to this heading">¶</a></h3>
+<p>Run the following script to equilibrate each window individually.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
+<span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/water/NPT/
+cp<span class="w"> </span>rep_999/<span class="w"> </span>rep_0/<span class="w"> </span>-r
+<span class="nb">cd</span><span class="w"> </span>rep_0/
+<span class="nv">base</span><span class="o">=</span><span class="nv">$PWD</span>
+<span class="nv">batch_size</span><span class="o">=</span><span class="m">4</span><span class="w"> </span><span class="c1"># 16 windows in batch of 4, you can do batch of 8 if you have more CPUs</span>
+<span class="k">for</span><span class="w"> </span>win0<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>seq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="nv">$batch_size</span><span class="w"> </span><span class="m">15</span><span class="k">)</span>
+<span class="k">do</span>
+<span class="w">    </span><span class="nv">win1</span><span class="o">=</span><span class="k">$((</span><span class="nv">win0</span><span class="o">+</span><span class="nv">batch_size</span><span class="o">-</span><span class="m">1</span><span class="k">))</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>seq<span class="w"> </span><span class="nv">$win0</span><span class="w"> </span><span class="nv">$win1</span><span class="k">)</span>
+<span class="w">    </span><span class="k">do</span>
+<span class="w">        </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$base</span>/<span class="nv">$win</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-f<span class="w"> </span>npt_eq.pdb<span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">            </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Run </span><span class="nv">$win</span><span class="s2">&quot;</span>
+<span class="w">            </span><span class="nv">$script_dir</span>/run_NPT_init.py<span class="w"> </span><span class="se">\</span>
+<span class="w">                </span>-pdb<span class="w"> </span>../../../system.pdb<span class="w"> </span><span class="se">\</span>
+<span class="w">                </span>-system<span class="w"> </span>../../../system.xml.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">                </span>-nstep<span class="w"> </span><span class="m">50000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">                </span>-yml<span class="w"> </span>npt_eq.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">                </span>-deffnm<span class="w"> </span>npt_eq<span class="w"> </span><span class="p">&amp;</span>
+<span class="w">                </span><span class="c1"># 50000 * 0.004 ps = 200 ps</span>
+<span class="w">        </span><span class="k">fi</span>
+<span class="w">    </span><span class="k">done</span>
+<span class="w">    </span><span class="nb">wait</span>
+<span class="k">done</span>
+</pre></div>
+</div>
+<p>This will run 200 ps NPT equilibration for each window. After equilibration, you can check the csv file for temperature
+and density.</p>
+</section>
+<section id="production">
+<h3>3.3. Production<a class="headerlink" href="#production" title="Link to this heading">¶</a></h3>
+<p>Run the following script to run production NPT simulations.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
+<span class="k">do</span>
+<span class="w">    </span>mkdir<span class="w"> </span><span class="nv">$win</span>/0<span class="w"> </span>-p
+<span class="k">done</span>
+
+mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="nv">$script_dir</span>/run_NPT_RE.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-pdb<span class="w">    </span>../../system.pdb<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-system<span class="w"> </span>../../system.xml.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-multidir<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="m">6</span><span class="w"> </span><span class="m">7</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">9</span><span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">12</span><span class="w"> </span><span class="m">13</span><span class="w"> </span><span class="m">14</span><span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-yml<span class="w"> </span>npt.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-maxh<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-ncycle<span class="w"> </span><span class="m">10000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-start_rst7<span class="w"> </span>npt_eq.rst7<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-deffnm<span class="w"> </span><span class="m">0</span>/npt
+</pre></div>
+</div>
+<p>After 4 hour time out, you can execute the same command again to continue the simulation. The <code class="docutils literal notranslate"><span class="pre">-deffnm</span></code> flag will tells
+the script to append the new data to existing files. The simulation will end when the number of RE reaches <code class="docutils literal notranslate"><span class="pre">ncycle</span></code>
+(10000 here).</p>
+<p>If you want to start a new simulation in the next directory (e.g., <code class="docutils literal notranslate"><span class="pre">1/npt</span></code>), you can run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
+<span class="k">do</span>
+<span class="w">    </span>mkdir<span class="w"> </span><span class="nv">$win</span>/1<span class="w"> </span>-p
+<span class="k">done</span>
+
+mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="nv">$script_dir</span>/run_NPT_RE.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-pdb<span class="w">    </span>../../system.pdb<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-system<span class="w"> </span>../../system.xml.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-multidir<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="m">6</span><span class="w"> </span><span class="m">7</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">9</span><span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">12</span><span class="w"> </span><span class="m">13</span><span class="w"> </span><span class="m">14</span><span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-yml<span class="w"> </span>npt.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-maxh<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-ncycle<span class="w"> </span><span class="m">10000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-start_rst7<span class="w"> </span><span class="m">0</span>/npt.rst7<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-deffnm<span class="w"> </span><span class="m">1</span>/npt
+</pre></div>
+</div>
+<p>5 ~ 10 ns is sufficient.</p>
+</section>
+</section>
+<section id="npt-density-equilibration">
+<h2>4. NPT density equilibration<a class="headerlink" href="#npt-density-equilibration" title="Link to this heading">¶</a></h2>
+<p>GC has slower density fluctuation autocorrelation time than normal NPT MD. NPT is still the better way to equilibrate
+the density. We run a short NPT simulation to equilibrate the density before running GC simulations. We run the same
+thing as the water leg (<code class="docutils literal notranslate"><span class="pre">$script_dir/run_NPT_init.py</span></code>).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
+<span class="c1"># Preparation</span>
+<span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein
+mkdir<span class="w"> </span>NPT
+cp<span class="w"> </span>../../../JOB/tip3p_REST2/protein/NPT/rep_999<span class="w"> </span>./NPT/<span class="w"> </span>-r
+
+<span class="nb">cd</span><span class="w"> </span>./NPT/rep_999/
+
+sed<span class="w"> </span><span class="s1">&#39;s/GEN_VEL/true/&#39;</span><span class="w">  </span>npt_tmp.yml<span class="w"> </span>&gt;<span class="w"> </span>./npt_eq.yml
+sed<span class="w"> </span><span class="s1">&#39;s/GEN_VEL/false/&#39;</span><span class="w"> </span>npt_tmp.yml<span class="w"> </span>&gt;<span class="w"> </span>./npt.yml
+
+<span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
+<span class="k">do</span>
+<span class="w">    </span>mkdir<span class="w"> </span><span class="nv">$win</span><span class="w"> </span>-p
+<span class="w">    </span>sed<span class="w"> </span><span class="s2">&quot;s/INIT_LAMBDA_STATE/</span><span class="nv">$win</span><span class="s2">/&quot;</span><span class="w"> </span>npt_eq.yml<span class="w"> </span>&gt;<span class="w">  </span><span class="nv">$win</span>/npt_eq.yml
+<span class="w">    </span>sed<span class="w"> </span><span class="s2">&quot;s/INIT_LAMBDA_STATE/</span><span class="nv">$win</span><span class="s2">/&quot;</span><span class="w"> </span>npt.yml<span class="w">    </span>&gt;<span class="w">  </span><span class="nv">$win</span>/npt.yml
+<span class="w">    </span>cat<span class="w"> </span>../../../OPT_lam.yml<span class="w">                   </span>&gt;&gt;<span class="w"> </span><span class="nv">$win</span>/npt_eq.yml
+<span class="w">    </span>cat<span class="w"> </span>../../../OPT_lam.yml<span class="w">                   </span>&gt;&gt;<span class="w"> </span><span class="nv">$win</span>/npt.yml
+<span class="k">done</span>
+<span class="nb">cd</span><span class="w"> </span>../
+
+<span class="c1"># Equilibration</span>
+<span class="nv">base</span><span class="o">=</span><span class="nv">$PWD</span>
+<span class="k">for</span><span class="w"> </span>rep<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..2<span class="o">}</span>
+<span class="k">do</span>
+<span class="w">    </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$base</span>
+<span class="w">    </span>cp<span class="w"> </span>rep_999/<span class="w"> </span>rep_<span class="nv">$rep</span>/<span class="w"> </span>-r
+<span class="w">    </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$base</span>/rep_<span class="nv">$rep</span>/
+<span class="w">    </span><span class="nv">batch_size</span><span class="o">=</span><span class="m">4</span><span class="w"> </span><span class="c1"># 16 windows in batch of 4, you can do batch of 8 or 16 if you have more CPUs</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span>win0<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>seq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="nv">$batch_size</span><span class="w"> </span><span class="m">15</span><span class="k">)</span>
+<span class="w">    </span><span class="k">do</span>
+<span class="w">        </span><span class="nv">win1</span><span class="o">=</span><span class="k">$((</span><span class="nv">win0</span><span class="o">+</span><span class="nv">batch_size</span><span class="o">-</span><span class="m">1</span><span class="k">))</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>seq<span class="w"> </span><span class="nv">$win0</span><span class="w"> </span><span class="nv">$win1</span><span class="k">)</span>
+<span class="w">        </span><span class="k">do</span>
+<span class="w">            </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$base</span>/rep_<span class="nv">$rep</span>/<span class="nv">$win</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-f<span class="w"> </span>npt_eq.pdb<span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">                </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Run rep_</span><span class="nv">$rep</span><span class="s2"> </span><span class="nv">$win</span><span class="s2">&quot;</span>
+<span class="w">                </span><span class="nv">$script_dir</span>/run_NPT_init.py<span class="w"> </span><span class="se">\</span>
+<span class="w">                    </span>-pdb<span class="w"> </span>../../../system.pdb<span class="w"> </span><span class="se">\</span>
+<span class="w">                    </span>-system<span class="w"> </span>../../../system.xml.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">                    </span>-nstep<span class="w"> </span><span class="m">100000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">                    </span>-yml<span class="w"> </span>npt_eq.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">                    </span>-deffnm<span class="w"> </span>npt_eq<span class="w"> </span><span class="p">&amp;</span>
+<span class="w">                    </span><span class="c1"># 100000 * 0.004 ps = 400 ps</span>
+<span class="w">            </span><span class="k">fi</span>
+<span class="w">        </span><span class="k">done</span>
+<span class="w">        </span><span class="nb">wait</span>
+<span class="w">    </span><span class="k">done</span>
+<span class="k">done</span>
+</pre></div>
+</div>
+<p>The NPT RE production run can be run in the same way as the water leg.</p>
+</section>
+<section id="gcmc">
+<h2>5. GCMC<a class="headerlink" href="#gcmc" title="Link to this heading">¶</a></h2>
+<p>GC (µVT) can be relatively expensive than normal NPT, if you want to achieve the same density fluctuations.
+Modern simulation engines do NPT by calculating the virial and scaling the box, but GCMC (µVT) needs
+insertion/deletion Monte Carlo moves to generate density fluctuations and sample waters. Although the
+primary goal of GC is to sample water molecules in the binding site, we still need some density fluctuations.</p>
+<p>We will run a equilibration with more GC moves in the subdir <code class="docutils literal notranslate"><span class="pre">0</span></code> in each window folder, and continue to run
+further simulations with less GC moves in <code class="docutils literal notranslate"><span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">2</span></code>, <code class="docutils literal notranslate"><span class="pre">3</span></code> … subdirs ~1ns each.</p>
+<section id="id2">
+<h3>5.1. Preparation<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<p>Prepare the yaml files for GC simulations. We use the optimized lambda schedule from water leg NPT simulations.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
+<span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein
+mkdir<span class="w"> </span>GC_80l_40MD_15RE_200MD
+cp<span class="w"> </span>../../../JOB/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_999<span class="w"> </span>./GC_80l_40MD_15RE_200MD/<span class="w"> </span>-r
+<span class="nb">cd</span><span class="w"> </span>GC_80l_40MD_15RE_200MD/rep_999/
+<span class="c1"># sed keyword GEN_VEL and RESTRAINT</span>
+<span class="nv">center</span><span class="o">=</span><span class="s2">&quot;C18&quot;</span><span class="w"> </span><span class="c1"># each edge has its own center atom</span>
+sed<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;s/GEN_VEL/true/&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-e<span class="w"> </span><span class="s2">&quot;s/RESTRAINT/false/&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>gc_tmp.yml<span class="w">            </span>&gt;<span class="w">  </span>./gc_eq.yml
+cat<span class="w"> </span>prot_eq.yml<span class="w">           </span>&gt;&gt;<span class="w"> </span>./gc_eq.yml
+cat<span class="w"> </span>../../../OPT_lam.yml<span class="w">  </span>&gt;&gt;<span class="w"> </span>./gc_eq.yml
+sed<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;s/CENTERATOM/</span><span class="nv">$center</span><span class="s2">/&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>GC_center.yml<span class="w">         </span>&gt;&gt;<span class="w"> </span>./gc_eq.yml
+
+sed<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;s/GEN_VEL/false/&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-e<span class="w"> </span><span class="s2">&quot;s/RESTRAINT/false/&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>gc_tmp.yml<span class="w">            </span>&gt;<span class="w">  </span>./gc.yml
+cat<span class="w"> </span>prot.yml<span class="w">              </span>&gt;&gt;<span class="w"> </span>./gc.yml
+cat<span class="w"> </span>../../../OPT_lam.yml<span class="w">  </span>&gt;&gt;<span class="w"> </span>./gc.yml
+sed<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;s/CENTERATOM/</span><span class="nv">$center</span><span class="s2">/&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>GC_center.yml<span class="w">         </span>&gt;&gt;<span class="w"> </span>./gc.yml
+
+<span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
+<span class="k">do</span>
+<span class="w">    </span>mkdir<span class="w"> </span><span class="nv">$win</span><span class="w"> </span>-p
+<span class="w">    </span>sed<span class="w"> </span><span class="s2">&quot;s/INIT_LAMBDA_STATE/</span><span class="nv">$win</span><span class="s2">/&quot;</span><span class="w"> </span>gc_eq.yml<span class="w"> </span>&gt;<span class="w"> </span><span class="nv">$win</span>/gc_eq.yml
+<span class="w">    </span>sed<span class="w"> </span><span class="s2">&quot;s/INIT_LAMBDA_STATE/</span><span class="nv">$win</span><span class="s2">/&quot;</span><span class="w"> </span>gc.yml<span class="w">    </span>&gt;<span class="w"> </span><span class="nv">$win</span>/gc.yml
+<span class="k">done</span>
+</pre></div>
+</div>
+<p>After the NPT equilibration, we cut a slightly smaller box on the final frame of NPT simulation. The volume
+that has been cut will be converted to ghost waters in the following GC simulations.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD
+<span class="nv">base</span><span class="o">=</span><span class="nv">$PWD</span>
+<span class="k">for</span><span class="w"> </span>rep<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..2<span class="o">}</span>
+<span class="k">do</span>
+<span class="w">    </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$base</span>/
+<span class="w">    </span>cp<span class="w"> </span>rep_999<span class="w"> </span>rep_<span class="nv">$rep</span><span class="w"> </span>-r
+<span class="w">    </span><span class="nb">cd</span><span class="w"> </span>rep_<span class="nv">$rep</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
+<span class="w">    </span><span class="k">do</span>
+<span class="w">        </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$base</span>/rep_<span class="nv">$rep</span>/<span class="nv">$win</span>
+<span class="w">        </span><span class="c1"># if link npt_eq.rst7 not exists, create link</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-L<span class="w"> </span>npt_eq.rst7<span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">            </span>ln<span class="w"> </span>-s<span class="w"> </span>../../../NPT/rep_<span class="nv">$rep</span>/<span class="nv">$win</span>/npt_eq.rst7
+<span class="w">        </span><span class="k">fi</span>
+<span class="w">    </span><span class="k">done</span>
+<span class="k">done</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$base</span>
+<span class="nv">$script_dir</span>/run_GC_prep_box.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-pdb<span class="w"> </span>../system.pdb<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-system<span class="w"> </span>../system.xml.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-multidir<span class="w"> </span>rep_?/?/<span class="w"> </span>rep_?/??/<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-yml<span class="w"> </span>gc_eq.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-start_rst7<span class="w"> </span>npt_eq.rst7<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-odeffnm<span class="w"> </span>gc_start<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-scale_box<span class="w"> </span><span class="m">0</span>.996
+</pre></div>
+</div>
+<p>The scaled box size will be saved to <code class="docutils literal notranslate"><span class="pre">gc_start.dat</span></code>.</p>
+<p>Each frame still needs to be optimized (Energy minimization). The Volume that has been cut will be converted
+to ghost waters. The ghost waters will be randomly chosen. The new box needs to be optimized.</p>
+<p>We run energy minimization on those new starting structures.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD
+<span class="nv">$script_dir</span>/run_GC_prep_box.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-pdb<span class="w"> </span>../../system.pdb<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-system<span class="w"> </span>../../system.xml.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-multidir<span class="w"> </span>rep_?/?/<span class="w"> </span>rep_?/??/<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-yml<span class="w"> </span>gc_eq.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-start_rst7<span class="w"> </span>npt_eq.rst7<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-odeffnm<span class="w"> </span>gc_start<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-box<span class="w"> </span><span class="k">$(</span>&lt;<span class="w"> </span>../gc_start.dat<span class="k">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">gc_start.rst7</span></code> and <code class="docutils literal notranslate"><span class="pre">gc_start.jsonl</span></code> will be generated in each window folder. These files will be the starting
+configuration for the GC simulations.</p>
+</section>
+<section id="equilibration">
+<h3>5.2. Equilibration<a class="headerlink" href="#equilibration" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
+<span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
+<span class="k">do</span>
+<span class="w">    </span>mkdir<span class="w"> </span><span class="nv">$win</span>/0
+<span class="k">done</span>
+mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="nv">$script_dir</span>/run_GC_RE.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-pdb<span class="w">    </span>../../../system.pdb<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-system<span class="w"> </span>../../../system.xml.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-multidir<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="m">6</span><span class="w"> </span><span class="m">7</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">9</span><span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">12</span><span class="w"> </span><span class="m">13</span><span class="w"> </span><span class="m">14</span><span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-yml<span class="w"> </span>gc_eq.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-maxh<span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-ncycle<span class="w"> </span><span class="m">576</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-start_rst7<span class="w">   </span>gc_start.rst7<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-start_jsonl<span class="w">  </span>gc_start.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-deffnm<span class="w">       </span><span class="m">0</span>/gc
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>5.3. Production<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
+<span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
+<span class="k">do</span>
+<span class="w">    </span>mkdir<span class="w"> </span><span class="nv">$win</span>/1
+<span class="k">done</span>
+mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="nv">$script_dir</span>/run_GC_RE.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-pdb<span class="w">    </span>../../../system.pdb<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-system<span class="w"> </span>../../../system.xml.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-multidir<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="m">6</span><span class="w"> </span><span class="m">7</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">9</span><span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">12</span><span class="w"> </span><span class="m">13</span><span class="w"> </span><span class="m">14</span><span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-yml<span class="w"> </span>gc.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-maxh<span class="w"> </span><span class="m">9</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-ncycle<span class="w"> </span><span class="m">1200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-start_rst7<span class="w">  </span><span class="m">0</span>/gc.rst7<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-start_jsonl<span class="w"> </span><span class="m">0</span>/gc.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-deffnm<span class="w">      </span><span class="m">1</span>/gc
+</pre></div>
+</div>
+<p>Roughly 5~15 ns is sufficient.</p>
+</section>
+</section>
+<section id="collect-results-and-estimate-delta-g">
+<h2>6. Collect results, and estimate $Delta G$<a class="headerlink" href="#collect-results-and-estimate-delta-g" title="Link to this heading">¶</a></h2>
+</section>
+<section id="what-about-amber19sb-and-opc-water">
+<h2>7. What about Amber19SB and OPC water?<a class="headerlink" href="#what-about-amber19sb-and-opc-water" title="Link to this heading">¶</a></h2>
+</section>
+<section id="tips">
+<h2>8. Tips<a class="headerlink" href="#tips" title="Link to this heading">¶</a></h2>
+<section id="how-to-set-up-the-environment-inside-a-slurm-job">
+<h3>8.1. How to set up the environment inside a slurm job<a class="headerlink" href="#how-to-set-up-the-environment-inside-a-slurm-job" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>/YourCondaInstallationDir/miniforge3/bin/activate<span class="w"> </span>grandfep
+module<span class="w"> </span>add<span class="w"> </span>openmpi/gcc/64/4.1.5<span class="w"> </span><span class="c1"># Remember to install the same OpenMPI inside the conda env</span>
+</pre></div>
+</div>
+</section>
+<section id="how-to-run-openmpi-with-2-gpus">
+<h3>8.2. How to run OpenMPI with 2 GPUs<a class="headerlink" href="#how-to-run-openmpi-with-2-gpus" title="Link to this heading">¶</a></h3>
+<p>We can prepare a hostfile and an app file for <code class="docutils literal notranslate"><span class="pre">mpirun</span></code>.</p>
+<p>In the case of running 16 threads on 2 GPUs (CUDA_VISIBLE_DEVICES=0,1) on a node called <code class="docutils literal notranslate"><span class="pre">n71-16</span></code>, the
+hostfile can be:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>n71-16
+n71-16
+</pre></div>
+</div>
+<p>The app file can be:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>-np<span class="w"> </span><span class="m">8</span><span class="w"> </span>-x<span class="w"> </span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>./run_GC_RE.py<span class="w"> </span>-arg1<span class="w"> </span>XX<span class="w"> </span>-arg2<span class="w"> </span>XXX
+-np<span class="w"> </span><span class="m">8</span><span class="w"> </span>-x<span class="w"> </span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>./run_GC_RE.py<span class="w"> </span>-arg1<span class="w"> </span>XX<span class="w"> </span>-arg2<span class="w"> </span>XXX
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">mpirun</span></code> can be called like this:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>--hostfile<span class="w"> </span>hostfile<span class="w"> </span>--app<span class="w"> </span>appfile
+</pre></div>
+</div>
+<p>Here is a sample script for preparing appfile and hostfile</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cp<span class="w"> </span><span class="nv">$script_dir</span>/run_GC_RE.py<span class="w"> </span>./
+<span class="nv">command</span><span class="o">=</span><span class="s2">&quot;./run_GC_RE.py \</span>
+<span class="s2">    -pdb system.pdb \</span>
+<span class="s2">    -system system.xml.gz \</span>
+<span class="s2">    -multidir 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 \</span>
+<span class="s2">    -yml gc_eq.yml \</span>
+<span class="s2">    -maxh 15 \</span>
+<span class="s2">    -ncycle 576 \</span>
+<span class="s2">    -start_rst7 gc_start.rst7 \</span>
+<span class="s2">    -start_jsonl gc_start.jsonl \</span>
+<span class="s2">    -deffnm 0/gc&quot;</span>
+
+<span class="nv">APPFILE</span><span class="o">=</span><span class="s2">&quot;appfile.</span><span class="nv">$SLURM_JOB_ID</span><span class="s2">&quot;</span>
+<span class="nv">HOSTFILE</span><span class="o">=</span><span class="s2">&quot;hostfile.</span><span class="nv">$SLURM_JOB_ID</span><span class="s2">&quot;</span>
+&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$APPFILE</span><span class="s2">&quot;</span><span class="w">  </span><span class="c1"># truncate/create</span>
+&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOSTFILE</span><span class="s2">&quot;</span>
+
+<span class="c1"># Split CUDA_VISIBLE_DEVICES on comma into an array</span>
+<span class="nv">IFS</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>-ra<span class="w"> </span>GPU_ARRAY<span class="w"> </span><span class="o">&lt;&lt;&lt;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$CUDA_VISIBLE_DEVICES</span><span class="s2">&quot;</span>
+
+<span class="c1"># if there are X GPUs,</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[[</span><span class="w"> </span><span class="si">${#</span><span class="nv">GPU_ARRAY</span><span class="p">[@]</span><span class="si">}</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="o">]]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span>gpu<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">GPU_ARRAY</span><span class="p">[@]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOSTNAME</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOSTFILE</span><span class="s2">&quot;</span>
+<span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;-np 4 -x CUDA_VISIBLE_DEVICES=</span><span class="nv">$gpu</span><span class="s2"> </span><span class="nv">$command</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$APPFILE</span><span class="s2">&quot;</span>
+<span class="w">    </span><span class="k">done</span>
+<span class="k">elif</span><span class="w"> </span><span class="o">[[</span><span class="w"> </span><span class="si">${#</span><span class="nv">GPU_ARRAY</span><span class="p">[@]</span><span class="si">}</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="o">]]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span>gpu<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">GPU_ARRAY</span><span class="p">[@]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOSTNAME</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOSTFILE</span><span class="s2">&quot;</span>
+<span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;-np 8 -x CUDA_VISIBLE_DEVICES=</span><span class="nv">$gpu</span><span class="s2"> </span><span class="nv">$command</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$APPFILE</span><span class="s2">&quot;</span>
+<span class="w">    </span><span class="k">done</span>
+<span class="k">elif</span><span class="w"> </span><span class="o">[[</span><span class="w"> </span><span class="si">${#</span><span class="nv">GPU_ARRAY</span><span class="p">[@]</span><span class="si">}</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="o">]]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span>gpu<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">GPU_ARRAY</span><span class="p">[@]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOSTNAME</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOSTFILE</span><span class="s2">&quot;</span>
+<span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;-np 16 -x CUDA_VISIBLE_DEVICES=</span><span class="nv">$gpu</span><span class="s2"> </span><span class="nv">$command</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$APPFILE</span><span class="s2">&quot;</span>
+<span class="w">    </span><span class="k">done</span>
+<span class="k">else</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Error: Unsupported number of GPUs (</span><span class="si">${#</span><span class="nv">GPU_ARRAY</span><span class="p">[@]</span><span class="si">}</span><span class="s2">). Expected 1, 2, or 4.&quot;</span>
+<span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="k">fi</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>date<span class="w"> </span><span class="s2">&quot;+%Y-%m-%d_%H:%M:%S&quot;</span><span class="k">)</span><span class="s2"> </span><span class="nv">$HOSTFILE</span><span class="s2">&quot;</span>
+cat<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOSTFILE</span><span class="s2">&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>date<span class="w"> </span><span class="s2">&quot;+%Y-%m-%d_%H:%M:%S&quot;</span><span class="k">)</span><span class="s2"> </span><span class="nv">$APPFILE</span><span class="s2">&quot;</span>
+cat<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$APPFILE</span><span class="s2">&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;#########################################&quot;</span>
+
+mpirun<span class="w"> </span>--hostfile<span class="w"> </span><span class="nv">$HOSTFILE</span><span class="w"> </span>--app<span class="w"> </span><span class="nv">$APPFILE</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="reference">
+<h2>9. Reference<a class="headerlink" href="#reference" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Ross, G. A.; Russell, E.; Deng, Y.; Lu, C.; Harder, E. D.; Abel, R.; Wang, L. Enhancing Water Sampling in Free Energy Calculations with Grand Canonical Monte Carlo. J. Chem. Theory Comput. 2020, 16 (10), 6061–6076. <a class="reference external" href="https://doi.org/10.1021/acs.jctc.0c00660">https://doi.org/10.1021/acs.jctc.0c00660</a>.</p></li>
+<li><p>XXX</p></li>
+</ol>
+</section>
+<section id="contact">
+<h2>10. Contact<a class="headerlink" href="#contact" title="Link to this heading">¶</a></h2>
+<p>Chenggong Hui (惠成功)</p>
+<ul class="simple">
+<li><p><strong>Email:</strong> <a class="reference external" href="mailto:chenggong&#46;hui&#37;&#52;&#48;mpinat&#46;mpg&#46;de">chenggong<span>&#46;</span>hui<span>&#64;</span>mpinat<span>&#46;</span>mpg<span>&#46;</span>de</a></p></li>
+<li><p><strong>ORCID:</strong> <a class="reference external" href="https://orcid.org/0000-0003-2875-4739">0000-0003-2875-4739</a></p></li>
+<li><p><strong>GitHub:</strong> <a class="reference external" href="https://github.com/huichenggong/GrandFEP">GrandFEP</a></p></li>
+</ul>
+<p>Here is the youtube video demonstrating this tutorial (Coming soon).</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Chenggong Hui.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/tutorial/1-hsp90-tutorial.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/huichenggong/GrandFEP" class="github">
+        <img src="../_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

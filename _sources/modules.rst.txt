@@ -3,7 +3,7 @@ GrandFEP API
 
 .. toctree::
     :maxdepth: 2
-    :caption: Contents:
+    :caption: grandfep:
 
     sampler
     utils

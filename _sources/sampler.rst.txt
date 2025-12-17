@@ -3,7 +3,7 @@ sampler
 
 .. toctree::
     :maxdepth: 1
-    :caption: Contents:
+    :caption: sampler:
 
     sampler/BaseGrandCanonicalMonteCarloSampler
     sampler/NoneqGrandCanonicalMonteCarloSampler

@@ -10,7 +10,6 @@ Welcome to the documentation for GrandFEP.
 
 .. toctree::
     :maxdepth: 2
-    :caption: Contents:
 
     intro
     tutorial/tutorial

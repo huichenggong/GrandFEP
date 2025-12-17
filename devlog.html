@@ -65,6 +65,8 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/tutorial.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/tutorial.html#hsp90-woodhead-data-set-from-schrodinger">hsp90 woodhead data set from Schrodinger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/tutorial.html#reference">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">GrandFEP API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="commandline.html">GrandFEP CLI</a></li>
 </ul>
@@ -98,6 +100,79 @@
             
   <section id="versions">
 <h1>Versions<a class="headerlink" href="#versions" title="Link to this heading">¶</a></h1>
+<section id="v0-1-3-rest2">
+<h2>v0.1.3 REST2<a class="headerlink" href="#v0-1-3-rest2" title="Link to this heading">¶</a></h2>
+<section id="plan">
+<h3>Plan<a class="headerlink" href="#plan" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>REST2</p></li>
+<li><p>AtomMapping</p></li>
+<li><p>Lambda path auto-opt</p></li>
+<li><p>ABFE</p></li>
+<li><p>cli <code class="docutils literal notranslate"><span class="pre">run_GC_RE</span></code></p></li>
+</ol>
+</section>
+<section id="rest2">
+<h3>REST2<a class="headerlink" href="#rest2" title="Link to this heading">¶</a></h3>
+<section id="charge">
+<h4>1. charge<a class="headerlink" href="#charge" title="Link to this heading">¶</a></h4>
+</section>
+<section id="vdw">
+<h4>2. vdw<a class="headerlink" href="#vdw" title="Link to this heading">¶</a></h4>
+</section>
+<section id="id1">
+<h4>3. 1-4<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h4>
+</section>
+<section id="dihedral">
+<h4>4. dihedral<a class="headerlink" href="#dihedral" title="Link to this heading">¶</a></h4>
+</section>
+<section id="bond-angle">
+<h4>5. bond, angle<a class="headerlink" href="#bond-angle" title="Link to this heading">¶</a></h4>
+<p>skip</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># create a new branch and switch to it</span>
+git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span><span class="m">0</span>.1.3_dev
+git<span class="w"> </span>push<span class="w"> </span>-u<span class="w"> </span>origin<span class="w"> </span><span class="m">0</span>.1.3_dev
+</pre></div>
+</div>
+<p>Remove the non-vdw atoms from the interaction group reduce to udpate time by order of magnitude.
+Hard code <code class="docutils literal notranslate"><span class="pre">sigma</span></code> <code class="docutils literal notranslate"><span class="pre">epsilon</span></code> into the <code class="docutils literal notranslate"><span class="pre">CustomNonbondedForce</span></code> for the water-water interaction only reduce the time from
+17s to 16s. Split water molecules into several groups saves the time for <code class="docutils literal notranslate"><span class="pre">updateParametersInContext</span></code>
+from 16s to 4s.</p>
+</section>
+</section>
+<section id="changes">
+<h3>Changes<a class="headerlink" href="#changes" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>Change the integrator from <code class="docutils literal notranslate"><span class="pre">openmmtools.integrators.BAOABIntegrator</span></code>
+to <code class="docutils literal notranslate"><span class="pre">openmm.LangevinMiddleIntegrator</span></code>, according to the following Reference.</p>
+<ol class="arabic simple">
+<li><p><a class="reference external" href="https://pubs.acs.org/doi/10.1021/acs.jctc.2c00585">GROMACS Stochastic Dynamics and BAOAB Are Equivalent Configurational Sampling Algorithms</a></p></li>
+<li><p><a class="reference external" href="https://docs.openmm.org/development/api-python/generated/openmm.openmm.LangevinMiddleIntegrator.html">Openmm doc LangevinMiddleIntegrator</a></p></li>
+<li><p><a class="reference external" href="https://pubs.acs.org/doi/10.1021/acs.jpca.9b02771">Unified Efficient Thermostat Scheme for the Canonical Ensemble with Holonomic or Isokinetic Constraints via Molecular Dynamics</a></p></li>
+</ol>
+</li>
+<li><p>Dihedral with dummy atoms <span class="raw-html-md"><br /></span>
+Dihedral with dummy atoms are will be selectively scaled. If this
+dihedral is an improper or double bonded dihedral, it will not be scaled,
+neither by REST2, nor by <code class="docutils literal notranslate"><span class="pre">lambda_torsions</span></code>. We don’t want isomerization of
+a double bond, and we don’t want to touch the ring’s planarity.</p></li>
+<li><p>XXX</p></li>
+</ol>
+</section>
+</section>
+<section id="v0-1-2">
+<h2>v0.1.2<a class="headerlink" href="#v0-1-2" title="Link to this heading">¶</a></h2>
+<section id="problem-to-be-solved">
+<h3>Problem to be Solved<a class="headerlink" href="#problem-to-be-solved" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>Add trajectory processing tools. We need 1. center the trajectory, 2. remove ghost water, 3. cluster water.</p></li>
+<li><p>Make output writing more efficient.</p></li>
+<li><p>Hybrid system with CMAP.</p></li>
+<li><p>Why does OPC water have force when all the nonbonded interactions are turned off?</p></li>
+<li><p>Lambda path optimization.</p></li>
+</ol>
+</section>
+</section>
 <section id="v0-1-1-speed-up-updateparametersincontext">
 <h2>v0.1.1 Speed up <code class="docutils literal notranslate"><span class="pre">updateParametersInContext</span></code><a class="headerlink" href="#v0-1-1-speed-up-updateparametersincontext" title="Link to this heading">¶</a></h2>
 <section id="create-a-new-branch">
@@ -116,8 +191,8 @@ git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </
 </pre></div>
 </div>
 </section>
-<section id="problem-to-be-solved">
-<h3>Problem to be Solved<a class="headerlink" href="#problem-to-be-solved" title="Link to this heading">¶</a></h3>
+<section id="id2">
+<h3>Problem to be Solved<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
 <p>In the <code class="docutils literal notranslate"><span class="pre">0.1.0</span></code>, <code class="docutils literal notranslate"><span class="pre">updateParametersInContext</span></code> cost ~1 min. This means if a RE/GCMC is accepted, the particular replica will spend 1 min  waiting. There are two solutions to speed this up.</p>
 </section>
 <section id="solution-part-1-no-configuration-exchange-in-re">
@@ -131,11 +206,11 @@ stay in the MPI rank. Only rank 0 collects and writes the trajectory/rst/energy.
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"></th>
-<th class="head"><p>old</p></th>
-<th class="head"><p>core</p></th>
-<th class="head"><p>new</p></th>
-<th class="head"><p>fix</p></th>
-<th class="head"><p>wat</p></th>
+<th class="head"><p>Old</p></th>
+<th class="head"><p>Core</p></th>
+<th class="head"><p>New</p></th>
+<th class="head"><p>Fix</p></th>
+<th class="head"><p>Wat</p></th>
 <th class="head"><p>Switch</p></th>
 </tr>
 </thead>

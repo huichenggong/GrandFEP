@@ -1,12 +1,9 @@
 Tutorials
-==============
+=========
 
+.. toctree::
+    :maxdepth: 1
 
-1. HSP90
-------------------------
+    1-hsp90-tutorial
+    2-StandardV-Chemical-Potential
 
-2. Chemical Potential and Standard Volume
------------------------------------------
-
-3. K\ :sup:`+` Channel
--------------------------
