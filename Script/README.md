@@ -6,4 +6,4 @@ Check the atom mapping of 2 ligands. Mapped atoms will be shown in sphere with m
 ```
 pymol -d "run $script_dir/color_map_pairs.py; check_color_mapping lig1.pdb, lig2.pdb, pair.dat"
 ```
-![mapping](picture/mapping_sample.png "Mapping")
+![mapping](../docs/picture/edge_1_to_2.png "Mapping")
