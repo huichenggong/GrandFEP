@@ -2278,5 +2278,16 @@ class _ReplicaExchangeMixin:
         self.re_step += 1
         return reduced_energy_all, re_decision, exchange
 
+    def rank_0_print_log(self, msg):
+        """
+        Print log message only on rank 0, and log on all ranks.
 
+        Parameters
+        ----------
+        msg :
+            The message to be printed.
+        """
+        if self.rank == 0:
+            print(msg)
+        self.logger.info(msg)
 
