@@ -392,6 +392,38 @@ def prepare_restraints_force(topology: app.Topology, positions: unit.Quantity, f
             posres.addParticle(at.index, [fc, pos[0], pos[1], pos[2]])
             res_atom_count += 1
     return posres, res_atom_count, res_residue_list
+def reduced_mass(m1, m2):
+    """
+    (m1*m2)/(m1+m2). Reduced mass for frequency calculation.
+
+    Parameters
+    ----------
+    m1 : mass of particle 1
+    m2 : mass of particle 2
+
+    Returns
+    -------
+    reduced_mass
+    """
+    return (m1*m2)/(m1+m2)
+
+def period_from_k_mu(k, mu):
+    """
+    Calculate the period T from spring constant k and reduced mass mu. Please make sure k and mu have the proper units.
+
+    Parameters
+    ----------
+    k : spring constant (energy/distance^2), e.g. kJ/mol/nm^2
+    mu: reduced mass (mass), e.g. dalton
+
+    Returns
+    -------
+    T
+    """
+    # Convert to coherent SI via OpenMM units then back to convenient units
+    omega = unit.sqrt(k/mu)                       # angular freq
+    T = 2*math.pi/omega                           # period
+    return T
 
 class md_params_yml:
     """
