@@ -1,7 +1,7 @@
 ## 1. Introduction
 This tutorial will use the hsp90 woodhead data set from Schrodinger. The input file is adapted from the paper of 
-Ross et al.[1](#reference) The hsp90 woodhead data set shows significant improvement in sampling efficiency when 
-using Grand Canonical Monte Carlo (GCMC) water sampling.  
+Ross et al.[1] The hsp90 woodhead data set shows significant improvement in sampling efficiency when using 
+Grand Canonical Monte Carlo (GCMC) water sampling.  
 
 ## 2. Preparation
 ### 2.1. Environment setup
@@ -185,7 +185,7 @@ cd ../
 ```
 These yaml files contain the simulation parameters for each window.
 
-### 3.2. Equilibration {#3-2-equilibration}
+### 3.2. Equilibration
 Run the following script to equilibrate each window individually.
 ```bash
 # from the GrandFEP root directory
@@ -218,7 +218,7 @@ This will run 200 ps NPT equilibration for each window. After equilibration, you
 and density.  
 
 ### 3.3. Production
-Run the following script to run production NPT simulations.
+Run the following script to perform production NPT simulations.
 ```bash
 for win in {0..15}
 do
@@ -388,10 +388,10 @@ $script_dir/run_GC_prep_box.py \
     -odeffnm gc_start \
     -scale_box 0.996
 ```
-The scaled box size will be saved to `gc_start.dat`.
+The box will be scaled from the mean box size by 0.996. The scaled box size will be saved to `gc_start.dat`.
 
 Each frame still needs to be optimized (Energy minimization). The Volume that has been cut will be converted 
-to ghost waters. The ghost waters will be randomly chosen. The new box needs to be optimized.  
+to ghost waters. The ghost waters will be randomly chosen.  
 
 We run energy minimization on those new starting structures.
 ```bash
@@ -447,7 +447,7 @@ mpirun -np 16 $script_dir/run_GC_RE.py \
 ```
 Roughly 5~15 ns is sufficient.
 
-## 6. Collect results, and estimate $\Delta G$
+## 6. Collect results, and estimate ΔG
 
 ## 7. What about Amber19SB and OPC water?
 
