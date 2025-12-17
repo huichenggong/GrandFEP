@@ -1,0 +1,19 @@
+source leaprc.water.opc
+source leaprc.gaff2
+
+MOL = loadmol2 04_MOL.mol2
+loadamberparams 03.frcmod
+
+BOX = loadpdb 06_box.pdb
+
+setBox BOX "vdw"
+
+# Add ions to neutralize the system and reach 150 mM concentration
+addIonsRand BOX Na+ 0
+addIonsRand BOX Cl- 0
+addIonsRand BOX Na+ 4
+addIonsRand BOX Cl- 4
+
+saveamberparm BOX 08_opc.prmtop 08_opc.inpcrd
+savepdb       BOX 08_opc.pdb
+quit

@@ -1,0 +1,23 @@
+dt: 0.004           # in ps, with HMR
+tau_t: 1.0          # in ps
+ref_t: 298.15       # in K
+gen_vel : GEN_VEL
+gen_temp: 270
+
+# position restraint
+restraint    : false
+restraint_fc : 1000.0 # kJ/mol/nm^2, 1/2 * k * (x-x0)^2
+
+system_setting:
+  nonbondedMethod: "app.PME"
+  nonbondedCutoff: "1.0 * unit.nanometer"
+  constraints    : "app.HBonds"
+  hydrogenMass   : "3.0 * unit.amu"
+
+ncycle_dcd : 250               # RE write a dcd/rst7 file every XXX re_cycles
+calc_neighbor_only : true      # false for MBAR, true for BAR only
+md_gc_re_protocol:
+  - ["MD", 200 ] # 200 * 0.004 ps = 0.8 ps
+  - ["RE", 1   ]
+
+init_lambda_state  : INIT_LAMBDA_STATE

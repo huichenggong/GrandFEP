@@ -1,0 +1,4 @@
+ref_atoms :
+  - "res_name" : "MOL"
+    "atom_name": "CENTERATOM"
+sphere_radius  : 0.85

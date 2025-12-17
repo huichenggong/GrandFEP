@@ -1,0 +1,11 @@
+dt: 0.004           # in ps, with HMR
+tau_t: 1.0          # in ps
+ref_t: 298.15       # in K
+gen_vel : GEN_VEL
+gen_temp: 250
+
+# position restraint
+restraint    : RESTRAINT
+restraint_fc : 1000.0 # kJ/mol/nm^2, 1/2 * k * (x-x0)^2
+
+init_lambda_state  : INIT_LAMBDA_STATE
