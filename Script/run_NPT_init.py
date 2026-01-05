@@ -84,7 +84,7 @@ def main():
     
     # Add reporter
     state_reporter = app.StateDataReporter(
-            args.deffnm+".csv", 5000, step=True, time=True, temperature=True, density=True)
+            args.deffnm+".csv", 5000, step=True, time=True, temperature=True, density=True, volume=True)
     samp.simulation.reporters.append(state_reporter)
     
     if args.v:

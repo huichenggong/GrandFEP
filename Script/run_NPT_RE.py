@@ -107,6 +107,7 @@ def main():
             dcd_file=str(sim_dir/(args.deffnm+".dcd")),
             init_lambda_state = mdp.init_lambda_state,
             lambda_dict = mdp.get_lambda_dict(),
+            append=restart_flag,
         )
     for msg in msg_list:
         samp.logger.info(msg)
@@ -189,7 +190,7 @@ def main():
                     samp.comm.Barrier()
                     samp.comm.Abort(1)
                 if samp.re_step % mdp.ncycle_dcd == 0:
-                    rank_0_print_log(samp, f"write dcd/rst7. {(time.time() - time_start)/3600:.2f} h")
+                    rank_0_print_log(samp, f"RE_Step {samp.re_step} write dcd/rst7. {(time.time() - time_start)/3600:.2f} h")
                     samp.report_dcd()
             else:
                 raise ValueError(f"Unknown operation {operation}")
@@ -203,7 +204,7 @@ def main():
             rank_0_print_log(samp, f"maxh {args.maxh} hours reached, stop simulation")
             break
     if samp.re_step % mdp.ncycle_dcd != 0: # if dcd and rst7 are not written in the last RE step
-        rank_0_print_log(samp, f"write rst7. {(time.time() - time_start)/3600:.2f} h")
+        rank_0_print_log(samp, f"RE_Step {samp.re_step} write rst7. {(time.time() - time_start)/3600:.2f} h")
         samp.report_rst()
 
     

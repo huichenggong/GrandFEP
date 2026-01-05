@@ -392,6 +392,7 @@ def prepare_restraints_force(topology: app.Topology, positions: unit.Quantity, f
             posres.addParticle(at.index, [fc, pos[0], pos[1], pos[2]])
             res_atom_count += 1
     return posres, res_atom_count, res_residue_list
+
 def reduced_mass(m1, m2):
     """
     (m1*m2)/(m1+m2). Reduced mass for frequency calculation.

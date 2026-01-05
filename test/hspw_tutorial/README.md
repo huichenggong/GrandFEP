@@ -10,7 +10,7 @@ Grand Canonical Monte Carlo (GCMC) water sampling.
 mamba activate grandfep_dev
 export script_dir="/GrandFEP_Gitdir/Script/"
 ```  
-`GrandFEP_Gitdir` should be replaced by your `GrandFEP` git repository directory. The scripts in `Script/` will be used 
+`GrandFEP_Gitdir` should be replaced by your `GrandFEP` git repository directory. The scripts under `Script/` will be used 
 throughout the tutorial.  
 
 ### 2.2. Ligand preparation
@@ -19,15 +19,15 @@ throughout the tutorial.
 cd test/hspw_tutorial/lig_prep
 ```
 All of the ligands have been prepared by `Antechamber`. `02.mol2` has the AM1-BCC charges and `03.frcmod` has the 
-missing parameters. `tleap` script `04_tip3p_150mmol.in`. The solvated water box `03_all_ligands_solvated.pdb` are also 
-provided.  
+missing parameters. The Amber `tleap` script `04_tip3p_150mmol.in`, and the solvated water box 
+`03_all_ligands_solvated.pdb` are also provided.  
 
 ```
 ./04_build_box.sh
 ```
-After running `04_build_box.sh`, Amber top and coordinate file will be generated in each ligand folder. Those files 
-are : `07_tip3p.pdb`, `07_tip3p.prmtop`,`07_tip3p.inpcrd` for tip3p water and `08_opc.pdb`, `08_opc.prmtop`, 
-`08_opc.inpcrd` for OPC water.  
+After running `04_build_box.sh`, Amber top (`.prmtop`) and coordinate (`.inpcrd`) file will be generated in each ligand 
+folder. Those files are : `07_tip3p.pdb`, `07_tip3p.prmtop`,`07_tip3p.inpcrd` for tip3p water and `08_opc.pdb`, 
+`08_opc.prmtop`, `08_opc.inpcrd` for OPC water.  
 
 ### 2.3. Protein preparation
 ```bash
@@ -60,21 +60,21 @@ of the script for doing this hybrid system preparation.
 ```bash
 $script_dir/hybrid.py \
     -prmtopA A.prmtop \
-    -prmtopB B.prmtop \
     -inpcrdA A.inpcrd \
+    -prmtopB B.prmtop \
     -inpcrdB B.inpcrd \
     -yml ../hybrid_map.yml \
     -pdb system.pdb \
     -system system.xml.gz \
     -REST2 \
-    -dum_dihe_scale 0.0  1.0  0.0  0.0  0.0
+    -dum_dihe_scale 0.0 1.0 0.0 0.0 0.0
 ```
 1. `prmtop` and `inpcrd` are the Amber topology and coordinate files.
 2. `yml` is the yaml file that contains the atom mapping and nonbonded settings. An example is given below.
 3. `system.pdb` is the output pdb file for saving the hybrid topology (`openmm.topology` has atom, bond and residue 
 information).
 4. `system.xml.gz` is the compressed serialized hybrid system file.
-5. `-REST2` uses REST2.
+5. `-REST2` use REST2. Dihedral and nonbonded terms of the selected REST2 atoms will be scaled.
 6. `-dum_dihe_scale` scales the dummy dihedral terms in the hybrid system. Here we set the scaling factors for dummy 
 dihedrals with periodicity 1, 2, 3, 4, 5 to be `0.0 1.0 0.0 0.0 0.0`, meaning only the periodicity 2 dummy dihedrals are 
 kept. This can give flexibility to the dummy atoms but stop double bond from isomerization.
@@ -445,20 +445,39 @@ mpirun -np 16 $script_dir/run_GC_RE.py \
     -start_jsonl 0/gc.jsonl \
     -deffnm      1/gc
 ```
-Roughly 5~15 ns is sufficient.
+Roughly 5~15 ns with 3 replicas are needed, depending on the quality of the initial structures.
 
 ## 6. Collect results, and estimate ΔG
-
-## 7. What about Amber19SB and OPC water?
-
-## 8. Tips
-### 8.1. How to set up the environment inside a slurm job
+### 6.1. Run all edges
+Scripts for batch running all edges are provided.
 ```bash
-source /YourCondaInstallationDir/miniforge3/bin/activate grandfep
-module add openmpi/gcc/64/4.1.5 # Remember to install the same OpenMPI inside the conda env
+cd test/hspw_tutorial/JOB/tip3p_REST2
 ```
 
-### 8.2. How to run OpenMPI with 2 GPUs
+### 6.2. Cycle closure and ΔG estimation
+Jupyter notebook for analysis is provided in `analysis/` folder.  
+![deltaG](../../test/hspw_tutorial/analysis/hspw_deltaG.png "Delta_G")
+
+
+## 7. What about NPT double decoupling?
+If you have the prior knowledge about where the water molecules are located in the binding site, you can also
+use NPT double decoupling. While the ligand is performing a relative binding free energy calculation, a water
+molecule is decoupled and restrained to the binding site (effectively an absolute binding free energy 
+calculation for this water).
+
+## 8. What about Amber19SB and OPC water?
+To draw a conclusion about the accuracy of 2 force field combinations, way more benchmarks are needed. Here we just 
+provide the results from hsp90 Kung alongside the hsp90 Woodhead data set for a quick comparison.  
+![deltaG](../../test/hspw_tutorial/analysis/hspk_deltaG.png "Delta_G")
+
+## 9. Tips
+### 9.1. How to set up the environment inside a slurm job
+```bash
+source /YourCondaInstallationDir/miniforge3/bin/activate grandfep
+module add openmpi/gcc/64/4.1.5 # Remember to install the same OpenMPI version as your cluster inside the conda env
+```
+
+### 9.2. How to run OpenMPI with 2 GPUs
 We can prepare a hostfile and an app file for `mpirun`.  
 
 In the case of running 16 threads on 2 GPUs (CUDA_VISIBLE_DEVICES=0,1) on a node called `n71-16`, the 
@@ -478,7 +497,7 @@ The `mpirun` can be called like this:
 mpirun --hostfile hostfile --app appfile
 ```
 
-Here is a sample script for preparing appfile and hostfile
+Here is a sample script for preparing appfile and hostfile for multi-GPU mpirun.
 ```bash
 cp $script_dir/run_GC_RE.py ./
 command="./run_GC_RE.py \
@@ -530,11 +549,11 @@ echo "#########################################"
 mpirun --hostfile $HOSTFILE --app $APPFILE
 ```
 
-## 9. Reference
+## 10. Reference
 1. Ross, G. A.; Russell, E.; Deng, Y.; Lu, C.; Harder, E. D.; Abel, R.; Wang, L. Enhancing Water Sampling in Free Energy Calculations with Grand Canonical Monte Carlo. J. Chem. Theory Comput. 2020, 16 (10), 6061–6076. https://doi.org/10.1021/acs.jctc.0c00660. 
 2. XXX
 
-## 10. Contact
+## 11. Contact
 Chenggong Hui (惠成功)
 - **Email:** [chenggong.hui@mpinat.mpg.de](mailto:chenggong.hui@mpinat.mpg.de)
 - **ORCID:** [0000-0003-2875-4739](https://orcid.org/0000-0003-2875-4739)
