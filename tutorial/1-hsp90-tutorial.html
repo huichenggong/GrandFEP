@@ -94,42 +94,89 @@
             
   <section id="hsp90">
 <h1>HSP90<a class="headerlink" href="#hsp90" title="Link to this heading">¶</a></h1>
+<nav class="contents local" id="on-this-page">
+<p class="topic-title">On this page</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#introduction" id="id6">1. Introduction</a></p></li>
+<li><p><a class="reference internal" href="#preparation" id="id7">2. Preparation</a></p>
+<ul>
+<li><p><a class="reference internal" href="#environment-setup" id="id8">2.1. Environment setup</a></p></li>
+<li><p><a class="reference internal" href="#ligand-preparation" id="id9">2.2. Ligand preparation</a></p></li>
+<li><p><a class="reference internal" href="#protein-preparation" id="id10">2.3. Protein preparation</a></p></li>
+<li><p><a class="reference internal" href="#check-atom-mapping" id="id11">2.4. Check atom mapping</a></p></li>
+<li><p><a class="reference internal" href="#hybrid-system-preparation" id="id12">2.5. Hybrid system preparation</a></p></li>
+<li><p><a class="reference internal" href="#center-selection" id="id13">2.6. Center selection</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#water-leg-npt" id="id14">3. Water leg NPT</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id1" id="id15">3.1. Preparation</a></p></li>
+<li><p><a class="reference internal" href="#equilibration" id="id16">3.2. Equilibration</a></p></li>
+<li><p><a class="reference internal" href="#production" id="id17">3.3. Production</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#npt-density-equilibration" id="id18">4. NPT density equilibration</a></p></li>
+<li><p><a class="reference internal" href="#gcmc" id="id19">5. GCMC</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id2" id="id20">5.1. Preparation</a></p></li>
+<li><p><a class="reference internal" href="#id3" id="id21">5.2. Equilibration</a></p></li>
+<li><p><a class="reference internal" href="#id4" id="id22">5.3. Production</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#collect-results-and-estimate-g" id="id23">6. Collect results, and estimate ΔG</a></p>
+<ul>
+<li><p><a class="reference internal" href="#run-all-edges" id="id24">6.1. Run all edges</a></p></li>
+<li><p><a class="reference internal" href="#cycle-closure-and-g-estimation" id="id25">6.2. Cycle closure and ΔG estimation</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#what-about-npt-double-decoupling" id="id26">7. What about NPT double decoupling?</a></p></li>
+<li><p><a class="reference internal" href="#what-about-amber19sb-and-opc-water" id="id27">8. What about Amber19SB and OPC water?</a></p></li>
+<li><p><a class="reference internal" href="#tips" id="id28">9. Tips</a></p>
+<ul>
+<li><p><a class="reference internal" href="#how-to-set-up-the-environment-inside-a-slurm-job" id="id29">9.1. How to set up the environment inside a slurm job</a></p></li>
+<li><p><a class="reference internal" href="#how-to-run-openmpi-with-2-gpus" id="id30">9.2. How to run OpenMPI with 2 GPUs</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#reference" id="id31">10. Reference</a></p></li>
+<li><p><a class="reference internal" href="#contact" id="id32">11. Contact</a></p></li>
+</ul>
+</nav>
 <section id="introduction">
-<h2>1. Introduction<a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">1. Introduction</a><a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h2>
 <p>This tutorial will use the hsp90 woodhead data set from Schrodinger. The input file is adapted from the paper of
-Ross et al.:ref:<cite>1 &lt;reference&gt;</cite> The hsp90 woodhead data set shows significant improvement in sampling efficiency when
-using Grand Canonical Monte Carlo (GCMC) water sampling.</p>
+Ross et al.[1] The hsp90 woodhead data set shows significant improvement in sampling efficiency when using
+Grand Canonical Monte Carlo (GCMC) water sampling.</p>
 </section>
 <section id="preparation">
-<h2>2. Preparation<a class="headerlink" href="#preparation" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">2. Preparation</a><a class="headerlink" href="#preparation" title="Link to this heading">¶</a></h2>
 <section id="environment-setup">
-<h3>2.1. Environment setup<a class="headerlink" href="#environment-setup" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">2.1. Environment setup</a><a class="headerlink" href="#environment-setup" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
 mamba<span class="w"> </span>activate<span class="w"> </span>grandfep_dev
 <span class="nb">export</span><span class="w"> </span><span class="nv">script_dir</span><span class="o">=</span><span class="s2">&quot;/GrandFEP_Gitdir/Script/&quot;</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">GrandFEP_Gitdir</span></code> should be replaced by your <code class="docutils literal notranslate"><span class="pre">GrandFEP</span></code> git repository directory. The scripts in <code class="docutils literal notranslate"><span class="pre">Script/</span></code> will be used
+<p><code class="docutils literal notranslate"><span class="pre">GrandFEP_Gitdir</span></code> should be replaced by your <code class="docutils literal notranslate"><span class="pre">GrandFEP</span></code> git repository directory. The scripts under <code class="docutils literal notranslate"><span class="pre">Script/</span></code> will be used
 throughout the tutorial.</p>
 </section>
 <section id="ligand-preparation">
-<h3>2.2. Ligand preparation<a class="headerlink" href="#ligand-preparation" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">2.2. Ligand preparation</a><a class="headerlink" href="#ligand-preparation" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
 <span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/lig_prep
 </pre></div>
 </div>
 <p>All of the ligands have been prepared by <code class="docutils literal notranslate"><span class="pre">Antechamber</span></code>. <code class="docutils literal notranslate"><span class="pre">02.mol2</span></code> has the AM1-BCC charges and <code class="docutils literal notranslate"><span class="pre">03.frcmod</span></code> has the
-missing parameters. <code class="docutils literal notranslate"><span class="pre">tleap</span></code> script <code class="docutils literal notranslate"><span class="pre">04_tip3p_150mmol.in</span></code>. The solvated water box <code class="docutils literal notranslate"><span class="pre">03_all_ligands_solvated.pdb</span></code> are also
-provided.</p>
+missing parameters. The Amber <code class="docutils literal notranslate"><span class="pre">tleap</span></code> script <code class="docutils literal notranslate"><span class="pre">04_tip3p_150mmol.in</span></code>, and the solvated water box
+<code class="docutils literal notranslate"><span class="pre">03_all_ligands_solvated.pdb</span></code> are also provided.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="mi">04</span><span class="n">_build_box</span><span class="o">.</span><span class="n">sh</span>
 </pre></div>
 </div>
-<p>After running <code class="docutils literal notranslate"><span class="pre">04_build_box.sh</span></code>, Amber top and coordinate file will be generated in each ligand folder. Those files
-are : <code class="docutils literal notranslate"><span class="pre">07_tip3p.pdb</span></code>, <code class="docutils literal notranslate"><span class="pre">07_tip3p.prmtop</span></code>,``07_tip3p.inpcrd`` for tip3p water and <code class="docutils literal notranslate"><span class="pre">08_opc.pdb</span></code>, <code class="docutils literal notranslate"><span class="pre">08_opc.prmtop</span></code>,
-<code class="docutils literal notranslate"><span class="pre">08_opc.inpcrd</span></code> for OPC water.</p>
+<p>After running <code class="docutils literal notranslate"><span class="pre">04_build_box.sh</span></code>, Amber top (<code class="docutils literal notranslate"><span class="pre">.prmtop</span></code>) and coordinate (<code class="docutils literal notranslate"><span class="pre">.inpcrd</span></code>) file will be generated in each ligand
+folder. Those files are : <code class="docutils literal notranslate"><span class="pre">07_tip3p.pdb</span></code>, <code class="docutils literal notranslate"><span class="pre">07_tip3p.prmtop</span></code>,``07_tip3p.inpcrd`` for tip3p water and <code class="docutils literal notranslate"><span class="pre">08_opc.pdb</span></code>,
+<code class="docutils literal notranslate"><span class="pre">08_opc.prmtop</span></code>, <code class="docutils literal notranslate"><span class="pre">08_opc.inpcrd</span></code> for OPC water.</p>
 </section>
 <section id="protein-preparation">
-<h3>2.3. Protein preparation<a class="headerlink" href="#protein-preparation" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">2.3. Protein preparation</a><a class="headerlink" href="#protein-preparation" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
 <span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/pro_prep
 </pre></div>
@@ -137,7 +184,7 @@ are : <code class="docutils literal notranslate"><span class="pre">07_tip3p.pdb<
 <p>Files are provided.</p>
 </section>
 <section id="check-atom-mapping">
-<h3>2.4. Check atom mapping<a class="headerlink" href="#check-atom-mapping" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">2.4. Check atom mapping</a><a class="headerlink" href="#check-atom-mapping" title="Link to this heading">¶</a></h3>
 <p>The atom mapping is provided in each edge (<code class="docutils literal notranslate"><span class="pre">edge_LigX_to_LigY</span></code>) folder. You can visualize the mapping by excuting the
 following script.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
@@ -151,7 +198,7 @@ have the same color showing in sphere. <span class="raw-html-md"><br /></span></
 </a>
 </section>
 <section id="hybrid-system-preparation">
-<h3>2.5. Hybrid system preparation<a class="headerlink" href="#hybrid-system-preparation" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id12" role="doc-backlink">2.5. Hybrid system preparation</a><a class="headerlink" href="#hybrid-system-preparation" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
 <span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/JOB/tip3p_REST2
 ./run_01_hybrid.sh
@@ -162,14 +209,14 @@ have the same color showing in sphere. <span class="raw-html-md"><br /></span></
 of the script for doing this hybrid system preparation.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$script_dir</span>/hybrid.py<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-prmtopA<span class="w"> </span>A.prmtop<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>-prmtopB<span class="w"> </span>B.prmtop<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-inpcrdA<span class="w"> </span>A.inpcrd<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-prmtopB<span class="w"> </span>B.prmtop<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-inpcrdB<span class="w"> </span>B.inpcrd<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-yml<span class="w"> </span>../hybrid_map.yml<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-pdb<span class="w"> </span>system.pdb<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-system<span class="w"> </span>system.xml.gz<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-REST2<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>-dum_dihe_scale<span class="w"> </span><span class="m">0</span>.0<span class="w">  </span><span class="m">1</span>.0<span class="w">  </span><span class="m">0</span>.0<span class="w">  </span><span class="m">0</span>.0<span class="w">  </span><span class="m">0</span>.0
+<span class="w">    </span>-dum_dihe_scale<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">1</span>.0<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span>.0
 </pre></div>
 </div>
 <ol class="arabic simple">
@@ -178,7 +225,7 @@ of the script for doing this hybrid system preparation.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">system.pdb</span></code> is the output pdb file for saving the hybrid topology (<code class="docutils literal notranslate"><span class="pre">openmm.topology</span></code> has atom, bond and residue
 information).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">system.xml.gz</span></code> is the compressed serialized hybrid system file.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-REST2</span></code> uses REST2.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-REST2</span></code> use REST2. Dihedral and nonbonded terms of the selected REST2 atoms will be scaled.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">-dum_dihe_scale</span></code> scales the dummy dihedral terms in the hybrid system. Here we set the scaling factors for dummy
 dihedrals with periodicity 1, 2, 3, 4, 5 to be <code class="docutils literal notranslate"><span class="pre">0.0</span> <span class="pre">1.0</span> <span class="pre">0.0</span> <span class="pre">0.0</span> <span class="pre">0.0</span></code>, meaning only the periodicity 2 dummy dihedrals are
 kept. This can give flexibility to the dummy atoms but stop double bond from isomerization.</p></li>
@@ -204,7 +251,7 @@ kept. This can give flexibility to the dummy atoms but stop double bond from iso
 </div>
 </section>
 <section id="center-selection">
-<h3>2.6. Center selection<a class="headerlink" href="#center-selection" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id13" role="doc-backlink">2.6. Center selection</a><a class="headerlink" href="#center-selection" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
 <span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/JOB/tip3p_REST2/protein/center_selection
 pymol<span class="w"> </span>run_check.py
@@ -224,9 +271,9 @@ sphere.</p>
 </section>
 </section>
 <section id="water-leg-npt">
-<h2>3. Water leg NPT<a class="headerlink" href="#water-leg-npt" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id14" role="doc-backlink">3. Water leg NPT</a><a class="headerlink" href="#water-leg-npt" title="Link to this heading">¶</a></h2>
 <section id="id1">
-<h3>3.1. Preparation<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">3.1. Preparation</a><a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
 <p>Only one edge will be demonstrated.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
 <span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/
@@ -291,8 +338,8 @@ sed<span class="w"> </span><span class="s1">&#39;s/GEN_VEL/false/&#39;</span><sp
 </div>
 <p>These yaml files contain the simulation parameters for each window.</p>
 </section>
-<section id="equilibration-3-2-equilibration">
-<h3>3.2. Equilibration {#3-2-equilibration}<a class="headerlink" href="#equilibration-3-2-equilibration" title="Link to this heading">¶</a></h3>
+<section id="equilibration">
+<h3><a class="toc-backref" href="#id16" role="doc-backlink">3.2. Equilibration</a><a class="headerlink" href="#equilibration" title="Link to this heading">¶</a></h3>
 <p>Run the following script to equilibrate each window individually.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
 <span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/water/NPT/
@@ -325,8 +372,8 @@ cp<span class="w"> </span>rep_999/<span class="w"> </span>rep_0/<span class="w">
 and density.</p>
 </section>
 <section id="production">
-<h3>3.3. Production<a class="headerlink" href="#production" title="Link to this heading">¶</a></h3>
-<p>Run the following script to run production NPT simulations.</p>
+<h3><a class="toc-backref" href="#id17" role="doc-backlink">3.3. Production</a><a class="headerlink" href="#production" title="Link to this heading">¶</a></h3>
+<p>Run the following script to perform production NPT simulations.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
 <span class="k">do</span>
 <span class="w">    </span>mkdir<span class="w"> </span><span class="nv">$win</span>/0<span class="w"> </span>-p
@@ -367,7 +414,7 @@ mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">16</spa
 </section>
 </section>
 <section id="npt-density-equilibration">
-<h2>4. NPT density equilibration<a class="headerlink" href="#npt-density-equilibration" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id18" role="doc-backlink">4. NPT density equilibration</a><a class="headerlink" href="#npt-density-equilibration" title="Link to this heading">¶</a></h2>
 <p>GC has slower density fluctuation autocorrelation time than normal NPT MD. NPT is still the better way to equilibrate
 the density. We run a short NPT simulation to equilibrate the density before running GC simulations. We run the same
 thing as the water leg (<code class="docutils literal notranslate"><span class="pre">$script_dir/run_NPT_init.py</span></code>).</p>
@@ -425,7 +472,7 @@ sed<span class="w"> </span><span class="s1">&#39;s/GEN_VEL/false/&#39;</span><sp
 <p>The NPT RE production run can be run in the same way as the water leg.</p>
 </section>
 <section id="gcmc">
-<h2>5. GCMC<a class="headerlink" href="#gcmc" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id19" role="doc-backlink">5. GCMC</a><a class="headerlink" href="#gcmc" title="Link to this heading">¶</a></h2>
 <p>GC (µVT) can be relatively expensive than normal NPT, if you want to achieve the same density fluctuations.
 Modern simulation engines do NPT by calculating the virial and scaling the box, but GCMC (µVT) needs
 insertion/deletion Monte Carlo moves to generate density fluctuations and sample waters. Although the
@@ -433,7 +480,7 @@ primary goal of GC is to sample water molecules in the binding site, we still ne
 <p>We will run a equilibration with more GC moves in the subdir <code class="docutils literal notranslate"><span class="pre">0</span></code> in each window folder, and continue to run
 further simulations with less GC moves in <code class="docutils literal notranslate"><span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">2</span></code>, <code class="docutils literal notranslate"><span class="pre">3</span></code> … subdirs ~1ns each.</p>
 <section id="id2">
-<h3>5.1. Preparation<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id20" role="doc-backlink">5.1. Preparation</a><a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
 <p>Prepare the yaml files for GC simulations. We use the optimized lambda schedule from water leg NPT simulations.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the GrandFEP root directory</span>
 <span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein
@@ -495,9 +542,9 @@ that has been cut will be converted to ghost waters in the following GC simulati
 <span class="w">    </span>-scale_box<span class="w"> </span><span class="m">0</span>.996
 </pre></div>
 </div>
-<p>The scaled box size will be saved to <code class="docutils literal notranslate"><span class="pre">gc_start.dat</span></code>.</p>
+<p>The box will be scaled from the mean box size by 0.996. The scaled box size will be saved to <code class="docutils literal notranslate"><span class="pre">gc_start.dat</span></code>.</p>
 <p>Each frame still needs to be optimized (Energy minimization). The Volume that has been cut will be converted
-to ghost waters. The ghost waters will be randomly chosen. The new box needs to be optimized.</p>
+to ghost waters. The ghost waters will be randomly chosen.</p>
 <p>We run energy minimization on those new starting structures.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD
 <span class="nv">$script_dir</span>/run_GC_prep_box.py<span class="w"> </span><span class="se">\</span>
@@ -513,8 +560,8 @@ to ghost waters. The ghost waters will be randomly chosen. The new box needs to 
 <p><code class="docutils literal notranslate"><span class="pre">gc_start.rst7</span></code> and <code class="docutils literal notranslate"><span class="pre">gc_start.jsonl</span></code> will be generated in each window folder. These files will be the starting
 configuration for the GC simulations.</p>
 </section>
-<section id="equilibration">
-<h3>5.2. Equilibration<a class="headerlink" href="#equilibration" title="Link to this heading">¶</a></h3>
+<section id="id3">
+<h3><a class="toc-backref" href="#id21" role="doc-backlink">5.2. Equilibration</a><a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
 <span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
 <span class="k">do</span>
@@ -533,8 +580,8 @@ mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">16</spa
 </pre></div>
 </div>
 </section>
-<section id="id3">
-<h3>5.3. Production<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<section id="id4">
+<h3><a class="toc-backref" href="#id22" role="doc-backlink">5.3. Production</a><a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
 <span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
 <span class="k">do</span>
@@ -552,26 +599,50 @@ mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">16</spa
 <span class="w">    </span>-deffnm<span class="w">      </span><span class="m">1</span>/gc
 </pre></div>
 </div>
-<p>Roughly 5~15 ns is sufficient.</p>
+<p>Roughly 5~15 ns with 3 replicas are needed, depending on the quality of the initial structures.</p>
 </section>
 </section>
-<section id="collect-results-and-estimate-delta-g">
-<h2>6. Collect results, and estimate $Delta G$<a class="headerlink" href="#collect-results-and-estimate-delta-g" title="Link to this heading">¶</a></h2>
+<section id="collect-results-and-estimate-g">
+<h2><a class="toc-backref" href="#id23" role="doc-backlink">6. Collect results, and estimate ΔG</a><a class="headerlink" href="#collect-results-and-estimate-g" title="Link to this heading">¶</a></h2>
+<section id="run-all-edges">
+<h3><a class="toc-backref" href="#id24" role="doc-backlink">6.1. Run all edges</a><a class="headerlink" href="#run-all-edges" title="Link to this heading">¶</a></h3>
+<p>Scripts for batch running all edges are provided.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/JOB/tip3p_REST2
+</pre></div>
+</div>
+</section>
+<section id="cycle-closure-and-g-estimation">
+<h3><a class="toc-backref" href="#id25" role="doc-backlink">6.2. Cycle closure and ΔG estimation</a><a class="headerlink" href="#cycle-closure-and-g-estimation" title="Link to this heading">¶</a></h3>
+<p>Jupyter notebook for analysis is provided in <code class="docutils literal notranslate"><span class="pre">analysis/</span></code> folder. <span class="raw-html-md"><br /></span></p>
+<a class="reference external image-reference" href="../../test/hspw_tutorial/analysis/hspw_deltaG.png"><img alt="deltaG" src="../_images/hspw_deltaG.png" />
+</a>
+</section>
+</section>
+<section id="what-about-npt-double-decoupling">
+<h2><a class="toc-backref" href="#id26" role="doc-backlink">7. What about NPT double decoupling?</a><a class="headerlink" href="#what-about-npt-double-decoupling" title="Link to this heading">¶</a></h2>
+<p>If you have the prior knowledge about where the water molecules are located in the binding site, you can also
+use NPT double decoupling. While the ligand is performing a relative binding free energy calculation, a water
+molecule is decoupled and restrained to the binding site (effectively an absolute binding free energy
+calculation for this water).</p>
 </section>
 <section id="what-about-amber19sb-and-opc-water">
-<h2>7. What about Amber19SB and OPC water?<a class="headerlink" href="#what-about-amber19sb-and-opc-water" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id27" role="doc-backlink">8. What about Amber19SB and OPC water?</a><a class="headerlink" href="#what-about-amber19sb-and-opc-water" title="Link to this heading">¶</a></h2>
+<p>To draw a conclusion about the accuracy of 2 force field combinations, way more benchmarks are needed. Here we just
+provide the results from hsp90 Kung alongside the hsp90 Woodhead data set for a quick comparison. <span class="raw-html-md"><br /></span></p>
+<a class="reference external image-reference" href="../../test/hspw_tutorial/analysis/hspk_deltaG.png"><img alt="deltaG" src="../_images/hspk_deltaG.png" />
+</a>
 </section>
 <section id="tips">
-<h2>8. Tips<a class="headerlink" href="#tips" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id28" role="doc-backlink">9. Tips</a><a class="headerlink" href="#tips" title="Link to this heading">¶</a></h2>
 <section id="how-to-set-up-the-environment-inside-a-slurm-job">
-<h3>8.1. How to set up the environment inside a slurm job<a class="headerlink" href="#how-to-set-up-the-environment-inside-a-slurm-job" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id29" role="doc-backlink">9.1. How to set up the environment inside a slurm job</a><a class="headerlink" href="#how-to-set-up-the-environment-inside-a-slurm-job" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>/YourCondaInstallationDir/miniforge3/bin/activate<span class="w"> </span>grandfep
-module<span class="w"> </span>add<span class="w"> </span>openmpi/gcc/64/4.1.5<span class="w"> </span><span class="c1"># Remember to install the same OpenMPI inside the conda env</span>
+module<span class="w"> </span>add<span class="w"> </span>openmpi/gcc/64/4.1.5<span class="w"> </span><span class="c1"># Remember to install the same OpenMPI version as your cluster inside the conda env</span>
 </pre></div>
 </div>
 </section>
 <section id="how-to-run-openmpi-with-2-gpus">
-<h3>8.2. How to run OpenMPI with 2 GPUs<a class="headerlink" href="#how-to-run-openmpi-with-2-gpus" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id30" role="doc-backlink">9.2. How to run OpenMPI with 2 GPUs</a><a class="headerlink" href="#how-to-run-openmpi-with-2-gpus" title="Link to this heading">¶</a></h3>
 <p>We can prepare a hostfile and an app file for <code class="docutils literal notranslate"><span class="pre">mpirun</span></code>.</p>
 <p>In the case of running 16 threads on 2 GPUs (CUDA_VISIBLE_DEVICES=0,1) on a node called <code class="docutils literal notranslate"><span class="pre">n71-16</span></code>, the
 hostfile can be:</p>
@@ -588,7 +659,7 @@ n71-16
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>--hostfile<span class="w"> </span>hostfile<span class="w"> </span>--app<span class="w"> </span>appfile
 </pre></div>
 </div>
-<p>Here is a sample script for preparing appfile and hostfile</p>
+<p>Here is a sample script for preparing appfile and hostfile for multi-GPU mpirun.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cp<span class="w"> </span><span class="nv">$script_dir</span>/run_GC_RE.py<span class="w"> </span>./
 <span class="nv">command</span><span class="o">=</span><span class="s2">&quot;./run_GC_RE.py \</span>
 <span class="s2">    -pdb system.pdb \</span>
@@ -642,14 +713,14 @@ mpirun<span class="w"> </span>--hostfile<span class="w"> </span><span class="nv"
 </section>
 </section>
 <section id="reference">
-<h2>9. Reference<a class="headerlink" href="#reference" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id31" role="doc-backlink">10. Reference</a><a class="headerlink" href="#reference" title="Link to this heading">¶</a></h2>
 <ol class="arabic simple">
 <li><p>Ross, G. A.; Russell, E.; Deng, Y.; Lu, C.; Harder, E. D.; Abel, R.; Wang, L. Enhancing Water Sampling in Free Energy Calculations with Grand Canonical Monte Carlo. J. Chem. Theory Comput. 2020, 16 (10), 6061–6076. <a class="reference external" href="https://doi.org/10.1021/acs.jctc.0c00660">https://doi.org/10.1021/acs.jctc.0c00660</a>.</p></li>
 <li><p>XXX</p></li>
 </ol>
 </section>
 <section id="contact">
-<h2>10. Contact<a class="headerlink" href="#contact" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id32" role="doc-backlink">11. Contact</a><a class="headerlink" href="#contact" title="Link to this heading">¶</a></h2>
 <p>Chenggong Hui (惠成功)</p>
 <ul class="simple">
 <li><p><strong>Email:</strong> <a class="reference external" href="mailto:chenggong&#46;hui&#37;&#52;&#48;mpinat&#46;mpg&#46;de">chenggong<span>&#46;</span>hui<span>&#64;</span>mpinat<span>&#46;</span>mpg<span>&#46;</span>de</a></p></li>
