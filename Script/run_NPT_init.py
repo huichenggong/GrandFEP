@@ -24,6 +24,8 @@ def main():
                         help="Yaml md parameter file. Each directory should have its own yaml file.")
     parser.add_argument("-nsteps", type=int, default=1000, 
                         help="Number of MD steps to run")
+    parser.add_argument("-rst7",  type=str,
+                        help="If provided, start the simulation from the coordinate of this amber rst7 file")
     parser.add_argument("-deffnm",  type=str, default="md1",
                         help="Default output file name")
     parser.add_argument("-v", action="store_true", default=False,
@@ -93,15 +95,22 @@ def main():
         samp.simulation.reporters.append(state_reporter_std)
 
     # Short equilibration
-    samp.simulation.context.setPositions(positions)
-    samp.simulation.context.setPeriodicBoxVectors(*box_vec)
+    
+    if args.rst7:
+        samp.logger.info(f"Load positions from {args.rst7}")
+        samp.load_rst(args.rst7)
+    else:
+        samp.logger.info(f"Load positions from {args.pdb}")
+        samp.simulation.context.setPositions(positions)
+        samp.simulation.context.setPeriodicBoxVectors(*box_vec)
     samp.logger.info("Minimize energy")
     samp.simulation.minimizeEnergy()
     if mdp.gen_vel:
         samp.logger.info(f"Set random velocities to {mdp.gen_temp}")
         samp.simulation.context.setVelocitiesToTemperature(mdp.gen_temp)
-    samp.logger.info(f"MD {args.nsteps}")
-    samp.simulation.step(args.nsteps)
+    if args.nsteps > 0:
+        samp.logger.info(f"MD {args.nsteps}")
+        samp.simulation.step(args.nsteps)
 
     # save restart
     samp.report_rst()
