@@ -258,6 +258,19 @@ def kendall_stat(exp, com):
     tau = scipy.stats.kendalltau(exp, com).correlation
     return tau
 
+def r_squared_stat(exp, com):
+    correlation_matrix = np.corrcoef(exp, com)
+    correlation_xy = correlation_matrix[0,1]
+    r_squared = correlation_xy**2
+    return r_squared
+
+def get_stat(com, exp, func_list, n_resamples=5000):
+    results = []
+    for func in func_list:
+        res, res_bs = get_stat_bootstrap(com, exp, func, n_resamples=n_resamples)
+        results.append((res, res_bs))
+    return results
+
 def get_stat_bootstrap(com_arr, exp_arr, func, n_resamples=5000, confidence_level=0.95, method="BCa", random_state=None):
     """
     Get bootstrap statistics for a given statistic function.
@@ -301,3 +314,43 @@ def get_stat_bootstrap(com_arr, exp_arr, func, n_resamples=5000, confidence_leve
         random_state=random_state,
     )
     return res_point, res
+
+def paired_bootstrap_delta(exp, com1, com2, stat=rmsd_stat,
+                           n_resamples=5000, confidence_level=0.95,
+                           method="BCa", random_state=None):
+    """
+    Paired bootstrap for Δ = stat(exp, com1) - stat(exp, com2).
+
+    Returns
+    -------
+    delta_point : float
+        Point estimate on the original data.
+    ci : (float, float)
+        Lower and upper bounds of the bootstrap CI.
+    boot : scipy.stats.BootstrapResult or dict
+        Bootstrap result (SciPy object or a dict if manual fallback used).
+    """
+    exp  = np.asarray(exp,  float)
+    com1 = np.asarray(com1, float)
+    com2 = np.asarray(com2, float)
+
+    # point estimate
+    delta_point = stat(exp, com1) - stat(exp, com2)
+
+    # SciPy paired bootstrap (resamples shared indices across all three arrays)
+    def delta_stat(e, c1, c2):
+        return stat(e, c1) - stat(e, c2)
+
+    
+    boot = scipy.stats.bootstrap(
+        data=(exp, com1, com2),
+        statistic=delta_stat,
+        paired=True,
+        vectorized=False,        # statistic is scalar, not vectorized
+        n_resamples=n_resamples,
+        confidence_level=confidence_level,
+        method=method,           # 'BCa' if available; else user can pass 'percentile'
+        random_state=random_state,
+    )
+    return delta_point, boot
+    
