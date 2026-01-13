@@ -40,6 +40,8 @@ def main():
                              "If set, it will override the box size from the rst7 files.")
     parser.add_argument("-scale_box", type=float, default=0.996,
                         help="Scale down the box from the mean value by this factor. Default: 0.996")
+    parser.add_argument("-N_ghost", type=float,
+                        help="Average number of ghost water molecules to set. If not set, will calculate based on box size. Default: None")
 
     msg_list = []
     args = parser.parse_args()
@@ -129,13 +131,17 @@ def main():
                               [0, 0, box_22]]) * unit.nanometer
         vol_new = box_00 * box_11 * box_22 * unit.nanometer**3
         n_ghost_min = len(positions)
+        n_ghost_list = []
         for inpcrd, mdp, sim_dir in zip(inpcrd_list, mdp_list, args.multidir):
             box_v = inpcrd.getBoxVectors(asNumpy=True)
             box_vol = (box_v[0][0] * box_v[1][1] * box_v[2][2])
             n_ghost = round((box_vol - vol_new) / (mdp.standard_volume))
             n_ghost_min = min(n_ghost_min, n_ghost)
+            n_ghost_list.append(n_ghost)
             samp.logger.info(f"{sim_dir} {n_ghost}")
-        msg = f"Minimum number of ghost water molecules: {n_ghost_min}"
+        msg =  f"Minimum number of ghost water molecules: {n_ghost_min}\n"
+        msg += f"Average number of ghost water molecules: {np.mean(n_ghost_list):.2f}"
+        
         print(msg)
         samp.logger.info(msg)
         
@@ -153,11 +159,23 @@ def main():
                               [0, 0, box_22]]) * unit.nanometer
         vol_new = box_00 * box_11 * box_22 * unit.nanometer**3
         water_res_list = [res.index for res in topology.residues() if res.name == "HOH"][10:-2]
+        
+        n_ghost_list = []
         for inpcrd, mdp, sim_dir in zip(inpcrd_list, mdp_list, args.multidir):
             box_v = inpcrd.getBoxVectors(asNumpy=True)
             box_vol = (box_v[0][0] * box_v[1][1] * box_v[2][2])
-            n_ghost = round((box_vol - vol_new) / (mdp.standard_volume))
-            ghost_list = np.random.choice(water_res_list, round(n_ghost))
+            n_ghost = (box_vol - vol_new) / (mdp.standard_volume)
+            n_ghost_list.append(n_ghost)
+        if args.N_ghost is not None:
+            # shift the n_ghost_list to have the average equal to args.N_ghost
+            n_ghost_list = np.array(n_ghost_list)
+            n_ghost_list = n_ghost_list - np.mean(n_ghost_list) + args.N_ghost
+        n_ghost_list = [int(round(i)) for i in n_ghost_list]
+        
+        for inpcrd, mdp, sim_dir, n_ghost in zip(inpcrd_list, mdp_list, args.multidir, n_ghost_list):
+            box_v = inpcrd.getBoxVectors(asNumpy=True)
+            box_vol = (box_v[0][0] * box_v[1][1] * box_v[2][2])
+            ghost_list = np.random.choice(water_res_list, n_ghost)
             ghost_list = [int(i) for i in ghost_list]
             samp.logger.info(f"Set {n_ghost} water to ghost for {sim_dir}, {ghost_list}")
             samp.set_ghost_list(ghost_list, check_system=True)
