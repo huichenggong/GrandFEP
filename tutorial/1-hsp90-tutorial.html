@@ -121,24 +121,25 @@
 <li><p><a class="reference internal" href="#id2" id="id20">5.1. Preparation</a></p></li>
 <li><p><a class="reference internal" href="#id3" id="id21">5.2. Equilibration</a></p></li>
 <li><p><a class="reference internal" href="#id4" id="id22">5.3. Production</a></p></li>
+<li><p><a class="reference internal" href="#mbar" id="id23">5.4. MBAR</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#collect-results-and-estimate-g" id="id23">6. Collect results, and estimate ΔG</a></p>
+<li><p><a class="reference internal" href="#collect-results-and-estimate-g" id="id24">6. Collect results, and estimate ΔG</a></p>
 <ul>
-<li><p><a class="reference internal" href="#run-all-edges" id="id24">6.1. Run all edges</a></p></li>
-<li><p><a class="reference internal" href="#cycle-closure-and-g-estimation" id="id25">6.2. Cycle closure and ΔG estimation</a></p></li>
+<li><p><a class="reference internal" href="#run-all-edges" id="id25">6.1. Run all edges</a></p></li>
+<li><p><a class="reference internal" href="#cycle-closure-and-g-estimation" id="id26">6.2. Cycle closure and ΔG estimation</a></p></li>
+<li><p><a class="reference internal" href="#shift-the-ghost-water-outside-the-box" id="id27">6.3. Shift the ghost water outside the box</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#what-about-npt-double-decoupling" id="id26">7. What about NPT double decoupling?</a></p></li>
-<li><p><a class="reference internal" href="#what-about-amber19sb-and-opc-water" id="id27">8. What about Amber19SB and OPC water?</a></p></li>
-<li><p><a class="reference internal" href="#tips" id="id28">9. Tips</a></p>
+<li><p><a class="reference internal" href="#what-about-amber19sb-and-opc-water" id="id28">7. What about Amber19SB and OPC water?</a></p></li>
+<li><p><a class="reference internal" href="#tips" id="id29">8. Tips</a></p>
 <ul>
-<li><p><a class="reference internal" href="#how-to-set-up-the-environment-inside-a-slurm-job" id="id29">9.1. How to set up the environment inside a slurm job</a></p></li>
-<li><p><a class="reference internal" href="#how-to-run-openmpi-with-2-gpus" id="id30">9.2. How to run OpenMPI with 2 GPUs</a></p></li>
+<li><p><a class="reference internal" href="#how-to-set-up-the-environment-inside-a-slurm-job" id="id30">8.1. How to set up the environment inside a slurm job</a></p></li>
+<li><p><a class="reference internal" href="#how-to-run-openmpi-with-2-gpus" id="id31">8.2. How to run OpenMPI with 2 GPUs</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#reference" id="id31">10. Reference</a></p></li>
-<li><p><a class="reference internal" href="#contact" id="id32">11. Contact</a></p></li>
+<li><p><a class="reference internal" href="#reference" id="id32">9. Reference</a></p></li>
+<li><p><a class="reference internal" href="#contact" id="id33">10. Contact</a></p></li>
 </ul>
 </nav>
 <section id="introduction">
@@ -583,6 +584,7 @@ mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">16</spa
 <section id="id4">
 <h3><a class="toc-backref" href="#id22" role="doc-backlink">5.3. Production</a><a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
+<span class="c1"># run simulation in subdir 1 restarting from subdir 0</span>
 <span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
 <span class="k">do</span>
 <span class="w">    </span>mkdir<span class="w"> </span><span class="nv">$win</span>/1
@@ -601,48 +603,126 @@ mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">16</spa
 </div>
 <p>Roughly 5~15 ns with 3 replicas are needed, depending on the quality of the initial structures.</p>
 </section>
+<section id="mbar">
+<h3><a class="toc-backref" href="#id23" role="doc-backlink">5.4. MBAR</a><a class="headerlink" href="#mbar" title="Link to this heading">¶</a></h3>
+<p>Estimate free energy differences (ddG in this case) with MBAR.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
+
+<span class="nv">partN</span><span class="o">=</span><span class="m">10</span><span class="w"> </span><span class="c1"># subdirs 1-10 in each window folder should be finished</span>
+<span class="nv">tempdir</span><span class="o">=</span><span class="s2">&quot;/tmp/rep_</span><span class="si">${</span><span class="nv">rep</span><span class="si">}</span><span class="s2">_part</span><span class="si">${</span><span class="nv">partN</span><span class="si">}</span><span class="s2">_mbar&quot;</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;rep_</span><span class="nv">$rep</span><span class="s2"> part </span><span class="nv">$partN</span><span class="s2"> MBAR ...&quot;</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span>mbar_<span class="si">${</span><span class="nv">partN</span><span class="si">}</span>ns
+<span class="nb">cd</span><span class="w">       </span>mbar_<span class="si">${</span><span class="nv">partN</span><span class="si">}</span>ns
+<span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>seq<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="nv">$partN</span><span class="k">)</span>
+<span class="k">do</span>
+<span class="w">    </span>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$tempdir</span>/0/<span class="nv">$i</span>
+<span class="w">    </span>cp<span class="w"> </span>../0/<span class="nv">$i</span>/gc.log<span class="w"> </span><span class="nv">$tempdir</span>/0/<span class="nv">$i</span>/
+<span class="k">done</span>
+<span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
+<span class="k">do</span>
+<span class="w">    </span>grep<span class="w"> </span><span class="s2">&quot;T   =&quot;</span><span class="w"> </span><span class="nv">$tempdir</span>/0/1/gc.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w">  </span>&gt;<span class="w">  </span><span class="nv">$tempdir</span>/<span class="nv">$win</span>.dat
+<span class="w">    </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>seq<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="nv">$partN</span><span class="k">)</span>
+<span class="w">    </span><span class="k">do</span>
+<span class="w">        </span>grep<span class="w"> </span><span class="s2">&quot; - INFO: </span><span class="nv">$win</span><span class="s2">:&quot;</span><span class="w"> </span><span class="nv">$tempdir</span>/0/<span class="nv">$i</span>/gc.log<span class="w">  </span>&gt;&gt;<span class="w"> </span><span class="nv">$tempdir</span>/<span class="nv">$win</span>.dat
+<span class="w">    </span><span class="k">done</span>
+<span class="w">    </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;s/- INFO: </span><span class="nv">$win</span><span class="s2">:/Reduced_E:/&quot;</span><span class="w"> </span><span class="nv">$tempdir</span>/<span class="nv">$win</span>.dat
+<span class="w">    </span>awk<span class="w"> </span><span class="s1">&#39;NR % 3 == 1&#39;</span><span class="w"> </span><span class="nv">$tempdir</span>/<span class="nv">$win</span>.dat<span class="w"> </span>&gt;<span class="w"> </span>./<span class="nv">$win</span>.dat<span class="w"> </span><span class="c1"># only use 1/3 data for MBAR to save time, they are highly correlated anyway</span>
+<span class="k">done</span>
+rm<span class="w"> </span>-r<span class="w"> </span><span class="nv">$tempdir</span>/*
+<span class="nv">$script_dir</span>/analysis/MBAR.py<span class="w"> </span>-log<span class="w"> </span>?.dat<span class="w"> </span>??.dat<span class="w"> </span>-kw<span class="w"> </span><span class="s2">&quot;Reduced_E:&quot;</span><span class="w"> </span>-m<span class="w"> </span>MBAR<span class="w"> </span>-csv<span class="w"> </span>mbar_dG.csv<span class="w"> </span>&gt;<span class="w"> </span>mbar.log<span class="w"> </span><span class="m">2</span>&gt;<span class="w"> </span>mbar.err
+rm<span class="w"> </span>?.dat<span class="w"> </span>??.dat
+</pre></div>
+</div>
+<p>The log file <code class="docutils literal notranslate"><span class="pre">mbar.log</span></code> will contain the ddG estimation results. The values are in kcal/mol.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Calculating</span> <span class="n">free</span> <span class="n">energy</span> <span class="n">using</span> <span class="n">MBAR</span> <span class="n">method</span><span class="o">.</span>
+ <span class="n">A</span> <span class="o">-</span> <span class="n">B</span> <span class="p">:</span>   <span class="n">MBAR</span>
+<span class="o">----------------------------------</span>
+ <span class="mi">0</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">:</span>  <span class="mf">10.4122</span> <span class="o">+-</span>  <span class="mf">0.0137</span> <span class="mf">0.40</span>
+ <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="p">:</span>  <span class="mf">10.1342</span> <span class="o">+-</span>  <span class="mf">0.0160</span> <span class="mf">0.23</span>
+ <span class="mi">2</span> <span class="o">-</span> <span class="mi">3</span> <span class="p">:</span>   <span class="mf">9.5982</span> <span class="o">+-</span>  <span class="mf">0.0245</span> <span class="mf">0.16</span>
+ <span class="mi">3</span> <span class="o">-</span> <span class="mi">4</span> <span class="p">:</span>   <span class="mf">8.5886</span> <span class="o">+-</span>  <span class="mf">0.0291</span> <span class="mf">0.24</span>
+ <span class="mi">4</span> <span class="o">-</span> <span class="mi">5</span> <span class="p">:</span>   <span class="mf">7.5752</span> <span class="o">+-</span>  <span class="mf">0.0220</span> <span class="mf">0.26</span>
+ <span class="mi">5</span> <span class="o">-</span> <span class="mi">6</span> <span class="p">:</span>   <span class="mf">7.0142</span> <span class="o">+-</span>  <span class="mf">0.0155</span> <span class="mf">0.21</span>
+ <span class="mi">6</span> <span class="o">-</span> <span class="mi">7</span> <span class="p">:</span>   <span class="mf">8.6529</span> <span class="o">+-</span>  <span class="mf">0.0161</span> <span class="mf">0.19</span>
+ <span class="mi">7</span> <span class="o">-</span> <span class="mi">8</span> <span class="p">:</span>   <span class="mf">0.8920</span> <span class="o">+-</span>  <span class="mf">0.0136</span> <span class="mf">0.24</span>
+ <span class="mi">8</span> <span class="o">-</span> <span class="mi">9</span> <span class="p">:</span>  <span class="o">-</span><span class="mf">7.0965</span> <span class="o">+-</span>  <span class="mf">0.0170</span> <span class="mf">0.22</span>
+ <span class="mi">9</span> <span class="o">-</span><span class="mi">10</span> <span class="p">:</span>  <span class="o">-</span><span class="mf">6.8383</span> <span class="o">+-</span>  <span class="mf">0.0187</span> <span class="mf">0.17</span>
+<span class="mi">10</span> <span class="o">-</span><span class="mi">11</span> <span class="p">:</span>  <span class="o">-</span><span class="mf">6.4083</span> <span class="o">+-</span>  <span class="mf">0.0254</span> <span class="mf">0.21</span>
+<span class="mi">11</span> <span class="o">-</span><span class="mi">12</span> <span class="p">:</span>  <span class="o">-</span><span class="mf">5.7017</span> <span class="o">+-</span>  <span class="mf">0.0209</span> <span class="mf">0.24</span>
+<span class="mi">12</span> <span class="o">-</span><span class="mi">13</span> <span class="p">:</span>  <span class="o">-</span><span class="mf">5.8165</span> <span class="o">+-</span>  <span class="mf">0.0156</span> <span class="mf">0.28</span>
+<span class="mi">13</span> <span class="o">-</span><span class="mi">14</span> <span class="p">:</span>  <span class="o">-</span><span class="mf">6.1015</span> <span class="o">+-</span>  <span class="mf">0.0183</span> <span class="mf">0.12</span>
+<span class="mi">14</span> <span class="o">-</span><span class="mi">15</span> <span class="p">:</span>  <span class="o">-</span><span class="mf">6.3838</span> <span class="o">+-</span>  <span class="mf">0.0232</span> <span class="mf">0.22</span>
+<span class="o">----------------------------------</span>
+<span class="n">Total</span>  <span class="p">:</span>  <span class="mf">18.5210</span> <span class="o">+-</span>  <span class="mf">0.1064</span>
+</pre></div>
+</div>
+<p>Three replicas results I got are:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; tail rep_?/mbar_10ns/mbar.log -n 1
+==&gt; rep_0/mbar_10ns/mbar.log &lt;==
+Total  :  18.5210 +-  0.1064
+
+==&gt; rep_1/mbar_10ns/mbar.log &lt;==
+Total  :  19.3289 +-  0.0924
+
+==&gt; rep_2/mbar_10ns/mbar.log &lt;==
+Total  :  19.1379 +-  0.1013
+</pre></div>
+</div>
+</section>
 </section>
 <section id="collect-results-and-estimate-g">
-<h2><a class="toc-backref" href="#id23" role="doc-backlink">6. Collect results, and estimate ΔG</a><a class="headerlink" href="#collect-results-and-estimate-g" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id24" role="doc-backlink">6. Collect results, and estimate ΔG</a><a class="headerlink" href="#collect-results-and-estimate-g" title="Link to this heading">¶</a></h2>
 <section id="run-all-edges">
-<h3><a class="toc-backref" href="#id24" role="doc-backlink">6.1. Run all edges</a><a class="headerlink" href="#run-all-edges" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id25" role="doc-backlink">6.1. Run all edges</a><a class="headerlink" href="#run-all-edges" title="Link to this heading">¶</a></h3>
 <p>Scripts for batch running all edges are provided.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/JOB/tip3p_REST2
 </pre></div>
 </div>
 </section>
 <section id="cycle-closure-and-g-estimation">
-<h3><a class="toc-backref" href="#id25" role="doc-backlink">6.2. Cycle closure and ΔG estimation</a><a class="headerlink" href="#cycle-closure-and-g-estimation" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id26" role="doc-backlink">6.2. Cycle closure and ΔG estimation</a><a class="headerlink" href="#cycle-closure-and-g-estimation" title="Link to this heading">¶</a></h3>
 <p>Jupyter notebook for analysis is provided in <code class="docutils literal notranslate"><span class="pre">analysis/</span></code> folder. <span class="raw-html-md"><br /></span></p>
 <a class="reference external image-reference" href="../../test/hspw_tutorial/analysis/hspw_deltaG.png"><img alt="deltaG" src="../_images/hspw_deltaG.png" />
 </a>
 </section>
+<section id="shift-the-ghost-water-outside-the-box">
+<h3><a class="toc-backref" href="#id27" role="doc-backlink">6.3. Shift the ghost water outside the box</a><a class="headerlink" href="#shift-the-ghost-water-outside-the-box" title="Link to this heading">¶</a></h3>
+<p>There are ghost waters flying randomly in the simulation box. To visualize the trajectory, we can shift them away.
+The resiude index of the ghost water is saved with the dcd file as a jasonl file.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
+<span class="nv">base</span><span class="o">=</span><span class="nv">$PWD</span>
+<span class="k">for</span><span class="w"> </span>win<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..15<span class="o">}</span>
+<span class="k">do</span>
+<span class="w">    </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$base</span>/<span class="nv">$win</span>
+<span class="w">    </span><span class="nv">$script_dir</span>/remove_ghost.py<span class="w"> </span>-p<span class="w"> </span>../../../system.pdb<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-idcd<span class="w">   </span><span class="o">[</span><span class="m">1</span>-9<span class="o">]</span>/gc.dcd<span class="w">   </span><span class="m">10</span>/gc.dcd<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-ijsonl<span class="w"> </span><span class="o">[</span><span class="m">1</span>-9<span class="o">]</span>/gc.jsonl<span class="w"> </span><span class="m">10</span>/gc.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-oxtc<span class="w">   </span>gc_01_10.xtc
+<span class="k">done</span>
+</pre></div>
+</div>
 </section>
-<section id="what-about-npt-double-decoupling">
-<h2><a class="toc-backref" href="#id26" role="doc-backlink">7. What about NPT double decoupling?</a><a class="headerlink" href="#what-about-npt-double-decoupling" title="Link to this heading">¶</a></h2>
-<p>If you have the prior knowledge about where the water molecules are located in the binding site, you can also
-use NPT double decoupling. While the ligand is performing a relative binding free energy calculation, a water
-molecule is decoupled and restrained to the binding site (effectively an absolute binding free energy
-calculation for this water).</p>
 </section>
 <section id="what-about-amber19sb-and-opc-water">
-<h2><a class="toc-backref" href="#id27" role="doc-backlink">8. What about Amber19SB and OPC water?</a><a class="headerlink" href="#what-about-amber19sb-and-opc-water" title="Link to this heading">¶</a></h2>
-<p>To draw a conclusion about the accuracy of 2 force field combinations, way more benchmarks are needed. Here we just
-provide the results from hsp90 Kung alongside the hsp90 Woodhead data set for a quick comparison. <span class="raw-html-md"><br /></span></p>
+<h2><a class="toc-backref" href="#id28" role="doc-backlink">7. What about Amber19SB and OPC water?</a><a class="headerlink" href="#what-about-amber19sb-and-opc-water" title="Link to this heading">¶</a></h2>
+<p>It is difficult to draw a conclusion about the accuracy of 2 force field combinations. Way more benchmarks and
+sampling are needed. Here we just provide the results from hsp90 Kung alongside the hsp90 Woodhead data set for
+a quick comparison. <span class="raw-html-md"><br /></span></p>
 <a class="reference external image-reference" href="../../test/hspw_tutorial/analysis/hspk_deltaG.png"><img alt="deltaG" src="../_images/hspk_deltaG.png" />
 </a>
 </section>
 <section id="tips">
-<h2><a class="toc-backref" href="#id28" role="doc-backlink">9. Tips</a><a class="headerlink" href="#tips" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id29" role="doc-backlink">8. Tips</a><a class="headerlink" href="#tips" title="Link to this heading">¶</a></h2>
 <section id="how-to-set-up-the-environment-inside-a-slurm-job">
-<h3><a class="toc-backref" href="#id29" role="doc-backlink">9.1. How to set up the environment inside a slurm job</a><a class="headerlink" href="#how-to-set-up-the-environment-inside-a-slurm-job" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id30" role="doc-backlink">8.1. How to set up the environment inside a slurm job</a><a class="headerlink" href="#how-to-set-up-the-environment-inside-a-slurm-job" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>/YourCondaInstallationDir/miniforge3/bin/activate<span class="w"> </span>grandfep
 module<span class="w"> </span>add<span class="w"> </span>openmpi/gcc/64/4.1.5<span class="w"> </span><span class="c1"># Remember to install the same OpenMPI version as your cluster inside the conda env</span>
 </pre></div>
 </div>
 </section>
 <section id="how-to-run-openmpi-with-2-gpus">
-<h3><a class="toc-backref" href="#id30" role="doc-backlink">9.2. How to run OpenMPI with 2 GPUs</a><a class="headerlink" href="#how-to-run-openmpi-with-2-gpus" title="Link to this heading">¶</a></h3>
+<h3><a class="toc-backref" href="#id31" role="doc-backlink">8.2. How to run OpenMPI with 2 GPUs</a><a class="headerlink" href="#how-to-run-openmpi-with-2-gpus" title="Link to this heading">¶</a></h3>
 <p>We can prepare a hostfile and an app file for <code class="docutils literal notranslate"><span class="pre">mpirun</span></code>.</p>
 <p>In the case of running 16 threads on 2 GPUs (CUDA_VISIBLE_DEVICES=0,1) on a node called <code class="docutils literal notranslate"><span class="pre">n71-16</span></code>, the
 hostfile can be:</p>
@@ -713,14 +793,14 @@ mpirun<span class="w"> </span>--hostfile<span class="w"> </span><span class="nv"
 </section>
 </section>
 <section id="reference">
-<h2><a class="toc-backref" href="#id31" role="doc-backlink">10. Reference</a><a class="headerlink" href="#reference" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id32" role="doc-backlink">9. Reference</a><a class="headerlink" href="#reference" title="Link to this heading">¶</a></h2>
 <ol class="arabic simple">
 <li><p>Ross, G. A.; Russell, E.; Deng, Y.; Lu, C.; Harder, E. D.; Abel, R.; Wang, L. Enhancing Water Sampling in Free Energy Calculations with Grand Canonical Monte Carlo. J. Chem. Theory Comput. 2020, 16 (10), 6061–6076. <a class="reference external" href="https://doi.org/10.1021/acs.jctc.0c00660">https://doi.org/10.1021/acs.jctc.0c00660</a>.</p></li>
 <li><p>XXX</p></li>
 </ol>
 </section>
 <section id="contact">
-<h2><a class="toc-backref" href="#id32" role="doc-backlink">11. Contact</a><a class="headerlink" href="#contact" title="Link to this heading">¶</a></h2>
+<h2><a class="toc-backref" href="#id33" role="doc-backlink">10. Contact</a><a class="headerlink" href="#contact" title="Link to this heading">¶</a></h2>
 <p>Chenggong Hui (惠成功)</p>
 <ul class="simple">
 <li><p><strong>Email:</strong> <a class="reference external" href="mailto:chenggong&#46;hui&#37;&#52;&#48;mpinat&#46;mpg&#46;de">chenggong<span>&#46;</span>hui<span>&#64;</span>mpinat<span>&#46;</span>mpg<span>&#46;</span>de</a></p></li>

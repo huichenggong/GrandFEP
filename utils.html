@@ -92,8 +92,17 @@
 
           <div class="body" role="main">
             
-  <section id="module-grandfep.utils">
-<span id="utils"></span><h1>utils<a class="headerlink" href="#module-grandfep.utils" title="Link to this heading">¶</a></h1>
+  <section id="utils">
+<h1>utils<a class="headerlink" href="#utils" title="Link to this heading">¶</a></h1>
+<nav class="contents local" id="on-this-page">
+<p class="topic-title">On this page</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#module-grandfep.utils" id="id1">grandfep.utils</a></p></li>
+<li><p><a class="reference internal" href="#grandfep-utils-hybridtopologyfactoryrest2" id="id2">grandfep.utils.HybridTopologyFactoryREST2</a></p></li>
+</ul>
+</nav>
+<section id="module-grandfep.utils">
+<span id="grandfep-utils"></span><h2><a class="toc-backref" href="#id1" role="doc-backlink">grandfep.utils</a><a class="headerlink" href="#module-grandfep.utils" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="grandfep.utils.FreeEAnalysis">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">FreeEAnalysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keyword</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">separator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_equil</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">begin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.FreeEAnalysis" title="Link to this definition">¶</a></dt>
@@ -209,7 +218,7 @@ it does not guarantee the correct usage of the parameters anywhere else. The bui
 <code class="docutils literal notranslate"><span class="pre">self._unit_map</span></code> will be automatically added with units. If you want a unit to be attached, you can add it to
 <code class="docutils literal notranslate"><span class="pre">self._unit_map</span></code> before loading the yml file.</p>
 <section id="example">
-<h2>Example:<a class="headerlink" href="#example" title="Link to this heading">¶</a></h2>
+<h3>Example:<a class="headerlink" href="#example" title="Link to this heading">¶</a></h3>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">grandfep</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mdp</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">md_params_yml</span><span class="p">(</span><span class="s2">&quot;test/Water_Chemical_Potential/OPC/multidir/0/md.yml&quot;</span><span class="p">)</span>
 </pre></div>
@@ -686,7 +695,7 @@ It should either be <code class="docutils literal notranslate"><span class="pre"
 <span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">find_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">map_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resB</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.find_mapping" title="Link to this definition">¶</a></dt>
 <dd><p>Check if residues A and B match with a mapping in the mapping list.</p>
 <section id="parameter">
-<h2>Parameter<a class="headerlink" href="#parameter" title="Link to this heading">¶</a></h2>
+<h3>Parameter<a class="headerlink" href="#parameter" title="Link to this heading">¶</a></h3>
 <dl>
 <dt>map_list :</dt><dd><p>A list of mapping. For example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[{</span><span class="s1">&#39;res_nameA&#39;</span><span class="p">:</span> <span class="s1">&#39;MOL&#39;</span><span class="p">,</span>
@@ -982,6 +991,9 @@ to define the box. Without setting the box, trajectory files may lack box inform
 </dl>
 </dd></dl>
 
+</section>
+<section id="grandfep-utils-hybridtopologyfactoryrest2">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">grandfep.utils.HybridTopologyFactoryREST2</a><a class="headerlink" href="#grandfep-utils-hybridtopologyfactoryrest2" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="grandfep.utils.HybridTopologyFactoryREST2">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">HybridTopologyFactoryREST2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old_system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_to_new_atom_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_to_new_core_atom_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_rest2_atom_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_dispersion_correction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softcore_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_dihe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.HybridTopologyFactoryREST2" title="Link to this definition">¶</a></dt>
@@ -1005,7 +1017,7 @@ interactions are always on and are alchemically unmodified.</p>
 <p>All the alchemically changed atoms (core, unique_old, unique_new) will be considered “hot” in REST2.
 Other atoms in the environment can also be added by <cite>old_rest2_region_atom_indices</cite></p>
 <section id="properties">
-<h2>Properties<a class="headerlink" href="#properties" title="Link to this heading">¶</a></h2>
+<h3>Properties<a class="headerlink" href="#properties" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>hybrid_system<span class="classifier">openmm.System</span></dt><dd><p>The hybrid system for simulation</p>
 </dd>
@@ -1117,7 +1129,7 @@ default is scale_dihe={ 1: 0.1, “i1”: 0.1, 2: 1.0, “i2”: 1.0, 3: 0.1, �
 <dd><p>Handle the nonbonded interactions defined in the new and old systems.
 k_rest2 = T_cold / T_hot</p>
 <section id="coulomb">
-<h3>Coulomb<a class="headerlink" href="#coulomb" title="Link to this heading">¶</a></h3>
+<h4>Coulomb<a class="headerlink" href="#coulomb" title="Link to this heading">¶</a></h4>
 <ol class="arabic simple">
 <li><dl class="simple">
 <dt>Old atoms (atoms that only show in state A).</dt><dd><p>chg = chgA * (1-λ) * k_rest2_sqrt
@@ -1184,7 +1196,7 @@ One offset is needed:</p>
 </table>
 </section>
 <section id="vdw">
-<h3>vdW<a class="headerlink" href="#vdw" title="Link to this heading">¶</a></h3>
+<h4>vdW<a class="headerlink" href="#vdw" title="Link to this heading">¶</a></h4>
 <ul class="simple">
 <li><dl class="simple">
 <dt>NonbondedForce</dt><dd><p>env-env vdW</p>
@@ -1203,6 +1215,7 @@ One offset is needed:</p>
 </section>
 </dd></dl>
 
+</section>
 </section>
 
 
