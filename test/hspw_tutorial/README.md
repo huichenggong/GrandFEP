@@ -324,7 +324,7 @@ primary goal of GC is to sample water molecules in the binding site, we still ne
 We will run a equilibration with more GC moves in the subdir `0` in each window folder, and continue to run 
 further simulations with less GC moves in `1`, `2`, `3` ... subdirs ~1ns each.  
 
-### 5.1. Preparation
+### 5.1. Preparation of parameter files
   
 Prepare the yaml files for GC simulations. We use the optimized lambda schedule from water leg NPT simulations.  
 ```bash
@@ -359,6 +359,7 @@ do
 done
 ```
 
+### 5.1. Preparation of starting structures
 After the NPT equilibration, we cut a slightly smaller box on the final frame of NPT simulation. The volume 
 that has been cut will be converted to ghost waters in the following GC simulations.  
 ```bash
@@ -408,7 +409,7 @@ $script_dir/run_GC_prep_box.py \
 `gc_start.rst7` and `gc_start.jsonl` will be generated in each window folder. These files will be the starting 
 configuration for the GC simulations.
 
-### 5.2. Equilibration
+### 5.3. Equilibration
 ```bash
 cd test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
 for win in {0..15}
@@ -427,7 +428,7 @@ mpirun -np 16 $script_dir/run_GC_RE.py \
     -deffnm       0/gc 
 ```
 
-### 5.3. Production
+### 5.4. Production
 ```bash
 cd test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
 # run simulation in subdir 1 restarting from subdir 0
@@ -448,13 +449,13 @@ mpirun -np 16 $script_dir/run_GC_RE.py \
 ```
 Roughly 5~15 ns with 3 replicas are needed, depending on the quality of the initial structures.
 
-### 5.4. MBAR
+### 5.5. MBAR
 Estimate free energy differences (ddG in this case) with MBAR.  
 ```bash
 cd test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
 
 partN=10 # subdirs 1-10 in each window folder should be finished
-tempdir="/tmp/rep_${rep}_part${partN}_mbar"
+tempdir=$(mktemp -d -p /tmp rep_${rep}_part${partN}_mbar_XXXXXX)
 
 echo "rep_$rep part $partN MBAR ..."
 mkdir -p mbar_${partN}ns
@@ -477,6 +478,7 @@ done
 rm -r $tempdir/*
 $script_dir/analysis/MBAR.py -log ?.dat ??.dat -kw "Reduced_E:" -m MBAR -csv mbar_dG.csv > mbar.log 2> mbar.err
 rm ?.dat ??.dat
+rm -r $tempdir
 ```
 
 The log file `mbar.log` will contain the ddG estimation results. The values are in kcal/mol.  
@@ -516,8 +518,20 @@ Total  :  19.3289 +-  0.0924
 Total  :  19.1379 +-  0.1013 
 ```
 
+We can subtract the ddG on the water leg.
+
+$$
+\Delta G_{protein} - \Delta G_{water} 
+= (19.329 + 19.138 + 18.521)/3 - (16.4323 + 16.4013 + 16.3133)/3 
+= 2.61 (kcal/mol)
+$$
+
+The experimental ddG is 1.98 kcal/mol. +1.98 kcal/mol means that Lig1 binds stronger than Lig2. The MD result is 
+quite close to the experimental value. Please check the `analysis/dG.ipynb` for error estimation.
+
 ## 6. Collect results, and estimate ΔG
 ### 6.1. Run all edges
+We need to know the ddG between every ligands to estimate the ΔG. A map of edges need to be simulated. 
 Scripts for batch running all edges are provided.
 ```bash
 cd test/hspw_tutorial/JOB/tip3p_REST2
