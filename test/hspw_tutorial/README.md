@@ -430,6 +430,7 @@ mpirun -np 16 $script_dir/run_GC_RE.py \
 ### 5.3. Production
 ```bash
 cd test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
+# run simulation in subdir 1 restarting from subdir 0
 for win in {0..15}
 do
     mkdir $win/1
@@ -447,6 +448,74 @@ mpirun -np 16 $script_dir/run_GC_RE.py \
 ```
 Roughly 5~15 ns with 3 replicas are needed, depending on the quality of the initial structures.
 
+### 5.4. MBAR
+Estimate free energy differences (ddG in this case) with MBAR.  
+```bash
+cd test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
+
+partN=10 # subdirs 1-10 in each window folder should be finished
+tempdir="/tmp/rep_${rep}_part${partN}_mbar"
+
+echo "rep_$rep part $partN MBAR ..."
+mkdir -p mbar_${partN}ns
+cd       mbar_${partN}ns
+for i in $(seq 1 $partN)
+do
+    mkdir -p $tempdir/0/$i
+    cp ../0/$i/gc.log $tempdir/0/$i/
+done
+for win in {0..15}
+do
+    grep "T   =" $tempdir/0/1/gc.log | tail -n 1  >  $tempdir/$win.dat
+    for i in $(seq 1 $partN)
+    do
+        grep " - INFO: $win:" $tempdir/0/$i/gc.log  >> $tempdir/$win.dat
+    done
+    sed -i "s/- INFO: $win:/Reduced_E:/" $tempdir/$win.dat
+    awk 'NR % 3 == 1' $tempdir/$win.dat > ./$win.dat # only use 1/3 data for MBAR to save time, they are highly correlated anyway
+done
+rm -r $tempdir/*
+$script_dir/analysis/MBAR.py -log ?.dat ??.dat -kw "Reduced_E:" -m MBAR -csv mbar_dG.csv > mbar.log 2> mbar.err
+rm ?.dat ??.dat
+```
+
+The log file `mbar.log` will contain the ddG estimation results. The values are in kcal/mol.  
+```
+Calculating free energy using MBAR method.
+ A - B :   MBAR                    
+----------------------------------
+ 0 - 1 :  10.4122 +-  0.0137 0.40
+ 1 - 2 :  10.1342 +-  0.0160 0.23
+ 2 - 3 :   9.5982 +-  0.0245 0.16
+ 3 - 4 :   8.5886 +-  0.0291 0.24
+ 4 - 5 :   7.5752 +-  0.0220 0.26
+ 5 - 6 :   7.0142 +-  0.0155 0.21
+ 6 - 7 :   8.6529 +-  0.0161 0.19
+ 7 - 8 :   0.8920 +-  0.0136 0.24
+ 8 - 9 :  -7.0965 +-  0.0170 0.22
+ 9 -10 :  -6.8383 +-  0.0187 0.17
+10 -11 :  -6.4083 +-  0.0254 0.21
+11 -12 :  -5.7017 +-  0.0209 0.24
+12 -13 :  -5.8165 +-  0.0156 0.28
+13 -14 :  -6.1015 +-  0.0183 0.12
+14 -15 :  -6.3838 +-  0.0232 0.22
+----------------------------------
+Total  :  18.5210 +-  0.1064  
+```
+
+Three replicas results I got are:
+```
+>>> tail rep_?/mbar_10ns/mbar.log -n 1
+==> rep_0/mbar_10ns/mbar.log <==
+Total  :  18.5210 +-  0.1064     
+
+==> rep_1/mbar_10ns/mbar.log <==
+Total  :  19.3289 +-  0.0924     
+
+==> rep_2/mbar_10ns/mbar.log <==
+Total  :  19.1379 +-  0.1013 
+```
+
 ## 6. Collect results, and estimate ΔG
 ### 6.1. Run all edges
 Scripts for batch running all edges are provided.
@@ -458,26 +527,36 @@ cd test/hspw_tutorial/JOB/tip3p_REST2
 Jupyter notebook for analysis is provided in `analysis/` folder.  
 ![deltaG](../../test/hspw_tutorial/analysis/hspw_deltaG.png "Delta_G")
 
+### 6.3. Shift the ghost water outside the box
+There are ghost waters flying randomly in the simulation box. To visualize the trajectory, we can shift them away. 
+The resiude index of the ghost water is saved with the dcd file as a jasonl file.
+```bash
+cd test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
+base=$PWD
+for win in {0..15}
+do
+    cd $base/$win
+    $script_dir/remove_ghost.py -p ../../../system.pdb \
+        -idcd   [1-9]/gc.dcd   10/gc.dcd \
+        -ijsonl [1-9]/gc.jsonl 10/gc.jsonl \
+        -oxtc   gc_01_10.xtc
+done
+```
 
-## 7. What about NPT double decoupling?
-If you have the prior knowledge about where the water molecules are located in the binding site, you can also
-use NPT double decoupling. While the ligand is performing a relative binding free energy calculation, a water
-molecule is decoupled and restrained to the binding site (effectively an absolute binding free energy 
-calculation for this water).
-
-## 8. What about Amber19SB and OPC water?
-To draw a conclusion about the accuracy of 2 force field combinations, way more benchmarks are needed. Here we just 
-provide the results from hsp90 Kung alongside the hsp90 Woodhead data set for a quick comparison.  
+## 7. What about Amber19SB and OPC water?
+It is difficult to draw a conclusion about the accuracy of 2 force field combinations. Way more benchmarks and 
+sampling are needed. Here we just provide the results from hsp90 Kung alongside the hsp90 Woodhead data set for 
+a quick comparison.  
 ![deltaG](../../test/hspw_tutorial/analysis/hspk_deltaG.png "Delta_G")
 
-## 9. Tips
-### 9.1. How to set up the environment inside a slurm job
+## 8. Tips
+### 8.1. How to set up the environment inside a slurm job
 ```bash
 source /YourCondaInstallationDir/miniforge3/bin/activate grandfep
 module add openmpi/gcc/64/4.1.5 # Remember to install the same OpenMPI version as your cluster inside the conda env
 ```
 
-### 9.2. How to run OpenMPI with 2 GPUs
+### 8.2. How to run OpenMPI with 2 GPUs
 We can prepare a hostfile and an app file for `mpirun`.  
 
 In the case of running 16 threads on 2 GPUs (CUDA_VISIBLE_DEVICES=0,1) on a node called `n71-16`, the 
@@ -549,11 +628,11 @@ echo "#########################################"
 mpirun --hostfile $HOSTFILE --app $APPFILE
 ```
 
-## 10. Reference
+## 9. Reference
 1. Ross, G. A.; Russell, E.; Deng, Y.; Lu, C.; Harder, E. D.; Abel, R.; Wang, L. Enhancing Water Sampling in Free Energy Calculations with Grand Canonical Monte Carlo. J. Chem. Theory Comput. 2020, 16 (10), 6061–6076. https://doi.org/10.1021/acs.jctc.0c00660. 
 2. XXX
 
-## 11. Contact
+## 10. Contact
 Chenggong Hui (惠成功)
 - **Email:** [chenggong.hui@mpinat.mpg.de](mailto:chenggong.hui@mpinat.mpg.de)
 - **ORCID:** [0000-0003-2875-4739](https://orcid.org/0000-0003-2875-4739)

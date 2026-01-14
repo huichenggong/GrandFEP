@@ -3,6 +3,11 @@ Introduction
 
 GrandFEP : GCMC/FEP - Alchemical free energy calculations in Grand Canonical ensemble
 
+.. contents:: On this page
+    :local:
+    :depth: 2
+
+
 1. Background
 ---------------------
 
@@ -29,9 +34,9 @@ to check the hightest cuda version the driver supports. MPI version should follo
 configuration.
 
 .. code-block:: bash
-    
-    mamba env create -f env.yml
+
     # edit cuda and MPI version according to your cluster
+    mamba env create -f env.yml
     mamba activate grandfep_env
     pip install .
 

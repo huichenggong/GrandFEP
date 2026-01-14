@@ -36,6 +36,8 @@ def main():
     parser.add_argument("-REST2", action='store_true')
     parser.add_argument("-dum_dihe_scale", nargs="+", type=float, default=[0.0, 1.0, 0.0, 0.0, 0.0],
                         help="Dihedral scaling for dummy atoms. ")
+    parser.add_argument("-REST2_res", type=str,
+                        nargs="+")
 
     msg_list = []
     args = parser.parse_args()
@@ -69,13 +71,24 @@ def main():
         for i, scale in enumerate(args.dum_dihe_scale):
             print(f"Dummy dihedral scale for periodicity {i+1}: {scale}")
             scale_dihe[i+1] = scale
+        if args.REST2_res is not None:
+            old_rest2_atom_indices = []
+            for res in args.REST2_res:
+                print(f"Add REST2 residue: {res}")
+                name, index_str = res.split(":")
+                index = int(index_str)
+                ind_list = utils.find_reference_atom_indices(prmtopA.topology, [{"res_name": name, "res_index": index}])
+                old_rest2_atom_indices.extend(ind_list)
+            print(f"REST2 residues specified: {args.REST2_res}, total atoms: {len(old_rest2_atom_indices)}")
+
         h_factory = utils.HybridTopologyFactoryREST2(
             sysA, inpcrdA.getPositions(), prmtopA.topology,
             sysB, inpcrdB.getPositions(), prmtopB.topology,
             old_to_new_atom_map,      # All atoms that should map from A to B
             old_to_new_core_atom_map, # Alchemical Atoms that should map from A to B
             use_dispersion_correction=True,
-            scale_dihe=scale_dihe)
+            scale_dihe=scale_dihe,
+            old_rest2_atom_indices=old_rest2_atom_indices if args.REST2_res is not None else None)
         
         for dihe_key in ["old_only", "new_only"]:
             # for t_dict in [h_factory.hybrid_torsion_dict["old_only"], h_factory.hybrid_torsion_dict["new_only"]]:
