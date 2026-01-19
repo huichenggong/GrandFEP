@@ -14,10 +14,16 @@ module add openmpi4/gcc/4.1.5 # only as an example
 which mpirun                  # check if the correct mpirun is used
 ```
 
-# Full Documentation
+## 2. GrandFEP is doing as good as FEP+
+![WaterSet_RMSE](docs/picture/Water_Set_FEP+_OpenFE.png)
+![WaterSet_8system_scatter](docs/picture/All_8_system_deltaG_5ns.png)
+![WaterSet_8system_bar](docs/picture/RMSE_3x16x5ns.png)
+
+
+## 3. Full Documentation
 [huichenggong.github.io/GrandFEP](https://huichenggong.github.io/GrandFEP/)
 
-## 2. Contact
+## 4. Contact
 Chenggong Hui  
 <chenggong.hui@mpinat.mpg.de>  
 <huicgx@126.com>  
