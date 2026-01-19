@@ -13,7 +13,7 @@ dependencies:
   - openmpi=4.1.5
   - mpi4py
   - parmed
-  - cuda-version=11.8
+  - cuda-version=12
   - mdtraj
   # additional packages
   - mdanalysis
@@ -24,4 +24,7 @@ dependencies:
   - pytest-mpi
   - ghp-import
   - rdkit
-  
+  - pip:
+      - sphinx
+      - sphinx-autodoc-typehints
+      - sphinx-mdinclude
