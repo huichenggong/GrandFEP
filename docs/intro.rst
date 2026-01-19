@@ -44,7 +44,7 @@ Or:
 
 .. code-block:: bash
 
-    mamba create -n grandfep_env python=3.12 numpy scipy pandas openmm openmmtools pymbar-core openmpi=4.1.5 mpi4py parmed cudatoolkit=11.8
+    mamba create -n grandfep_env python=3.12 numpy scipy pandas openmm openmmtools pymbar-core openmpi=4.1.5 mpi4py parmed cuda-version=12
 
 Check cuda and MPI as what we previously mentioned.
 

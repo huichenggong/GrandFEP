@@ -2,7 +2,7 @@ name: grandfep_dev
 channels:
   - conda-forge
 dependencies:
-  - python=3.12
+  - python=3
   - pip
   - numpy
   - scipy
@@ -13,7 +13,7 @@ dependencies:
   - openmpi=4.1.5
   - mpi4py
   - parmed
-  - cudatoolkit=11.8
+  - cuda-version=11.8
   - mdtraj
   # additional packages
   - mdanalysis
