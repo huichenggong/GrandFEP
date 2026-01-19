@@ -543,7 +543,7 @@ Jupyter notebook for analysis is provided in `analysis/` folder.
 
 ### 6.3. Shift the ghost water outside the box
 There are ghost waters flying randomly in the simulation box. To visualize the trajectory, we can shift them away. 
-The resiude index of the ghost water is saved with the dcd file as a jasonl file.
+The residue index of the ghost water is saved with the dcd file as a jsonl file.
 ```bash
 cd test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
 base=$PWD
