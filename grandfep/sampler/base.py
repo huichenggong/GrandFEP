@@ -154,14 +154,16 @@ class BaseGrandCanonicalMonteCarloSampler:
 
         # preparation based on the topology
         self.logger.info("Check topology")
-        self.num_of_points_water = self._check_water_points(water_resname)
-        self._find_all_water(water_resname, water_O_name)
+        self.num_of_points_water = utils.check_water_points(self.topology, water_resname)
+        self.water_res_2_atom, self.water_res_2_O = utils.find_all_water(self.topology, water_resname, water_O_name)
+        self.switching_water = max(self.water_res_2_atom.keys())
+        self.logger.info(f"Water res_index={self.switching_water} will be set as the switching water")
 
         # preparation based on the system and force field
         self.logger.info("Prepare system")
         tick = time.time()
-        self.system_type = self._check_system(system)
-        self._get_water_parameters(water_resname, system)
+        self.system_type = utils.check_system_type(system, no_barostat=True)
+        self.wat_params = utils.get_water_parameters(self.topology, system, water_resname)
 
         if self.system_type == "Amber":
             self.customise_force_amber(system)
@@ -227,152 +229,6 @@ class BaseGrandCanonicalMonteCarloSampler:
         if len(self.water_res_2_atom) == 0:
             raise ValueError(f"The topology does not have any water({resname}). Please check the topology.")
 
-    def _check_water_points(self, resname):
-        """
-        Check if the water model is 3-point or 4-point in topology.
-        :return: int
-        """
-        # check if the system has water
-        for res in self.topology.residues():
-            if res.name == resname:
-                return len(list(res.atoms()))
-        return 0
-
-    def _check_system(self, system):
-        """
-        Check if system can be converted to a GCMC system.
-
-        :param system: (openmm.System)
-            The system to be checked.
-        :return: (str)
-            The type of the system. Can be Amber, Charmm or Hybrid
-            Amber should have NonbondedForce without CustomNonbondedForce
-            Charmm should have NonbondedForce and CustomNonbondedForce. The EnergyFunction that is allowed in
-            CustomNonbondedForce is `(a/r6)^2-b/r6; r6=r^6;a=acoef(type1, type2);b=bcoef(type1, type2)` or
-            `acoef(type1, type2)/r^12 - bcoef(type1, type2)/r^6;`
-
-            Hybrid should have
-                CustomBondForce            For perturbed bonds
-                HarmonicBondForce
-                CustomAngleForce           For perturbed angles
-                HarmonicAngleForce
-                CustomTorsionForce         For perturbed dihedrals
-                PeriodicTorsionForce
-                NonbondedForce             For perturbed Coulomb
-                CustomNonbondedForce       For perturbed Lennard-Jones
-                CustomBondForce_exceptions For perturbed exceptions, mostly 1-4 nonbonded
-
-            Hybrid_REST2 should have
-                CustomBondForce               For perturbed bonds
-                HarmonicBondForce
-                CustomAngleForce              For perturbed angles
-                HarmonicAngleForce
-                CustomTorsionForce            For perturbed dihedrals
-                PeriodicTorsionForce
-                NonbondedForce                For perturbed Coulomb
-                CustomNonbondedForce          For perturbed Lennard-Jones
-                CustomBondForce_exceptions_1D For perturbed exceptions, mostly 1-4 nonbonded
-        """
-        force_name_list = [f.getName() for f in system.getForces()]
-        c_bond_flag     = "CustomBondForce" in force_name_list
-        c_angle_flag    = "CustomAngleForce" in force_name_list
-        c_torsion_flag  = "CustomTorsionForce" in force_name_list
-        nb_force_flag   = "NonbondedForce" in force_name_list
-        c_nb_force_flag = "CustomNonbondedForce" in force_name_list
-        c_b_force_flag  = "CustomBondForce_exceptions_1D" in force_name_list
-
-        # all True, Hybrid
-        system_type = None
-        if c_bond_flag and c_angle_flag and c_torsion_flag and nb_force_flag and c_nb_force_flag and c_b_force_flag:
-            system_type =  "Hybrid_REST2"
-        elif c_bond_flag and c_angle_flag and c_torsion_flag and nb_force_flag and c_nb_force_flag:
-            system_type =  "Hybrid"
-        # NonbondedForce only, Amber
-        elif nb_force_flag and not c_bond_flag and not c_angle_flag and not c_torsion_flag and not c_nb_force_flag:
-            system_type =  "Amber"
-        # NonbondedForce and CustomNonbondedForce, nothing else, Charmm
-        elif nb_force_flag and c_nb_force_flag and not c_bond_flag and not c_angle_flag:
-            system_type =  "Charmm"
-        else:
-            msg = "Here are the forces in the system: \n"
-            for f in system.getForces():
-                msg += f"{f.getName()}\n"
-            msg += "The system is not supported. Please check the force in the system."
-            raise ValueError(msg)
-
-        # Other checks
-        for f in system.getForces():
-            # 1. PME should be used in nonbondedForce
-            if f.getName() == "NonbondedForce":
-                if f.getNonbondedMethod() != openmm.NonbondedForce.PME:
-                    raise ValueError("PME should be used for long range electrostatics")
-
-            # 2. Barostat should not be used
-            if f.getName() == "MonteCarloBarostat":
-                raise ValueError("Barostat should not be used in GCMC simulation")
-
-        return system_type
-
-    def _get_water_parameters(self, resname, system):
-        """
-        Get the charge of water and save it in self.wat_params['charge'].
-
-        :param resname: (str)
-        :param system: (openmm.System)
-        :return: None
-        """
-        nonbonded_force = None
-        for f in system.getForces():
-            if f.getName() == "NonbondedForce":
-                nonbonded_force = f
-                break
-
-        wat_params = {"charge":[], "sigma":[], "epsilon":[]}  # Store parameters in a dictionary
-        for residue in self.topology.residues():
-            if residue.name == resname:
-                for atom in residue.atoms():
-                    # Store the parameters of each atom
-                    atom_params = nonbonded_force.getParticleParameters(atom.index)
-                    wat_params["charge"].append( atom_params[0]) # has unit
-                    wat_params["sigma"].append(  atom_params[1])  # has unit
-                    wat_params["epsilon"].append(atom_params[2])  # has unit
-                break  # Don't need to continue past the first instance
-        self.wat_params = wat_params
-
-    @staticmethod
-    def _copy_nonbonded_setting_n2c(nonbonded_force: openmm.NonbondedForce, custom_nonbonded_force: openmm.CustomNonbondedForce):
-        """
-        Copy the nonbonded settings from NonbondedForce to CustomNonbondedForce.
-        :param nonbonded_force:
-        :param custom_nonbonded_force:
-        :return: None
-        """
-        custom_nonbonded_force.setNonbondedMethod(openmm.CustomNonbondedForce.CutoffPeriodic)
-        custom_nonbonded_force.setCutoffDistance(nonbonded_force.getCutoffDistance())
-        custom_nonbonded_force.setUseSwitchingFunction(nonbonded_force.getUseSwitchingFunction())
-        custom_nonbonded_force.setSwitchingDistance(nonbonded_force.getSwitchingDistance())
-        custom_nonbonded_force.setUseLongRangeCorrection(nonbonded_force.getUseDispersionCorrection())
-
-    @staticmethod
-    def _copy_nonbonded_setting_c2c(c1: openmm.CustomNonbondedForce, c2: openmm.CustomNonbondedForce):
-        """
-        Copy the nonbonded settings from CustomNonbondedForce to CustomNonbondedForce.
-        :param c1:
-        :param c2:
-        :return: None
-        """
-        c2.setNonbondedMethod(c1.getNonbondedMethod())
-        c2.setCutoffDistance(c1.getCutoffDistance())
-        c2.setUseSwitchingFunction(c1.getUseSwitchingFunction())
-        c2.setSwitchingDistance(c1.getSwitchingDistance())
-        c2.setUseLongRangeCorrection(c1.getUseLongRangeCorrection())
-
-    @staticmethod
-    def _copy_exclusion_c2c(c1: openmm.CustomNonbondedForce, c2: openmm.CustomNonbondedForce):
-        for exc_index in range(c1.getNumExclusions()):
-            at1_index, at2_index = c1.getExclusionParticles(exc_index)
-            c2.addExclusion(at1_index, at2_index)
-
     def customise_force_amber(self, system: openmm.System) -> None:
         """
         In Amber, NonbondedForce handles both electrostatics and vdW. This function will remove vdW from NonbondedForce
@@ -416,7 +272,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         custom_nb_force.addGlobalParameter('softcore_alpha', 0.5)
         custom_nb_force.addGlobalParameter('lambda_gc_vdw', 0.0) # lambda for vdw part of TI insertion/deletion
         # Transfer properties from the original force
-        self._copy_nonbonded_setting_n2c(self.nonbonded_force, custom_nb_force)
+        utils.copy_nonbonded_setting_n2c(self.nonbonded_force, custom_nb_force)
         self.nonbonded_force.setUseDispersionCorrection(False)  # Turn off dispersion correction in NonbondedForce as it will only be used for Coulomb
 
         # remove vdw from NonbondedForce, and add particles to CustomNonbondedForce
@@ -702,7 +558,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             "switch_interaction = max(is_switching1, is_switching2);"
         )
         custom_nb_force2 = openmm.CustomNonbondedForce(energy_expression)
-        self._copy_nonbonded_setting_n2c(self.nonbonded_force, custom_nb_force2)
+        utils.copy_nonbonded_setting_n2c(self.nonbonded_force, custom_nb_force2)
         custom_nb_force2.addPerParticleParameter("sigma")
         custom_nb_force2.addPerParticleParameter("epsilon")
         custom_nb_force2.addPerParticleParameter("is_real")
@@ -715,7 +571,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
             custom_nb_force2.addParticle([sigma, epsilon, 1.0, 0.0])
         # Copy all the exclusion from C1 to C2
-        self._copy_exclusion_c2c(custom_nb_force1, custom_nb_force2)
+        utils.copy_exclusion_c2c(custom_nb_force1, custom_nb_force2)
         # Add switch-(fix, wat, switch) interaction group
         # if H has no vdw, remove them from water_group_set
         water_group = []
@@ -758,7 +614,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             "scale_gc = is_real1 * is_real2;"
         )
         custom_nb_force3 = openmm.CustomNonbondedForce(energy_expression)
-        self._copy_nonbonded_setting_n2c(self.nonbonded_force, custom_nb_force3)
+        utils.copy_nonbonded_setting_n2c(self.nonbonded_force, custom_nb_force3)
         custom_nb_force3.addPerParticleParameter("sigma")
         custom_nb_force3.addPerParticleParameter("epsilon")
         custom_nb_force3.addPerParticleParameter("is_real")
@@ -768,7 +624,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
             custom_nb_force3.addParticle([sigma, epsilon, 1.0])
         # Copy all the exclusion from C1 to C3
-        self._copy_exclusion_c2c(custom_nb_force1, custom_nb_force3)
+        utils.copy_exclusion_c2c(custom_nb_force1, custom_nb_force3)
         # Add water-water, water-fix interaction group
         custom_nb_force3.addInteractionGroup(water_group_set, fix_group_set)
         custom_nb_force3.addInteractionGroup(water_group_set, water_group_set)
@@ -791,7 +647,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             "sigma = 0.5*(sigma1 + sigma2);"
         )
         custom_nb_force4 = openmm.CustomNonbondedForce(energy_expression)
-        self._copy_nonbonded_setting_n2c(self.nonbonded_force, custom_nb_force4)
+        utils.copy_nonbonded_setting_n2c(self.nonbonded_force, custom_nb_force4)
         custom_nb_force4.addPerParticleParameter("sigma")
         custom_nb_force4.addPerParticleParameter("epsilon")
         # Copy all the sigma, epsilon from NonbondedForce to C4
@@ -800,7 +656,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             charge, sigma, epsilon = self.nonbonded_force.getParticleParameters(at_index)
             custom_nb_force4.addParticle([sigma, epsilon])
         # Copy all the exclusion from C1 to C4
-        self._copy_exclusion_c2c(custom_nb_force1, custom_nb_force4)
+        utils.copy_exclusion_c2c(custom_nb_force1, custom_nb_force4)
         # Add fix-fix interaction group
         custom_nb_force4.addInteractionGroup(fix_group_set, fix_group_set)
         self.system.addForce(custom_nb_force4)
@@ -1160,7 +1016,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         self.system.addForce(c_nb_alchemy)
         self.custom_nonbonded_force_dict["alchem_X"] = [5, c_nb_alchemy]
 
-        self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_alchemy)
+        utils.copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_alchemy)
         c_nb_alchemy.addPerParticleParameter("sigmaA")
         c_nb_alchemy.addPerParticleParameter("epsilonA")
         c_nb_alchemy.addPerParticleParameter("sigmaB")
@@ -1194,7 +1050,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         c_nb_wat_envh = openmm.CustomNonbondedForce(energy)
         self.system.addForce(c_nb_wat_envh)
         self.custom_nonbonded_force_dict["wat_envh"] = [3, c_nb_wat_envh]
-        self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_envh)
+        utils.copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_envh)
         c_nb_wat_envh.addPerParticleParameter("sigma")
         c_nb_wat_envh.addPerParticleParameter("epsilon")
         c_nb_wat_envh.addPerParticleParameter("atom_group")
@@ -1215,7 +1071,7 @@ class BaseGrandCanonicalMonteCarloSampler:
             "sigma = 0.5*(sigma1 + sigma2);"
         )
         c_nb_wat_envc = openmm.CustomNonbondedForce(energy)
-        self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_envc)
+        utils.copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_envc)
         c_nb_wat_envc.addPerParticleParameter("sigma")
         c_nb_wat_envc.addPerParticleParameter("epsilon")
         c_nb_wat_envc.addPerParticleParameter("is_real")
@@ -1243,7 +1099,7 @@ class BaseGrandCanonicalMonteCarloSampler:
                 f"sigma = {wat_sigma};"
             )
             c_nb_wat_wat = openmm.CustomNonbondedForce(energy)
-            self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_wat)
+            utils.copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_wat)
             c_nb_wat_wat.addPerParticleParameter("is_real")
         else:
             flag_hard_code_wat = False
@@ -1259,7 +1115,7 @@ class BaseGrandCanonicalMonteCarloSampler:
                 "sigma = 0.5*(sigma1 + sigma2);"
             )
             c_nb_wat_wat = openmm.CustomNonbondedForce(energy)
-            self._copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_wat)
+            utils.copy_nonbonded_setting_n2c(self.nonbonded_force, c_nb_wat_wat)
             c_nb_wat_wat.addPerParticleParameter("sigma")
             c_nb_wat_wat.addPerParticleParameter("epsilon")
             c_nb_wat_wat.addPerParticleParameter("is_real")

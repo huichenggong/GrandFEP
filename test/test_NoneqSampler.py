@@ -1,6 +1,8 @@
 import unittest
 import copy
 from pathlib import Path
+from typing import Union, List, Tuple
+import time
 
 import numpy as np
 
@@ -11,6 +13,42 @@ from grandfep import utils, sampler
 
 l_vdw = [0.0, 0.11, 0.22, 0.33, 0.44, 0.55, 0.67, 0.89, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 l_chg = [0.0, 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+
+platform_ref = openmm.Platform.getPlatformByName('Reference')
+nonbonded_Amber = {"nonbondedMethod": app.PME,
+                   "nonbondedCutoff": 1.0 * unit.nanometer,
+                   "constraints": app.HBonds,
+                   }
+nonbonded_Charmm = {"nonbondedMethod": app.PME,
+                    "nonbondedCutoff": 1.2 * unit.nanometer,
+                    "switchDistance" : 1.0 * unit.nanometer,
+                    "constraints"    : app.HBonds
+                    }
+def load_amber_sys(inpcrd_file: Union[str, Path],
+                   prmtop_file: Union[str, Path],
+                   nonbonded_settings: dict) -> Tuple[app.AmberInpcrdFile, app.AmberPrmtopFile, openmm.System]:
+    """
+    Load Amber system from inpcrd and prmtop file.
+
+    Parameters
+    ----------
+    inpcrd_file :
+
+    prmtop_file :
+
+    nonbonded_settings :
+
+    Returns
+    -------
+    inpcrd :
+    prmtop :
+    sys :
+    """
+    inpcrd = app.AmberInpcrdFile(str(inpcrd_file))
+    prmtop = app.AmberPrmtopFile(str(prmtop_file),
+                                 periodicBoxVectors=inpcrd.boxVectors)
+    sys = prmtop.createSystem(**nonbonded_settings)
+    return inpcrd, prmtop, sys
 
 class MyTestCase(unittest.TestCase):
     def setUp(self):
@@ -363,6 +401,112 @@ class MyTestCase(unittest.TestCase):
                 )
             print(accept, acc_prob, protocol_work, n_water, sw_inside)
 
+
+class MyTestCaseNEwaterMC(unittest.TestCase):
+    def test_random_water(self):
+        print()
+        print("\n# REST2-waterMC Initialize a ligand-in-water system")
+        nonbonded_settings = nonbonded_Amber
+        platform = platform_ref
+
+        base = Path(__file__).resolve().parent
+
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "CH4_C2H6" / "lig0" / "06_solv.inpcrd",
+            base / "CH4_C2H6" / "lig0" / "06_solv.prmtop", nonbonded_settings)
+        inpcrd1, prmtop1, sys1 = load_amber_sys(
+            base / "CH4_C2H6" / "lig1" / "06_solv.inpcrd",
+            base / "CH4_C2H6" / "lig1" / "06_solv.prmtop", nonbonded_settings)
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(
+            prmtop0.topology,
+            prmtop1.topology,
+            [{'res_nameA': 'MOL', 'res_nameB': 'MOL', 'index_map': {0: 0}}]
+        )
+        h_factory = utils.HybridTopologyFactoryREST2(
+            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+        )
+        self.assertSetEqual({0, 1, 2, 3, 4, 17, 18, 19, 20, 21, 22, 23}, h_factory._atom_classes["rest2_atoms"])
+        tick = time.time()
+        samp = sampler.NoneqNPTWaterMCSampler(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_REST2_waterMC.log",
+            position=h_factory.hybrid_positions,
+            platform = platform,
+            active_site={
+                "name":"ActiveSiteSphereRelative",
+                "center_index":[0],
+                "radius":8.0 * unit.nanometer,
+                "box_vectors":np.array(h_factory.hybrid_system.getDefaultPeriodicBoxVectors())
+            }
+        )
+        tock = time.time()
+        print(f"## Time for initializing a REST2-waterMC system {tock - tick:.3f} s")
+        pos, vel = samp.random_pos_vel_water()
+        self.assertEqual(pos.shape, (3,3))
+        self.assertEqual(vel.shape, (3,3))
+
+    def test_random_move_in(self):
+        print()
+        print("\n# REST2-waterMC HSP90, move in")
+        nonbonded_settings = nonbonded_Amber
+
+        base = Path(__file__).resolve().parent
+
+        inpcrd0, prmtop0, sys0 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xab" / "10_complex_tleap.inpcrd",
+            base / "HSP90/protein_leg" / "2xab" / "10_complex_tleap.prmtop", nonbonded_settings)
+        inpcrd1, prmtop1, sys1 = load_amber_sys(
+            base / "HSP90/protein_leg" / "2xjg" / "10_complex_tleap.inpcrd",
+            base / "HSP90/protein_leg" / "2xjg" / "10_complex_tleap.prmtop", nonbonded_settings)
+        mdp = utils.md_params_yml(base / "HSP90/water_leg/bcc_gaff2/mapping.yml")
+        old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtop0.topology, prmtop1.topology,
+                                                                               mdp.mapping_list)
+        h_factory = utils.HybridTopologyFactoryREST2(
+            sys0, inpcrd0.getPositions(), prmtop0.topology, sys1, inpcrd1.getPositions(), prmtop1.topology,
+            old_to_new_atom_map,  # All atoms that should map from A to B
+            old_to_new_core_atom_map,  # Alchemical Atoms that should map from A to B
+            use_dispersion_correction=True,
+        )
+
+        samp = sampler.NoneqNPTWaterMCSampler(
+            h_factory.hybrid_system,
+            h_factory.omm_hybrid_topology,
+            300 * unit.kelvin,
+            1.0 / unit.picosecond,
+            2.0 * unit.femtosecond,
+            "test_REST2_waterMC_moveIn.log",
+            platform=openmm.Platform.getPlatformByName('CUDA'),
+            position=h_factory.hybrid_positions,
+            active_site={
+                "name": "ActiveSiteSphereRelative",
+                "center_index": [3282],
+                "radius": 1.0 * unit.nanometer,
+                "box_vectors": np.array(h_factory.hybrid_system.getDefaultPeriodicBoxVectors())
+            }
+        )
+        for i in range(10):
+            print(i, "In")
+            samp.move_in(
+                [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.2, 0.3, 0.4 ,0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+                40, "./")
+
+        for i in range(10):
+            print(i, "Out")
+            samp.move_out(
+                [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.2, 0.3, 0.4 ,0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+                40, "./")
+
+    def test_random_move_out(self):
+        pass
 
 if __name__ == '__main__':
     unittest.main()

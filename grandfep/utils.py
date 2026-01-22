@@ -15,6 +15,7 @@ import parmed
 from .relative import HybridTopologyFactory, HybridTopologyFactoryREST2
 
 
+# IO related functions
 def load_sys(sys_file: Union[str, Path]) -> openmm.System:
     """
     Load a serialized OpenMM system from a xml or xml.gz file.
@@ -81,6 +82,44 @@ def load_top(top_file: Union[str, Path]) -> tuple[app.topology.Topology, Union[a
         return prmtop.topology, prmtop
     else:
         raise ValueError(f"Topology file {top_file} is not supported. Only psf, parm7, and prmtop are supported.")
+
+def load_rst(context: openmm.Context, rst_input: Union[str, Path]) -> None:
+    """
+    Load coordinates and box vectors from an AMBER restart file (.rst7) into an OpenMM context.
+
+    Parameters
+    ----------
+    context : openmm.Context
+        The OpenMM context to load the coordinates and box vectors into.
+
+    rst_input : str or Path
+        Path to the AMBER restart file (.rst7).
+
+    Examples
+    --------
+    .. code-block:: python
+        :linenos:
+
+        from grandfep import utils
+        from openmm import app, openmm, unit
+
+        # Load system and create context
+        pdb = app.PDBFile("input.pdb")
+        forcefield = app.ForceField('amber14-all.xml', 'amber14/tip3pfb.xml')
+        system = forcefield.createSystem(pdb.topology, nonbondedMethod=app.PME,
+                                         nonbondedCutoff=1 * unit.nanometer, constraints=app.HBonds)
+        integrator = openmm.LangevinMiddleIntegrator(300*unit.kelvin, 1/unit.picosecond, 0.004*unit.picoseconds)
+        simulation = app.Simulation(pdb.topology, system, integrator)
+        simulation.context.setPositions(pdb.positions)
+
+        # Load restart file into context
+        utils.load_rst(simulation.context, "restart.rst7")
+    """
+    rst = app.AmberInpcrdFile(rst_input)
+    context.setPeriodicBoxVectors(*rst.getBoxVectors())
+    context.setPositions(rst.getPositions())
+    context.setVelocities(rst.getVelocities())
+
 
 def find_reference_atom_indices(topology : app.Topology, ref_atoms_list: list) -> list:
     """
@@ -925,3 +964,420 @@ class rst7_reporter(parmed.openmm.reporters.RestartReporter):
             fname = self.fname
 
         self.rst7.write(fname, self.netcdf)
+
+# force preparation functions
+def check_system_type(system, no_barostat: bool = True) -> str:
+    """
+    Check if system can be converted to a GCMC system.
+
+    :param system: (openmm.System)
+        The system to be checked.
+    :return: (str)
+        The type of the system. Can be Amber, Charmm or Hybrid
+        Amber should have NonbondedForce without CustomNonbondedForce
+        Charmm should have NonbondedForce and CustomNonbondedForce. The EnergyFunction that is allowed in
+        CustomNonbondedForce is `(a/r6)^2-b/r6; r6=r^6;a=acoef(type1, type2);b=bcoef(type1, type2)` or
+        `acoef(type1, type2)/r^12 - bcoef(type1, type2)/r^6;`
+
+        Hybrid should have
+            CustomBondForce            For perturbed bonds
+            HarmonicBondForce
+            CustomAngleForce           For perturbed angles
+            HarmonicAngleForce
+            CustomTorsionForce         For perturbed dihedrals
+            PeriodicTorsionForce
+            NonbondedForce             For perturbed Coulomb
+            CustomNonbondedForce       For perturbed Lennard-Jones
+            CustomBondForce_exceptions For perturbed exceptions, mostly 1-4 nonbonded
+
+        Hybrid_REST2 should have
+            CustomBondForce               For perturbed bonds
+            HarmonicBondForce
+            CustomAngleForce              For perturbed angles
+            HarmonicAngleForce
+            CustomTorsionForce            For perturbed dihedrals
+            PeriodicTorsionForce
+            NonbondedForce                For perturbed Coulomb
+            CustomNonbondedForce          For perturbed Lennard-Jones
+            CustomBondForce_exceptions_1D For perturbed exceptions, mostly 1-4 nonbonded
+    """
+    force_name_list = [f.getName() for f in system.getForces()]
+    c_bond_flag     = "CustomBondForce" in force_name_list
+    c_angle_flag    = "CustomAngleForce" in force_name_list
+    c_torsion_flag  = "CustomTorsionForce" in force_name_list
+    nb_force_flag   = "NonbondedForce" in force_name_list
+    c_nb_force_flag = "CustomNonbondedForce" in force_name_list
+    c_b_force_flag  = "CustomBondForce_exceptions_1D" in force_name_list
+
+    # all True, Hybrid
+    system_type = None
+    if c_bond_flag and c_angle_flag and c_torsion_flag and nb_force_flag and c_nb_force_flag and c_b_force_flag:
+        system_type =  "Hybrid_REST2"
+    elif c_bond_flag and c_angle_flag and c_torsion_flag and nb_force_flag and c_nb_force_flag:
+        system_type =  "Hybrid"
+    # NonbondedForce only, Amber
+    elif nb_force_flag and not c_bond_flag and not c_angle_flag and not c_torsion_flag and not c_nb_force_flag:
+        system_type =  "Amber"
+    # NonbondedForce and CustomNonbondedForce, nothing else, Charmm
+    elif nb_force_flag and c_nb_force_flag and not c_bond_flag and not c_angle_flag:
+        system_type =  "Charmm"
+    else:
+        msg = "Here are the forces in the system: \n"
+        for f in system.getForces():
+            msg += f"{f.getName()}\n"
+        msg += "The system is not supported. Please check the force in the system."
+        raise ValueError(msg)
+
+    # Other checks
+    for f in system.getForces():
+        # 1. PME should be used in nonbondedForce
+        if f.getName() == "NonbondedForce":
+            if f.getNonbondedMethod() != openmm.NonbondedForce.PME:
+                raise ValueError("PME should be used for long range electrostatics")
+
+        # 2. Barostat should not be used
+        if "Barostat" in f.getName() and no_barostat:
+            raise ValueError("Barostat should not be used.")
+
+    return system_type
+
+def check_water_points(topology, resname):
+    """
+    Check if the water model is 3-point or 4-point in topology.
+    :return: int
+    """
+    # check if the system has water
+    for res in topology.residues():
+        if res.name == resname:
+            return len(list(res.atoms()))
+    return 0
+
+def find_all_water(topology, resname, water_O_name):
+    """
+    Identify water residues and their oxygen atom indices in the topology.
+
+    Parameters
+    ----------
+    topology : openmm.app.Topology
+        OpenMM topology to inspect.
+    resname : str
+        Residue name used to identify water molecules in the topology.
+    water_O_name : str
+        Atom name used to identify the oxygen atom within a water residue.
+
+    Returns
+    -------
+    water_res_2_atom : dict
+        Mapping from water residue index (int) to a list of atom indices (list of int)
+        that belong to that water residue.
+    water_res_2_O : dict
+        Mapping from water residue index (int) to the atom index (int) of the oxygen
+        atom within that residue.
+
+    Raises
+    ------
+    ValueError
+        If a water residue matching `resname` does not contain an atom named `water_O_name`,
+        or if no residues matching `resname` are present in the topology.
+    """
+    # check if the system has water
+    water_res_2_atom = {}
+    water_res_2_O = {}
+    for res in topology.residues():
+        if res.name == resname:
+            # self.switching_water = res.index
+            water_res_2_atom[res.index] = []
+            water_res_2_O[res.index] = None
+            for atom in res.atoms():
+                water_res_2_atom[res.index].append(atom.index)
+                if atom.name == water_O_name:
+                    water_res_2_O[res.index] = atom.index
+            if water_res_2_O[res.index] is None:
+                raise ValueError(f"The water ({resname}) does not have the oxygen atom ({water_O_name}). Please check the topology.")
+    if len(water_res_2_atom) == 0:
+        raise ValueError(f"The topology does not have any water({resname}). Please check the topology.")
+    return water_res_2_atom, water_res_2_O
+
+def copy_nonbonded_setting_n2c(nonbonded_force: openmm.NonbondedForce, custom_nonbonded_force: openmm.CustomNonbondedForce):
+    """
+    Copy nonbonded settings from a NonbondedForce to a CustomNonbondedForce.
+
+    Parameters
+    ----------
+    nonbonded_force
+        Source NonbondedForce from which to copy settings (nonbonded method,
+        cutoff distance, switching function and switching distance, dispersion correction).
+    custom_nonbonded_force
+        Destination CustomNonbondedForce to update with the copied settings.
+
+    Returns
+    -------
+    None
+        The function updates custom_nonbonded_force in-place.
+    """
+    custom_nonbonded_force.setNonbondedMethod(openmm.CustomNonbondedForce.CutoffPeriodic)
+    custom_nonbonded_force.setCutoffDistance(nonbonded_force.getCutoffDistance())
+    custom_nonbonded_force.setUseSwitchingFunction(nonbonded_force.getUseSwitchingFunction())
+    custom_nonbonded_force.setSwitchingDistance(nonbonded_force.getSwitchingDistance())
+    custom_nonbonded_force.setUseLongRangeCorrection(nonbonded_force.getUseDispersionCorrection())
+
+def copy_nonbonded_setting_c2c(c1: openmm.CustomNonbondedForce, c2: openmm.CustomNonbondedForce):
+    """
+    Copy nonbonded settings from one CustomNonbondedForce to another.
+
+    Parameters
+    ----------
+    c1
+        Source CustomNonbondedForce from which to copy settings. Copied settings include:
+        nonbonded method, cutoff distance, switching function usage, switching distance,
+        and long-range dispersion correction usage.
+    c2
+        Destination CustomNonbondedForce to update in-place.
+
+    Returns
+    -------
+    None
+        The function updates ``c2`` in-place.
+    """
+    c2.setNonbondedMethod(c1.getNonbondedMethod())
+    c2.setCutoffDistance(c1.getCutoffDistance())
+    c2.setUseSwitchingFunction(c1.getUseSwitchingFunction())
+    c2.setSwitchingDistance(c1.getSwitchingDistance())
+    c2.setUseLongRangeCorrection(c1.getUseLongRangeCorrection())
+
+def copy_exclusion_c2c(c1: openmm.CustomNonbondedForce, c2: openmm.CustomNonbondedForce):
+    """
+    Copy exclusion from one CustomNonbondedForce to another.
+
+    Parameters
+    ----------
+    c1
+        Source CustomNonbondedForce from which to copy exclusion.
+    c2
+        Destination CustomNonbondedForce to update in-place.
+
+    Returns
+    -------
+    None
+        The function updates ``c2`` in-place.
+    """
+    for exc_index in range(c1.getNumExclusions()):
+        at1_index, at2_index = c1.getExclusionParticles(exc_index)
+        c2.addExclusion(at1_index, at2_index)
+
+def get_water_parameters(topology: app.Topology, system: openmm.System, water_resname: str = "HOH") -> dict:
+    """
+    Get charge, vdw of water parameters from the system.
+
+    Parameters
+    ----------
+    topology
+        The OpenMM topology object. Water residues will be identified by ``water_resname``.
+    system
+        The OpenMM system object containing force field parameters. The water parameters will be extracted from
+        the NonbondedForce in this system.
+    water_resname
+        The residue name used to identify water molecules in the topology. Default is "HOH".
+
+    Returns
+    -------
+    water_params : dict
+        A dictionary containing the water parameters with keys:
+        - 'charge': charge of all the atoms in a water molecule.
+        - 'sigma': sigma of all the atoms in a water molecule.
+        - 'epsilon': epsilon of all the atoms in a water molecule.
+
+    """
+    nonbonded_force = None
+    for f in system.getForces():
+        if f.getName() == "NonbondedForce":
+            nonbonded_force = f
+            break
+
+    wat_params = {"charge": [], "sigma": [], "epsilon": []}  # Store parameters in a dictionary
+    for residue in topology.residues():
+        if residue.name == water_resname:
+            for atom in residue.atoms():
+                # Store the parameters of each atom
+                atom_params = nonbonded_force.getParticleParameters(atom.index)
+                wat_params["charge"].append(atom_params[0])  # has unit
+                wat_params["sigma"].append(atom_params[1])  # has unit
+                wat_params["epsilon"].append(atom_params[2])  # has unit
+            break  # Don't need to continue past the first instance
+    return wat_params
+
+# region selection classes
+class ActiveSite:
+    """
+    Class to define an active site in the system. Only works for cubic box now.
+    """
+    def __init__(self, center_index: list, ):
+        """
+        Initialize the ActiveSite with a center atom index and a radius.
+
+        Parameters
+        ----------
+        center_index : list
+            The index of the center atom of the active site.
+        """
+        self.center_index = center_index
+
+    def rap_box(self, box_vectors, positions):
+        """
+        """
+        center = np.mean(positions[self.center_index].value_in_unit(unit.nanometer), axis=0)
+        simulation_box = np.array([box_vectors[0, 0].value_in_unit(unit.nanometer),
+                                   box_vectors[1, 1].value_in_unit(unit.nanometer),
+                                   box_vectors[2, 2].value_in_unit(unit.nanometer)])
+        # shift everything so that the sphere is at [box_x/2, box_y/2, box_z/2]
+        half_box = (simulation_box / 2)
+        positions = positions.value_in_unit(unit.nanometer)
+        positions += half_box - center
+        positions = np.mod(positions, simulation_box)
+
+        # return the new center
+        return half_box, positions
+
+
+    def get_atom_states(self, atom_indices, box_vectors, positions):
+        raise NotImplementedError("rap_box is not defined for base ActiveSite class.")
+
+    def random_position(self, box_vectors, positions, in_active_site: bool = True):
+        raise NotImplementedError("random_position is not defined for base ActiveSite class.")
+
+
+class ActiveSiteSphere(ActiveSite):
+    """
+    Class to define a spherical active site in the system.
+    """
+    def __init__(self, center_index: list, radius: unit.Quantity):
+        """
+        Initialize the ActiveSiteSphere with a center atom index and a radius.
+
+        Parameters
+        ----------
+        center_index : list
+            The index of the center atom of the active site.
+        radius : unit.Quantity
+            The radius of the active site sphere. with unit
+        """
+        super().__init__(center_index)
+        # radius should have length unit
+        radius.value_in_unit(unit.nanometer)
+        self.radius = radius
+
+    def get_atom_states(self, atom_indices, box_vectors, positions):
+        center, pos = self.rap_box(box_vectors, positions)
+        distance_all = np.linalg.norm(pos[atom_indices] - center, axis=1)
+        return distance_all <= self.radius.value_in_unit(unit.nanometer)
+
+    def random_position(self, box_vectors, positions, in_active_site: bool = True):
+        center = np.mean(positions[self.center_index], axis=0)
+        if in_active_site:
+            r = np.random.rand(1) ** (1 / 3)
+            v = np.random.normal(0, 1, 3)
+            v /= np.linalg.norm(v)
+            random_vec = v * r
+            pos = center + self.radius*random_vec
+        else:
+            while True:
+                pos = np.sum(np.random.uniform(0,1,3) * box_vectors, axis=0)
+                box_center = (box_vectors[0] + box_vectors[1] + box_vectors[2])/2
+                distance = np.linalg.norm(
+                    pos.value_in_unit(unit.nanometer) - box_center.value_in_unit(unit.nanometer)
+                ) * unit.nanometer
+                if distance > self.radius:
+                    pos = center + (pos - box_center)
+                    break
+        return pos
+
+    def get_volume(self, state):
+        volume = state.getPeriodicBoxVolume()
+        box_vectors = state.getPeriodicBoxVectors(asNumpy=True)
+        radius = self.radius_relative
+        vol_active = (4/3) * np.pi * radius**3
+        vol_bulk = volume - vol_active
+        return vol_active, vol_bulk
+
+
+class ActiveSiteSphereRelative(ActiveSite):
+    """
+    Class to define a spherical active site in the system.
+    """
+    def __init__(self, center_index: list, radius: unit.Quantity, box_vectors: unit.Quantity):
+        """
+        Initialize the ActiveSiteSphere with a center atom index and a radius.
+
+        Parameters
+        ----------
+        center_index : list
+            The index of the center atom of the active site.
+        radius : unit.Quantity
+            The radius of the active site sphere. with unit
+        """
+        super().__init__(center_index)
+        radius.value_in_unit(unit.nanometer)
+        self.radius_relative = radius / box_vectors[0,0]
+
+    def get_atom_states(self, atom_indices, box_vectors, positions):
+        center, pos = self.rap_box(box_vectors, positions)
+        distance_all = np.linalg.norm(pos[atom_indices] - center, axis=1)
+        radius = (self.radius_relative * box_vectors[0,0]).value_in_unit(unit.nanometer)
+        return distance_all <= radius
+
+    def random_position(self, box_vectors, positions, in_active_site: bool = True):
+        center = np.mean(positions[self.center_index], axis=0)
+        radius = (self.radius_relative * box_vectors[0, 0])
+        if in_active_site:
+            r = np.random.rand(1) ** (1 / 3)
+            v = np.random.normal(0, 1, 3)
+            v /= np.linalg.norm(v)
+            random_vec = v * r
+            pos = center + radius*random_vec
+        else:
+            while True:
+                pos = np.sum(np.random.uniform(0,1,3) * box_vectors, axis=0)
+                box_center = (box_vectors[0] + box_vectors[1] + box_vectors[2])/2
+                distance = np.linalg.norm(
+                    pos.value_in_unit(unit.nanometer) - box_center.value_in_unit(unit.nanometer)
+                ) * unit.nanometer
+                if distance > radius:
+                    pos = center + (pos - box_center)
+                    break
+        return pos
+
+    def get_volume(self, state):
+        volume = state.getPeriodicBoxVolume()
+        box_vectors = state.getPeriodicBoxVectors(asNumpy=True)
+        radius = (self.radius_relative * box_vectors[0, 0])
+        vol_active = (4/3) * np.pi * radius**3
+        vol_bulk = volume - vol_active
+        return vol_active, vol_bulk
+
+
+class ActiveSiteCube(ActiveSite):
+    """
+    Class to define a spherical active site in the system. only works for cubic box now.
+    """
+    def __init__(self, center_index: int, box_abc: unit.Quantity):
+        """
+        Initialize the ActiveSiteSphere with a center atom index and a radius.
+
+        Parameters
+        ----------
+        center_index : int
+            The index of the center atom of the active site.
+        box_abc : unit.Quantity
+            The box xyz of the active site sphere. with unit
+        """
+        super().__init__(center_index)
+        # box_abc should have length unit
+        box_abc.value_in_unit(unit.nanometer).shape
+        self.box_abc = box_abc
+
+    def get_atom_states(self, atom_indices, box_vectors, positions):
+        center, pos = self.rap_box(box_vectors, positions)
+        x_in = np.abs(pos[atom_indices, 0] - center[0]) <= self.box_abc.value_in_unit(unit.nanometer)[0] / 2
+        y_in = np.abs(pos[atom_indices, 1] - center[1]) <= self.box_abc.value_in_unit(unit.nanometer)[1] / 2
+        z_in = np.abs(pos[atom_indices, 2] - center[2]) <= self.box_abc.value_in_unit(unit.nanometer)[2] / 2
+        return x_in & y_in & z_in

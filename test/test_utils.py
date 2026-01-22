@@ -101,8 +101,75 @@ class MyTestCase(unittest.TestCase):
         rst7_rep.report_positions_velocities(simulation, state,
                                              boxv, pos, vel)
 
-    def test_HybridTopologyFactoryREST2(self):
-        pass
+class MyTestActiveSite(unittest.TestCase):
+    def setUp(self):
+        boxv = np.array([[1.0, 0.0, 0.0],
+                         [0.0, 1.0, 0.0],
+                         [0.0, 0.0, 1.0]]) * unit.nanometer
+
+        pos1 = np.array([[0.5, 0.5, 0.5],
+                         [0.6, 0.6, 0.6],
+                         [1.4, 1.4, 1.4],
+                         [0.9, 0.9, 0.9],
+                         [-0.1, -0.1, -0.1],
+                         ]) * unit.nanometer
+        self.data = (boxv, pos1)
+
+    def test_ActiveSiteSphere(self):
+        print("\n# Test ActiveSiteSphere")
+        boxv, pos1 = self.data
+        a_site = utils.ActiveSiteSphere([0],
+                                        radius=(3 * 0.2**2)**0.5*unit.nanometer)
+        for shift in np.linspace(0,1.5, 15):
+            shifted_pos = pos1 + np.array([shift, shift, shift]) * unit.nanometer
+            atom_states = a_site.get_atom_states([0, 1, 2, 3, 4],
+                                                 boxv,
+                                                 shifted_pos)
+            self.assertListEqual(atom_states.tolist(), [True, True, True, False, False])
+            pos = a_site.random_position(boxv, shifted_pos)
+            dist = np.linalg.norm(pos.value_in_unit(unit.nanometer) - shifted_pos[0].value_in_unit(unit.nanometer))
+            self.assertTrue(dist < 0.34642)
+            pos = a_site.random_position(boxv, shifted_pos, False)
+            dist = np.linalg.norm(pos.value_in_unit(unit.nanometer) - shifted_pos[0].value_in_unit(unit.nanometer))
+            self.assertTrue(dist > 0.34641)
+
+    def test_ActiveSiteSphereRelative(self):
+        print("\n# Test ActiveSiteSphereRelative")
+        boxv, pos1 = self.data
+        a_site = utils.ActiveSiteSphereRelative(
+            [0],
+            radius=(3 * 0.2**2)**0.5*unit.nanometer,
+            box_vectors=boxv
+        )
+        for scale in [0.1, 0.5, 1.0, 2, 10]:
+            for shift in np.linspace(1, 1.5, 15):
+                scaled_boxv = scale * boxv
+                shifted_pos = scale*(pos1 + np.array([shift, shift, shift]) * unit.nanometer)
+                atom_states = a_site.get_atom_states([0, 1, 2, 3, 4],
+                                                     scaled_boxv,
+                                                     shifted_pos,
+                                                     )
+                self.assertListEqual(atom_states.tolist(), [True, True, True, False, False])
+
+                pos = a_site.random_position(scaled_boxv, shifted_pos)
+                dist = np.linalg.norm(pos.value_in_unit(unit.nanometer) - shifted_pos[0].value_in_unit(unit.nanometer))
+                self.assertTrue(dist < 0.34642*scale)
+
+                pos = a_site.random_position(scaled_boxv, shifted_pos, False)
+                dist = np.linalg.norm(pos.value_in_unit(unit.nanometer) - shifted_pos[0].value_in_unit(unit.nanometer))
+                self.assertTrue(dist > 0.34641 * scale)
+
+    def test_ActiveSiteCube(self):
+        print("\n# Test ActiveSiteCube")
+        boxv, pos1 = self.data
+        a_site = utils.ActiveSiteCube([0],
+                                      box_abc=np.array([0.4, 0.4, 0.4])*unit.nanometer)
+        for shift in np.linspace(1, 1.5, 15):
+            atom_states = a_site.get_atom_states([0, 1, 2, 3, 4],
+                                                 boxv,
+                                                 pos1 + np.array([shift, shift, shift]) * unit.nanometer)
+            self.assertListEqual(atom_states.tolist(), [True, True, True, False, False])
+
 
 
 if __name__ == '__main__':
