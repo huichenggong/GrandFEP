@@ -192,3 +192,9 @@ cython_debug/
 /test/CH4_C2H6/multidir/?/md.log
 /test/CH4_C2H6/multidir/?/md.rst7
 /test/CH4_C2H6/multidir/?/md.jsonl
+Out_end*.pdb
+Out_start*.pdb
+In_end*.pdb
+In_start*.pdb
+tmp.pdb
+

@@ -10,3 +10,6 @@ sampler
     sampler/NoneqGrandCanonicalMonteCarloSamplerMPI
     sampler/NPTSampler
     sampler/NPTSamplerMPI
+    sampler/BaseNPTWaterMCSampler
+    sampler/NoneqNPTWaterMCSampler
+    sampler/NoneqNPTWaterMCSamplerMPI
