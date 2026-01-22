@@ -1,3 +1,8 @@
+## v1.0.1 Water MC move for NPT
+2 reasons why we should to water MC under NPT instead of a full GC ensemble
+1. It's too expansive to generate density fluctuation using GC Monte Carlo insertion/deletion.  
+2. We don't need that many sampling to get the correct water in the active site.
+
 ## v0.1.3 REST2  
 ### Plan
 1. REST2
@@ -18,6 +23,12 @@ skip
 # create a new branch and switch to it
 git checkout -b 0.1.3_dev
 git push -u origin 0.1.3_dev
+
+# In the end
+git checkout master
+git pull origin master
+git merge 0.1.3_dev
+git push origin master
 ```
 
 Remove the non-vdw atoms from the interaction group reduce to udpate time by order of magnitude. 
