@@ -193,7 +193,6 @@ def main():
             elif operation == "waterMC":
                 fail_flag = False
                 if np.random.rand() < 0.5:
-                    samp.logger.info(f"Water MC In_Move")
                     try:
                         samp.move_in(
                             mdp.lambda_gc_vdw,
@@ -204,7 +203,6 @@ def main():
                         samp.logger.error(f"Water MC failed: {e}")
                         fail_flag = True
                 else:
-                    samp.logger.info(f"Water MC Out_Move")
                     try:
                         samp.move_out(
                             mdp.lambda_gc_vdw,
