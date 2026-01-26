@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python=3
   - pip
-  - numpy
+  - numpy<2.3 # parmed Issue #1386
   - scipy
   - pandas
   - openmm
@@ -15,8 +15,8 @@ dependencies:
   - parmed
   - cuda-version=12
   - mdtraj
-  # additional packages
   - mdanalysis
+  # additional packages
   - ipykernel
   - ipywidgets
   - ambertools
