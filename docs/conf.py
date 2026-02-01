@@ -21,8 +21,15 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx_autodoc_typehints',
-    'sphinx_mdinclude'
+    "myst_parser",           # parse Markdown with MyST
+    "sphinx.ext.mathjax",    # render math in HTML via MathJax
 ]
+
+myst_enable_extensions = [
+    "dollarmath",            # $...$ and $$...$$
+    "amsmath",               # \begin{align}...\end{align}, numbering, {eq}`label`
+]
+
 typehints_fully_qualified = True       # <─ add this line
 # Napoleon settings
 

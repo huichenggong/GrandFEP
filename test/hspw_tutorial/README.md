@@ -1,7 +1,26 @@
 ## 1. Introduction
-This tutorial will use the hsp90 woodhead data set from Schrodinger. The input file is adapted from the paper of 
-Ross et al.[1] The hsp90 woodhead data set shows significant improvement in sampling efficiency when using 
-Grand Canonical Monte Carlo (GCMC) water sampling.  
+
+Accurately sampling binding-site hydration can be a limiting factor in relative binding free energy (RBFE) calculations. 
+Buried water molecules can exchange with bulk on timescales that are much slower than typical RBFE, and 
+their slow rearrangement can lead to hysteresis, poor overlap between alchemical states.  
+
+To address this, this tutorial demonstrates **hybrid MD/MC water sampling**, using either 
+(i) **Grand Canonical Monte Carlo (GCMC)** water insertion/deletion or (ii) a **Water Swap Monte Carlo (Water MC)** scheme 
+that shift water molecules between the active site and the bulk.  
+
+In this tutorial we use the **HSP90 Woodhead dataset** from Schrödinger. The protein–ligand input structures are adapted from 
+Ross et al. [1], which highlighted that explicit water sampling using GCMC can substantially improve sampling efficiency for 
+this system. We reproduce that setting here and provide two water-enhanced sampling modes implemented in this 
+package:
+
+- **GCMC**: water molecules are inserted into or deleted from a predefined region (typically the binding site) while the 
+  simulation box and the number of *non-water* particles remain fixed. Conceptually, the binding site is coupled to an 
+  water reservoir at a specified chemical potential.
+
+- **Water MC**: a *pairwise* move is attempted where one water is deleted from the active-site region and 
+  another is inserted in the bulk (or the reverse). This enforces **constant total water count** while accelerating the 
+  *exchange* of waters between the active site and bulk. The simulation is performed in the NPT ensemble. 
+
 
 ## 2. Preparation
 ### 2.1. Environment setup
@@ -235,9 +254,9 @@ mpirun -np 16 $script_dir/run_NPT_RE.py \
     -start_rst7 npt_eq.rst7 \
     -deffnm 0/npt 
 ```
-After 4 hour time out, you can execute the same command again to continue the simulation. The `-deffnm` flag will tells 
-the script to append the new data to existing files. The simulation will end when the number of RE reaches `ncycle` 
-(10000 here).  
+After 4 hour time out, if the number of RE cycles has not reached 10000, you can execute the same command again to 
+continue the simulation. The `-deffnm` flag will tells the script to append the new data to existing files. The 
+simulation will end when the number of RE reaches `ncycle` (10000 here).  
 
 If you want to start a new simulation in the next directory (e.g., `1/npt`), you can run:
 ```bash
@@ -359,7 +378,7 @@ do
 done
 ```
 
-### 5.1. Preparation of starting structures
+### 5.2. Preparation of starting structures
 After the NPT equilibration, we cut a slightly smaller box on the final frame of NPT simulation. The volume 
 that has been cut will be converted to ghost waters in the following GC simulations.  
 ```bash
@@ -425,10 +444,18 @@ mpirun -np 16 $script_dir/run_GC_RE.py \
     -ncycle 576 \
     -start_rst7   gc_start.rst7 \
     -start_jsonl  gc_start.jsonl \
-    -deffnm       0/gc 
+    -deffnm       0/gc
+# run until 576 RE are reached
 ```
 
 ### 5.4. Production
+![Protocol](../../test/hspw_tutorial/analysis/sampling_protocol.png "Protocol")
+In the production run, we will perform 1 GC step and 15 RE step in each sampling cycle. 
+Between every GCor RE, 200 steps of MD will be performed. So in total, each cycle contains 
+(1 + 15) * 200 * 0.004 = 12.8 (ps) of MD. Each 20% of the GC step is tested in the active site sphere, 
+and the other 80% is tested in the whole box. The GC insertion/deletion Monte Carlo moves are performed 
+in non-equilibrium fashion, with 80 perturbation steps and 40 propagation steps. In total, each GC step
+consists of 80 * 40 * 0.004 = 12.8 (ps) of MD.
 ```bash
 cd test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/GC_80l_40MD_15RE_200MD/rep_0
 # run simulation in subdir 1 restarting from subdir 0
@@ -446,8 +473,9 @@ mpirun -np 16 $script_dir/run_GC_RE.py \
     -start_rst7  0/gc.rst7 \
     -start_jsonl 0/gc.jsonl \
     -deffnm      1/gc
+# run until 1200 RE are reached
 ```
-Roughly 5~15 ns with 3 replicas are needed, depending on the quality of the initial structures.
+Roughly 5 ns * 3 replica or 15 ns * 1 replica are needed.
 
 ### 5.5. MBAR
 Estimate free energy differences (ddG in this case) with MBAR.  
@@ -529,19 +557,122 @@ $$
 The experimental ddG is 1.98 kcal/mol. +1.98 kcal/mol means that Lig1 binds stronger than Lig2. The MD result is 
 quite close to the experimental value. Please check the `analysis/dG.ipynb` for error estimation.
 
-## 6. Collect results, and estimate ΔG
-### 6.1. Run all edges
+## 6. Water MC
+
+### 6.1. Preparation of parameter files
+  
+Prepare the yaml files for GC simulations. We use the optimized lambda schedule from water leg NPT simulations.  
+```bash
+# from the GrandFEP root directory
+cd test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein
+mkdir WaterMC_80l_40MD
+cp ../../../JOB/tip3p_REST2/protein/WaterMC_80l_40MD/rep_999 ./WaterMC_80l_40MD/ -r
+cd WaterMC_80l_40MD/rep_999/
+# sed keyword GEN_VEL and RESTRAINT
+center="C18" # each edge has its own center atom
+sed -e 's/GEN_VEL/true/' \
+    -e 's/RESTRAINT/false/' \
+    npt_tmp.yml           >  ./npt_eq.yml
+cat prot_eq.yml           >> ./npt_eq.yml
+cat ../../../OPT_lam.yml  >> ./npt_eq.yml
+sed -e "s/CENTERATOM/$center/" \
+    GC_center.yml         >> ./npt_eq.yml
+
+sed -e 's/GEN_VEL/false/' \
+    -e "s/RESTRAINT/false/" \
+    npt_tmp.yml           >  ./npt.yml
+cat prot.yml              >> ./npt.yml
+cat ../../../OPT_lam.yml  >> ./npt.yml
+sed -e "s/CENTERATOM/$center/" \
+    GC_center.yml         >> ./npt.yml
+
+for win in {0..15}
+do
+    mkdir $win -p
+    sed "s/INIT_LAMBDA_STATE/$win/" npt_eq.yml > $win/npt_eq.yml
+    sed "s/INIT_LAMBDA_STATE/$win/" npt.yml    > $win/npt.yml
+done
+```
+
+### 6.2. Copy the starting structures 
+```bash
+cd test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/WaterMC_80l_40MD
+base=$PWD
+for rep in {0..2}
+do
+    cd $base/
+    cp rep_999 rep_$rep -r
+    cd rep_$rep
+    for win in {0..15}
+    do
+        cd $base/rep_$rep/$win
+        # if link npt_eq.rst7 not exists, create link
+        if [ ! -L npt_eq.rst7 ]; then
+            ln -s ../../../NPT/rep_$rep/$win/npt_eq.rst7
+        fi
+    done
+done
+```
+
+
+
+### 6.3. Equilibration
+```bash
+cd test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/WaterMC_80l_40MD/rep_0
+for win in {0..15}
+do
+    mkdir $win/0
+done
+mpirun -np 16 $script_dir/run_NPT_waterMC_RE.py \
+    -pdb    system.pdb \
+    -system system.xml.gz \
+    -multidir 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15  \
+    -yml npt_eq.yml \
+    -maxh 15 \
+    -ncycle 576 \
+    -start_rst7   npt_eq.rst7 \
+    -deffnm       0/npt
+# run until 576 RE cycles are finished
+```
+
+### 6.4. Production
+In the production run, we will perform 1 water MC move and 63 RE moves in each sampling cycle. 
+Between every water MC or RE, 200 steps of MD will be performed. So in total, each cycle contains 
+(1 + 63) * 200 * 0.004 = 51.2 (ps) of MD. The water swap Monte Carlo moves are performed 
+in non-equilibrium fashion, with 80 perturbation steps and 40 propagation steps. In total, each MC step
+consists of 80 * 40 * 0.004 = 12.8 (ps) of MD.
+```bash
+cd test/hspw_tutorial/edge_1_to_2/tip3p_REST2/protein/WaterMC_80l_40MD/rep_0
+# run simulation in subdir 1 restarting from subdir 0
+for win in {0..15}
+do
+    mkdir $win/1
+done
+mpirun -np 16 $script_dir/run_NPT_waterMC_RE.py \
+    -pdb    system.pdb \
+    -system system.xml.gz \
+    -multidir 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15  \
+    -yml npt.yml \
+    -maxh 2 \
+    -ncycle 1260 \
+    -start_rst7  0/npt.rst7 \
+    -deffnm      1/npt
+# run until 1260 RE cycles are finished
+```
+Roughly 5 ns * 3 replica or 15 ns * 1 replica are needed.
+## 7. Collect results, and estimate ΔG
+### 7.1. Run all edges
 We need to know the ddG between every ligands to estimate the ΔG. A map of edges need to be simulated. 
 Scripts for batch running all edges are provided.
 ```bash
 cd test/hspw_tutorial/JOB/tip3p_REST2
 ```
 
-### 6.2. Cycle closure and ΔG estimation
+### 7.2. Cycle closure and ΔG estimation
 Jupyter notebook for analysis is provided in `analysis/` folder.  
 ![deltaG](../../test/hspw_tutorial/analysis/hspw_deltaG.png "Delta_G")
 
-### 6.3. Shift the ghost water outside the box
+### 7.3. Shift the ghost water outside the box
 There are ghost waters flying randomly in the simulation box. To visualize the trajectory, we can shift them away. 
 The residue index of the ghost water is saved with the dcd file as a jsonl file.
 ```bash
@@ -557,20 +688,20 @@ do
 done
 ```
 
-## 7. What about Amber19SB and OPC water?
+## 8. What about Amber19SB and OPC water?
 It is difficult to draw a conclusion about the accuracy of 2 force field combinations. Way more benchmarks and 
 sampling are needed. Here we just provide the results from hsp90 Kung alongside the hsp90 Woodhead data set for 
 a quick comparison.  
 ![deltaG](../../test/hspw_tutorial/analysis/hspk_deltaG.png "Delta_G")
 
-## 8. Tips
-### 8.1. How to set up the environment inside a slurm job
+## 9. Tips
+### 9.1. How to set up the environment inside a slurm job
 ```bash
 source /YourCondaInstallationDir/miniforge3/bin/activate grandfep
 module add openmpi/gcc/64/4.1.5 # Remember to install the same OpenMPI version as your cluster inside the conda env
 ```
 
-### 8.2. How to run OpenMPI with 2 GPUs
+### 9.2. How to run OpenMPI with 2 GPUs
 We can prepare a hostfile and an app file for `mpirun`.  
 
 In the case of running 16 threads on 2 GPUs (CUDA_VISIBLE_DEVICES=0,1) on a node called `n71-16`, the 
@@ -642,11 +773,11 @@ echo "#########################################"
 mpirun --hostfile $HOSTFILE --app $APPFILE
 ```
 
-## 9. Reference
+## 10. Reference
 1. Ross, G. A.; Russell, E.; Deng, Y.; Lu, C.; Harder, E. D.; Abel, R.; Wang, L. Enhancing Water Sampling in Free Energy Calculations with Grand Canonical Monte Carlo. J. Chem. Theory Comput. 2020, 16 (10), 6061–6076. https://doi.org/10.1021/acs.jctc.0c00660. 
 2. XXX
 
-## 10. Contact
+## 11. Contact
 Chenggong Hui (惠成功)
 - **Email:** [chenggong.hui@mpinat.mpg.de](mailto:chenggong.hui@mpinat.mpg.de)
 - **ORCID:** [0000-0003-2875-4739](https://orcid.org/0000-0003-2875-4739)

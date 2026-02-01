@@ -28,3 +28,4 @@ dependencies:
       - sphinx
       - sphinx-autodoc-typehints
       - sphinx-mdinclude
+      - myst-parser
