@@ -26,6 +26,7 @@ class NPTSampler:
                  collision_rate: unit.Quantity,
                  timestep: unit.Quantity,
                  log: Union[str, Path],
+                 integrator_str: str = "BAOABIntegrator",
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  rst_file: str = "md.rst7",
                  dcd_file: str = None,
@@ -49,6 +50,8 @@ class NPTSampler:
             Timestep of the simulation, with unit. e.g., 4 * unit.femtoseconds with Hydrogen Mass Repartitioning
         log : Union[str, Path]
             Log file path for the simulation
+        integrator_str : str
+            "BAOABIntegrator" or "LangevinMiddleIntegrator"
         platform : openmm.Platform
             OpenMM platform to use for the simulation. Default is 'CUDA'.
         rst_file : str
@@ -86,7 +89,13 @@ class NPTSampler:
         self.topology = topology
         #: The OpenMM System object.
         self.system = system
-        integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
+        self.logger.info(f"Prepare integrator({integrator_str}) and simulation")
+        if integrator_str == "BAOABIntegrator":
+            integrator = BAOABIntegrator(temperature, collision_rate, timestep)
+        elif integrator_str == "LangevinMiddleIntegrator" or integrator_str is None:
+            integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
+        else:
+            raise ValueError(f"Integrator {integrator_str} has not been implemented.")
         #: Simulation ties together Topology, System, Integrator, and Context in this sampler.
         self.simulation: app.Simulation = app.Simulation(self.topology, self.system, integrator, platform)
 
@@ -198,6 +207,7 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
                  collision_rate: unit.Quantity,
                  timestep: unit.Quantity,
                  log: Union[str, Path],
+                 integrator_str: str = "BAOABIntegrator",
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  rst_file: str = "md.rst7",
                  dcd_file: str = None,
@@ -222,6 +232,8 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
             Timestep of the simulation, with unit. e.g., 4 * unit.femtoseconds with Hydrogen Mass Repartitioning
         log : Union[str, Path]
             Log file path for the simulation
+        integrator_str:
+            "BAOABIntegrator" or "LangevinMiddleIntegrator".
         platform : openmm.Platform
             OpenMM platform to use for the simulation. Default is 'CUDA'.
         rst_file : str
@@ -234,7 +246,8 @@ class NPTSamplerMPI(_ReplicaExchangeMixin, NPTSampler):
             A dictionary of mapping from global parameters to their values in all the sampling states.
 
         """
-        super().__init__(system, topology, temperature, collision_rate, timestep, log, platform, rst_file, dcd_file, append, False)
+        super().__init__(system, topology, temperature, collision_rate, timestep, log,
+                         integrator_str, platform, rst_file, dcd_file, append, False)
 
         # MPI related properties
         #: MPI communicator
@@ -432,6 +445,7 @@ class BaseNPTWaterMCSampler:
                  collision_rate: unit.Quantity,
                  timestep: unit.Quantity,
                  log: Union[str, Path],
+                 integrator_str: str = "BAOABIntegrator",
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  water_resname: str = "HOH",
                  water_O_name: str = "O",
@@ -457,6 +471,8 @@ class BaseNPTWaterMCSampler:
             Timestep of the simulation, with unit. e.g., 4 * unit.femtoseconds with Hydrogen Mass Repartitioning
         log : Union[str, Path]
             Log file path for the simulation
+        integrator_str:
+            "BAOABIntegrator" or "LangevinMiddleIntegrator"
         platform : openmm.Platform
             OpenMM platform to use for the simulation. Default is 'CUDA'.
         water_resname : str
@@ -517,12 +533,21 @@ class BaseNPTWaterMCSampler:
             raise ValueError(f"The system ({self.system_type}) cannot be customized. Please check the system.")
 
         # preparation of integrator, simulation
-        self.logger.info("Prepare integrator and simulation")
+        self.logger.info(f"Prepare integrator({integrator_str}) and simulation")
         self.compound_integrator = openmm.CompoundIntegrator()
-        integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
-        self.compound_integrator.addIntegrator(integrator)  # for EQ run
-        self.ncmc_integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
-        self.compound_integrator.addIntegrator(self.ncmc_integrator)  # for NCMC run
+        if integrator_str == "BAOABIntegrator":
+            integrator = BAOABIntegrator(temperature, collision_rate, timestep)
+            self.compound_integrator.addIntegrator(integrator)  # for EQ run
+            self.ncmc_integrator = BAOABIntegrator(temperature, collision_rate, timestep)
+            self.compound_integrator.addIntegrator(self.ncmc_integrator)  # for NCMC run
+        elif integrator_str == "LangevinMiddleIntegrator" or integrator_str is None:
+            integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
+            self.compound_integrator.addIntegrator(integrator)  # for EQ run
+            self.ncmc_integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
+            self.compound_integrator.addIntegrator(self.ncmc_integrator)  # for NCMC run
+        else:
+            raise ValueError(
+                f"The integrator {integrator_str} is not supported. Please use 'BAOABIntegrator' or 'LangevinMiddleIntegrator'.")
 
         self.simulation = app.Simulation(self.topology, self.system, self.compound_integrator, platform)
         self.compound_integrator.setCurrentIntegrator(0)
@@ -1103,6 +1128,7 @@ class NoneqNPTWaterMCSampler(BaseNPTWaterMCSampler):
                  collision_rate: unit.Quantity,
                  timestep: unit.Quantity,
                  log: Union[str, Path],
+                 integrator_str: str = "BAOABIntegrator",
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  water_resname: str = "HOH",
                  water_O_name: str = "O",
@@ -1129,6 +1155,8 @@ class NoneqNPTWaterMCSampler(BaseNPTWaterMCSampler):
             Timestep of the simulation, with unit. e.g., 4 * unit.femtoseconds with Hydrogen Mass Repartitioning
         log : Union[str, Path]
             Log file path for the simulation
+        integrator_str :
+            "BAOABIntegrator" or "LangevinMiddleIntegrator"
         platform : openmm.Platform
             OpenMM platform to use for the simulation. Default is 'CUDA'.
         water_resname : str
@@ -1154,6 +1182,7 @@ class NoneqNPTWaterMCSampler(BaseNPTWaterMCSampler):
             collision_rate=collision_rate,
             timestep=timestep,
             log=log,
+            integrator_str=integrator_str,
             platform=platform,
             water_resname=water_resname,
             water_O_name=water_O_name,

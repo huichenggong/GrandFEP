@@ -33,6 +33,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
                  collision_rate: unit.Quantity,
                  timestep: unit.Quantity,
                  log: Union[str, Path],
+                 integrator_str: str = "BAOABIntegrator",
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  water_resname: str = "HOH",
                  water_O_name: str = "O",
@@ -109,7 +110,7 @@ class NoneqGrandCanonicalMonteCarloSampler(BaseGrandCanonicalMonteCarloSampler):
 
 
         super().__init__(system, topology, temperature, collision_rate,
-                         timestep, log, platform, water_resname, water_O_name, create_simulation=True, n_split_water=n_split_water)
+                         timestep, log, integrator_str, platform, water_resname, water_O_name, create_simulation=True, n_split_water=n_split_water)
 
         self.logger.info("Initializing NoneqGrandCanonicalMonteCarloSampler")
 
@@ -1039,6 +1040,7 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
                  collision_rate: unit.Quantity,
                  timestep: unit.Quantity,
                  log: Union[str, Path],
+                 integrator_str: str = "BAOABIntegrator",
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  water_resname: str = "HOH",
                  water_O_name: str = "O",
@@ -1074,6 +1076,8 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
             The timestep for the integrator, with time units (e.g., femtoseconds).
         log :
             Path to the log file. This file will be opened in appended mode.
+        integrator_str :
+            The integrator to use. Default is "BAOABIntegrator".
         platform :
             The OpenMM computational platform to use. Default is CUDA.
         water_resname :
@@ -1106,7 +1110,7 @@ class NoneqGrandCanonicalMonteCarloSamplerMPI(_ReplicaExchangeMixin, NoneqGrandC
         n_split_water :
             Number of split water for Hybrid_REST2 system. If 'log', will use log10(N_water).
         """
-        super().__init__(system, topology, temperature, collision_rate, timestep, log, platform,
+        super().__init__(system, topology, temperature, collision_rate, timestep, log, integrator_str, platform,
                          water_resname, water_O_name, position, chemical_potential, standard_volume,
                          sphere_radius, reference_atoms, rst_file, dcd_file, append_dcd, jsonl_file, n_split_water=n_split_water)
 

@@ -57,6 +57,7 @@ def test_RE():
         collision_rate=1 / mdp.tau_t,
         timestep=mdp.dt,
         log=str(sim_dir / "test_npt.log"),
+        integrator_str="LangevinMiddleIntegrator",
         # platform=platform_ref,
         rst_file=str(sim_dir / "opc_npt_output.rst7"),
         dcd_file=str(sim_dir / "opc_npt_output.dcd"),

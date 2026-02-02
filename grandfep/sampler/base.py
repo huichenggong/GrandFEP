@@ -48,6 +48,7 @@ class BaseGrandCanonicalMonteCarloSampler:
                  collision_rate: unit.Quantity,
                  timestep: unit.Quantity,
                  log: Union[str, Path],
+                 integrator_str: str = "BAOABIntegrator",
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  water_resname: str = "HOH",
                  water_O_name: str = "O",
@@ -71,6 +72,8 @@ class BaseGrandCanonicalMonteCarloSampler:
             The timestep for the integrator, with time units (e.g., femtoseconds).
         log :
             Path to the log file. This file will be opened in append mode.
+        integrator_str:
+            "BAOABIntegrator" or "LangevinMiddleIntegrator"
         platform :
             The OpenMM computational platform to use. Default is CUDA.
         water_resname :
@@ -180,12 +183,21 @@ class BaseGrandCanonicalMonteCarloSampler:
 
         if create_simulation:
             # preparation of integrator, simulation
-            self.logger.info("Prepare integrator and simulation")
+            self.logger.info(f"Prepare integrator({integrator_str}) and simulation")
             self.compound_integrator = openmm.CompoundIntegrator()
-            integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
-            self.compound_integrator.addIntegrator(integrator) # for EQ run
-            self.ncmc_integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
-            self.compound_integrator.addIntegrator(self.ncmc_integrator) # for NCMC run
+            if integrator_str == "BAOABIntegrator":
+                integrator = BAOABIntegrator(temperature, collision_rate, timestep)
+                self.compound_integrator.addIntegrator(integrator)  # for EQ run
+                self.ncmc_integrator = BAOABIntegrator(temperature, collision_rate, timestep)
+                self.compound_integrator.addIntegrator(self.ncmc_integrator)  # for NCMC run
+            elif integrator_str == "LangevinMiddleIntegrator" or integrator_str is None:
+                integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
+                self.compound_integrator.addIntegrator(integrator) # for EQ run
+                self.ncmc_integrator = openmm.LangevinMiddleIntegrator(temperature, collision_rate, timestep)
+                self.compound_integrator.addIntegrator(self.ncmc_integrator) # for NCMC run
+            else:
+                raise ValueError(f"The integrator {integrator_str} is not supported. Please use 'BAOABIntegrator' or 'LangevinMiddleIntegrator'.")
+
 
             self.simulation = app.Simulation(self.topology, self.system, self.compound_integrator, platform)
             self.compound_integrator.setCurrentIntegrator(0)

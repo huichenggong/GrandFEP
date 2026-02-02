@@ -36,6 +36,7 @@ class MyTestCase(unittest.TestCase):
             collision_rate=1 / (1 * unit.picoseconds),
             timestep=2 * unit.femtoseconds,
             log="test_npt.log",
+            integrator_str="LangevinMiddleIntegrator",
             rst_file=str(base / "output/opc_npt_output.rst7"),
             dcd_file=str(base / "output/opc_npt_output.dcd")
         ) # use default CUDA platform

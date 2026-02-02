@@ -222,6 +222,7 @@ def main():
         collision_rate = 1 / mdp.tau_t,
         timestep = mdp.dt,
         log=sim_dir/(args.deffnm+".log"),
+        integrator = mdp.integrator,
         water_resname = "HOH",
         water_O_name = "O",
         position = positions,

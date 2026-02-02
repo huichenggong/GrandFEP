@@ -53,6 +53,7 @@ def test_RE():
     npt = sampler.NPTSamplerMPI(
         system=system,
         topology=prmtop.topology,
+        integrator="LangevinMiddleIntegrator",
         temperature=mdp.ref_t,
         collision_rate=1 / mdp.tau_t,
         timestep=mdp.dt,

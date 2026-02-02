@@ -478,7 +478,7 @@ class md_params_yml:
     >>> mdp = utils.md_params_yml("test/Water_Chemical_Potential/OPC/multidir/0/md.yml")
 
     Attributes:
-        integrator (str): Name of the integrator.
+        integrator (str): Name of the integrator. Can be "BAOABIntegrator", "LangevinMiddleIntegrator", etc.
         dt (unit.Quantity): Time step. Unit in ps
         nsteps (int): Number of steps.
         nst_dcd (int): Number of steps per dcd trajectory output.
@@ -544,7 +544,7 @@ class md_params_yml:
         }
 
         # Default parameter values
-        self.integrator = "LangevinIntegrator"
+        self.integrator = "BAOABIntegrator"
         self.dt = 0.002 * unit.picoseconds
         self.nsteps = 100
         self.nst_dcd = 0

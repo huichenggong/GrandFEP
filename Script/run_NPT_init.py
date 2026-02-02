@@ -76,6 +76,7 @@ def main():
             collision_rate=1 / mdp.tau_t,
             timestep=mdp.dt,
             log=args.deffnm+".log",
+            integrator = mdp.integrator,
             rst_file=args.deffnm+".rst7",
             dcd_file=args.deffnm+".dcd",
             init_lambda_state = mdp.init_lambda_state,

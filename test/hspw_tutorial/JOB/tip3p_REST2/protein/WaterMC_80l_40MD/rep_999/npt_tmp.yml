@@ -3,6 +3,7 @@ tau_t: 1.0          # in ps
 ref_t: 298.15       # in K
 gen_vel : GEN_VEL
 gen_temp: 270
+integrator: "BAOABIntegrator"
 
 # position restraint
 restraint    : RESTRAINT
