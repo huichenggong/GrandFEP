@@ -49,6 +49,8 @@ def main():
     box_vec = pdb.topology.getPeriodicBoxVectors()
     
     # Add barostat
+    msg = f"Adding MonteCarloBarostat with P={mdp.ref_p}, T={mdp.ref_t}, nstpcouple={mdp.nstpcouple}"
+    msg_list.append(msg)
     system.addForce(openmm.MonteCarloBarostat(mdp.ref_p, mdp.ref_t, mdp.nstpcouple))
     
     # Add restraints
@@ -76,7 +78,7 @@ def main():
             collision_rate=1 / mdp.tau_t,
             timestep=mdp.dt,
             log=args.deffnm+".log",
-            integrator = mdp.integrator,
+            integrator_str = mdp.integrator,
             rst_file=args.deffnm+".rst7",
             dcd_file=args.deffnm+".dcd",
             init_lambda_state = mdp.init_lambda_state,
@@ -87,7 +89,7 @@ def main():
     
     # Add reporter
     state_reporter = app.StateDataReporter(
-            args.deffnm+".csv", 5000, step=True, time=True, temperature=True, density=True, volume=True)
+            args.deffnm+".csv", 2500, step=True, time=True, temperature=True, density=True, volume=True)
     samp.simulation.reporters.append(state_reporter)
     
     if args.v:

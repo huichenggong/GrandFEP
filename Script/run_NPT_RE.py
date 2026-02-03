@@ -103,7 +103,7 @@ def main():
             collision_rate=1 / mdp.tau_t,
             timestep=mdp.dt,
             log=sim_dir/(args.deffnm+".log"),
-            integrator = mdp.integrator,
+            integrator_str = mdp.integrator,
             rst_file=str(sim_dir/(args.deffnm+".rst7")),
             dcd_file=str(sim_dir/(args.deffnm+".dcd")),
             init_lambda_state = mdp.init_lambda_state,
