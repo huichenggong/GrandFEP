@@ -1676,6 +1676,7 @@ class NoneqNPTWaterMCSamplerMPI(_ReplicaExchangeMixin, NoneqNPTWaterMCSampler):
                  collision_rate: unit.Quantity,
                  timestep: unit.Quantity,
                  log: Union[str, Path],
+                 integrator_str: str = "BAOABIntegrator",
                  platform: openmm.Platform = openmm.Platform.getPlatformByName('CUDA'),
                  water_resname: str = "HOH",
                  water_O_name: str = "O",
@@ -1725,8 +1726,8 @@ class NoneqNPTWaterMCSamplerMPI(_ReplicaExchangeMixin, NoneqNPTWaterMCSampler):
         lambda_dict : dict
             A dictionary of mapping from global parameters to their values in all the sampling states.
         """
-        super().__init__(system, topology, temperature, collision_rate, timestep, log, platform,
-                         water_resname, water_O_name, position, rst_file, dcd_file, append, active_site)
+        super().__init__(system, topology, temperature, collision_rate, timestep, log, integrator_str,
+                         platform, water_resname, water_O_name, position, rst_file, dcd_file, append, active_site)
 
         # MPI related properties
         #: MPI communicator
