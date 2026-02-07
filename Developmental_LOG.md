@@ -110,7 +110,7 @@ If water H has no vdw, remove them from the water group also speeds up the updat
 ```bash
 pip install sphinx sphinx-autodoc-typehints
 mamba install ghp-import # for pushing doc to github
-pip install --upgrade sphinx_mdinclude # for markdown support
+pip install --upgrade sphinx_mdinclude myst_parser # for markdown support
 ```
 
 #### 1.2 Initialize Sphinx in the project

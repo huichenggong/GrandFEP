@@ -79,4 +79,4 @@ For any questions or issues regarding this module, please contact Chenggong Hui 
 .. toctree::
     :maxdepth: 2
 
-    devlog
+    devlog.md
