@@ -78,13 +78,15 @@ def check_dihe_type(bond_const_list, torsion_parameters):
     """
     0-1-2-3 is a normal dihedral
 
-      2        1
-      |   or   |   is an improper
-    0-1-3    0-2-3
+      2        1        3        0
+      |   or   |   or   |   or   |   is an improper
+    0-1-3    0-2-3    1-0-2    1-3-2
     """
     at0, at1, at2, at3, periodicity, phase, force_k = torsion_parameters
     flag_01 = (at0, at1) in bond_const_list
+    flag_02 = (at0, at2) in bond_const_list
     flag_12 = (at1, at2) in bond_const_list
+    flag_13 = (at1, at3) in bond_const_list
     flag_23 = (at2, at3) in bond_const_list
 
     flag_13 = (at1, at3) in bond_const_list
@@ -93,7 +95,8 @@ def check_dihe_type(bond_const_list, torsion_parameters):
         return "normal"
     elif flag_01 and flag_12 and flag_23 and periodicity == 2:
         return "double"
-    elif ((flag_01 and flag_13) or (flag_02 and flag_23)) and periodicity in [1, 2]:
+    elif (((flag_01 and flag_13) or (flag_02 and flag_23) or (flag_01 and flag_02) or (flag_13 and flag_23))
+          and periodicity in [1, 2]):
         return "improper"
     else:
         return "unseen"
