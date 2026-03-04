@@ -17,14 +17,22 @@ def main():
     time_start = time.time()
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-prmtopA",  type=str, required=True,
+    parser.add_argument("-prmtopA",  type=str,
                         help="Amber prmtop file for state A")
-    parser.add_argument("-prmtopB",  type=str, required=True,
+    parser.add_argument("-prmtopB",  type=str,
                         help="Amber prmtop file for state B")
-    parser.add_argument("-inpcrdA",  type=str, required=True,
+    parser.add_argument("-inpcrdA",  type=str,
                         help="Amber inpcrd/rst7 file for state A")
-    parser.add_argument("-inpcrdB",  type=str, required=True,
+    parser.add_argument("-inpcrdB",  type=str,
                         help="Amber inpcrd/rst7 file for state B")
+    parser.add_argument("-xmlA",  type=str,
+                        help="OpenMM XML file for state A")
+    parser.add_argument("-xmlB",  type=str,
+                        help="OpenMM XML file for state B")
+    parser.add_argument("-pdbA",  type=str,
+                        help="PDB file for state A")
+    parser.add_argument("-pdbB",  type=str,
+                        help="PDB file for state B")
     parser.add_argument("-yml" ,     type=str, required=True, 
                         help="Yaml md parameter file. Atom mapping and nonbonded settings.")
 
@@ -47,18 +55,38 @@ def main():
 
     mdp = utils.md_params_yml(args.yml)
 
-    # Load the state A/B
-    inpcrdA = app.AmberInpcrdFile(args.inpcrdA)
-    inpcrdB = app.AmberInpcrdFile(args.inpcrdB)
-    prmtopA = app.AmberPrmtopFile(args.prmtopA, periodicBoxVectors=inpcrdA.boxVectors)
-    prmtopB = app.AmberPrmtopFile(args.prmtopB, periodicBoxVectors=inpcrdB.boxVectors)
-    nonbonded = mdp.get_system_setting()
-
-    sysA = prmtopA.createSystem(**nonbonded)
-    sysB = prmtopB.createSystem(**nonbonded)
+    # if inpcrdA, inpcrdB, prmtopA, prmtopB are given
+    if args.inpcrdA and args.inpcrdB and args.prmtopA and args.prmtopB:
+        # Load the state A/B
+        inpcrdA = app.AmberInpcrdFile(args.inpcrdA)
+        inpcrdB = app.AmberInpcrdFile(args.inpcrdB)
+        prmtopA = app.AmberPrmtopFile(args.prmtopA, periodicBoxVectors=inpcrdA.boxVectors)
+        prmtopB = app.AmberPrmtopFile(args.prmtopB, periodicBoxVectors=inpcrdB.boxVectors)
+        nonbonded = mdp.get_system_setting()
+    
+        sysA = prmtopA.createSystem(**nonbonded)
+        sysB = prmtopB.createSystem(**nonbonded)
+        topA = prmtopA.topology
+        topB = prmtopB.topology
+        posA = inpcrdA.getPositions()
+        posB = inpcrdB.getPositions()
+        boxVA = inpcrdA.boxVectors
+        boxVB = inpcrdB.boxVectors
+    # if pdb and xml are given
+    elif args.xmlA and args.xmlB and args.pdbA and args.pdbB:
+        sysA = openmm.XmlSerializer.deserialize(open(args.xmlA).read())
+        sysB = openmm.XmlSerializer.deserialize(open(args.xmlB).read())
+        pdbA = app.PDBFile(args.pdbA)
+        pdbB = app.PDBFile(args.pdbB)
+        posA = pdbA.getPositions()
+        posB = pdbB.getPositions()
+        topA = pdbA.getTopology()
+        topB = pdbB.getTopology()
+        boxVA = pdbA.topology.getPeriodicBoxVectors()
+        boxVB = pdbB.topology.getPeriodicBoxVectors()
 
     # Hybrid A and B
-    old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(prmtopA.topology, prmtopB.topology, mdp.mapping_list)
+    old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(topA, topB, mdp.mapping_list)
     if args.REST2:
         print("Using REST2")
         scale_dihe = {
@@ -77,13 +105,13 @@ def main():
                 print(f"Add REST2 residue: {res}")
                 name, index_str = res.split(":")
                 index = int(index_str)
-                ind_list = utils.find_reference_atom_indices(prmtopA.topology, [{"res_name": name, "res_index": index}])
+                ind_list = utils.find_reference_atom_indices(topA, [{"res_name": name, "res_index": index}])
                 old_rest2_atom_indices.extend(ind_list)
             print(f"REST2 residues specified: {args.REST2_res}, total atoms: {len(old_rest2_atom_indices)}")
 
         h_factory = utils.HybridTopologyFactoryREST2(
-            sysA, inpcrdA.getPositions(), prmtopA.topology,
-            sysB, inpcrdB.getPositions(), prmtopB.topology,
+            sysA, posA, topA,
+            sysB, posB, topB,
             old_to_new_atom_map,      # All atoms that should map from A to B
             old_to_new_core_atom_map, # Alchemical Atoms that should map from A to B
             use_dispersion_correction=True,
@@ -112,8 +140,8 @@ def main():
     else:
         print("No REST2")
         h_factory = utils.HybridTopologyFactory(
-            sysA, inpcrdA.getPositions(), prmtopA.topology,
-            sysB, inpcrdB.getPositions(), prmtopB.topology,
+            sysA, posA, topA,
+            sysB, posB, topB,
             old_to_new_atom_map,      # All atoms that should map from A to B
             old_to_new_core_atom_map, # Alchemical Atoms that should map from A to B
             use_dispersion_correction=True,
@@ -125,8 +153,9 @@ def main():
     system    = h_factory.hybrid_system
     topology  = h_factory.omm_hybrid_topology
 
-    topology.setPeriodicBoxVectors(inpcrdA.boxVectors)
-    system.setDefaultPeriodicBoxVectors(*inpcrdA.boxVectors)
+    
+    topology.setPeriodicBoxVectors(boxVA)
+    system.setDefaultPeriodicBoxVectors(*boxVA)
     positions = h_factory.hybrid_positions
 
     with gzip.open(args.system, mode="wt") as fh:
