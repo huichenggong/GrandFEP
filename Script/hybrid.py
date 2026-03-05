@@ -1,5 +1,15 @@
 #!/usr/bin/env python
 
+"""
+Build a hybrid OpenMM system and topology from two end states (A and B) and write the
+resulting serialized system (xml.gz file) and topology (pdb file).
+
+Inputs can be provided either as Amber (prmtop with inpcrd) or as
+OpenMM serialized systems plus PDBs (xml and pdb). Atom mapping and
+nonbonded/alchemical settings are read from the required YAML file.
+Please provide [ inpcrdA, inpcrdB, prmtopA, prmtopB ] or [ xmlA, xmlB, pdbA, pdbB ] .
+"""
+
 from pathlib import Path
 import argparse
 import sys
@@ -7,7 +17,6 @@ import time
 import gzip
 
 import numpy as np
-from mpi4py import MPI
 
 from openmm import app, unit, openmm
 
@@ -15,7 +24,7 @@ from grandfep import utils, sampler
 
 def main():
     time_start = time.time()
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__)
 
     parser.add_argument("-prmtopA",  type=str,
                         help="Amber prmtop file for state A")
@@ -25,14 +34,15 @@ def main():
                         help="Amber inpcrd/rst7 file for state A")
     parser.add_argument("-inpcrdB",  type=str,
                         help="Amber inpcrd/rst7 file for state B")
+
     parser.add_argument("-xmlA",  type=str,
-                        help="OpenMM XML file for state A")
+                        help="OpenMM XML file for state A. xml or xml.gz")
     parser.add_argument("-xmlB",  type=str,
-                        help="OpenMM XML file for state B")
+                        help="OpenMM XML file for state B. xml or xml.gz")
     parser.add_argument("-pdbA",  type=str,
-                        help="PDB file for state A")
+                        help="PDB file for state A. Provide it with xmlA")
     parser.add_argument("-pdbB",  type=str,
-                        help="PDB file for state B")
+                        help="PDB file for state B. Provide it with xmlB")
     parser.add_argument("-yml" ,     type=str, required=True, 
                         help="Yaml md parameter file. Atom mapping and nonbonded settings.")
 
@@ -74,8 +84,8 @@ def main():
         boxVB = inpcrdB.boxVectors
     # if pdb and xml are given
     elif args.xmlA and args.xmlB and args.pdbA and args.pdbB:
-        sysA = openmm.XmlSerializer.deserialize(open(args.xmlA).read())
-        sysB = openmm.XmlSerializer.deserialize(open(args.xmlB).read())
+        sysA = utils.load_sys(args.xmlA)
+        sysB = utils.load_sys(args.xmlB)
         pdbA = app.PDBFile(args.pdbA)
         pdbB = app.PDBFile(args.pdbB)
         posA = pdbA.getPositions()
@@ -84,6 +94,8 @@ def main():
         topB = pdbB.getTopology()
         boxVA = pdbA.topology.getPeriodicBoxVectors()
         boxVB = pdbB.topology.getPeriodicBoxVectors()
+    else:
+        raise ValueError("Either inpcrdA, inpcrdB, prmtopA, prmtopB or xmlA, xmlB, pdbA, pdbB should be provided.")
 
     # Hybrid A and B
     old_to_new_atom_map, old_to_new_core_atom_map = utils.prepare_atom_map(topA, topB, mdp.mapping_list)
