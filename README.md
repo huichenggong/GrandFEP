@@ -21,9 +21,11 @@ which mpirun                  # check if the correct mpirun is used
 ![WaterSet_RMSE](docs/picture/Water_Set_FEP+_OpenFE.png)
 Overall performance on water set  
 
+---
 ![WaterSet_8system_scatter](docs/picture/All_8_system_deltaG_GCMC+WaterMC.png)
 Predictions on 8 systems
 
+---
 ![WaterSet_8system_bar](docs/picture/RMSE_R2_1x16x15ns.png)
 Accuracy and correlation  
 
