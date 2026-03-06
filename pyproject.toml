@@ -14,16 +14,31 @@ license = { file = "LICENSE" }
 dynamic = ["version"]          # <- setuptools_scm will fill this field
 
 dependencies = [
-  'pymbar >=4, <5',
-  'numpy',
+  'numpy <2.3',       # parmed Issue #1386
+  'scipy',
   'pandas',
-  'scipy  >=1.7.0',
-  'openmm >=8.2.0',
+  'openmm',
   'openmmtools',
-  'parmed',
+  'pymbar >=4, <5',   # conda: pymbar-core
   'mpi4py',
+  'parmed',
   'mdtraj',
-  'mdanalysis'
+  'mdanalysis',
+]
+
+[project.optional-dependencies]
+dev = [
+  'ipykernel',
+  'ipywidgets',
+  'matplotlib',
+  'pytest-mpi',
+  'ghp-import',
+  'rdkit',
+  'sphinx',
+  'sphinx-autodoc-typehints',
+  'sphinx-mdinclude',
+  'myst-parser',
+  # ambertools: install via conda (not on PyPI)
 ]
 
 [tool.setuptools]
