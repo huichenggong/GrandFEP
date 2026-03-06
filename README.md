@@ -1,4 +1,6 @@
 # GrandFEP
+<img src="docs/picture/interpolated_AB.gif" alt="AB\_water" style="width: 50%;" />
+
 ## 1. Quick Installation
 ### 1.1 Prepare Env
 ```bash
