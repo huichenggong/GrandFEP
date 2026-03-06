@@ -16,8 +16,8 @@ which mpirun                  # check if the correct mpirun is used
 
 ## 2. GrandFEP is doing as good as FEP+
 ![WaterSet_RMSE](docs/picture/Water_Set_FEP+_OpenFE.png)
-![WaterSet_8system_scatter](docs/picture/All_8_system_deltaG_5ns.png)
-![WaterSet_8system_bar](docs/picture/RMSE_3x16x5ns.png)
+![WaterSet_8system_scatter](docs/picture/All_8_system_deltaG_GCMC+WaterMC.png)
+![WaterSet_8system_bar](docs/picture/RMSE_R2_1x16x15ns.png)
 
 
 ## 3. Full Documentation
