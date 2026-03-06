@@ -16,18 +16,36 @@ module add openmpi4/gcc/4.1.5 # only as an example
 which mpirun                  # check if the correct mpirun is used
 ```
 
-## 2. GrandFEP is doing as good as FEP+
+## 2. GrandFEP Sampling Performance
 
-![WaterSet_RMSE](docs/picture/Water_Set_FEP+_OpenFE.png)
-Overall performance on water set  
+### 1) Overall performance (weighted RMSE, 95% CI)
+<p align="center">
+  <img src="docs/picture/Water_Set_FEP+_OpenFE.png" width="750" alt="Weighted RMSE with 95% CI on the water set for GrandFEP (GCMC/WaterMC) vs FEP+ and OpenFE." />
+</p>
+
+**What this shows:** aggregated error across the full water set (lower is better).  
+- GrandFEP (GCMC): **0.94** kcal/mol  
+- GrandFEP (WaterMC): **1.00** kcal/mol  
+- FEP+: **0.86** kcal/mol  
+- OpenFE: **1.60** kcal/mol  
 
 ---
-![WaterSet_8system_scatter](docs/picture/All_8_system_deltaG_GCMC+WaterMC.png)
-Predictions on 8 systems
+
+### 2) Per-target predictions (8 systems)
+<p align="center">
+  <img src="docs/picture/All_8_system_deltaG_GCMC+WaterMC.png" width="900" alt="Scatter plots of predicted vs experimental ΔG across 8 targets, comparing GCMC and WaterMC." />
+</p>
+
+**How to read:** each panel is one target; diagonal is perfect agreement; shaded band indicates 1 kcal/mol error region.
 
 ---
-![WaterSet_8system_bar](docs/picture/RMSE_R2_1x16x15ns.png)
-Accuracy and correlation  
+
+### 3) Accuracy and correlation by target (RMSE and R²)
+<p align="center">
+  <img src="docs/picture/RMSE_R2_1x16x15ns.png" width="900" alt="Bar charts of RMSE and R² by target for GCMC, WaterMC, FEP+, and OpenFE." />
+</p>
+
+**What this shows:** target-by-target breakdown of error (RMSE) and correlation (R²), including bootstrapped 95% CI.
 
 ## 3. Full Documentation
 [huichenggong.github.io/GrandFEP](https://huichenggong.github.io/GrandFEP/)
