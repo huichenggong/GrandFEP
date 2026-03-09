@@ -354,3 +354,13 @@ def paired_bootstrap_delta(exp, com1, com2, stat=rmsd_stat,
     )
     return delta_point, boot
     
+def add_panel_labels(axes):
+    for i, ax in enumerate(axes.ravel()):
+        ax.text(
+            -0.1, 1.1, f"({string.ascii_lowercase[i]})",
+            transform=ax.transAxes,
+            fontsize=14,
+            # fontweight="bold",
+            va="top",
+            ha="left",
+        )
