@@ -15,7 +15,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="GrandFEP CLI" href="commandline.html" />
-    <link rel="prev" title="NPTSamplerMPI" href="sampler/NPTSamplerMPI.html" />
+    <link rel="prev" title="NoneqNPTWaterMCSamplerMPI" href="sampler/NoneqNPTWaterMCSamplerMPI.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -70,7 +70,7 @@
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
   <li><a href="modules.html">GrandFEP API</a><ul>
-      <li>Previous: <a href="sampler/NPTSamplerMPI.html" title="previous chapter">NPTSamplerMPI</a></li>
+      <li>Previous: <a href="sampler/NoneqNPTWaterMCSamplerMPI.html" title="previous chapter">NoneqNPTWaterMCSamplerMPI</a></li>
       <li>Next: <a href="commandline.html" title="next chapter">GrandFEP CLI</a></li>
   </ul></li>
   </ul></li>
@@ -103,6 +103,84 @@
 </nav>
 <section id="module-grandfep.utils">
 <span id="grandfep-utils"></span><h2><a class="toc-backref" href="#id1" role="doc-backlink">grandfep.utils</a><a class="headerlink" href="#module-grandfep.utils" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSite">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">ActiveSite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">center_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSite" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class to define an active site in the system. Only works for cubic box now.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSite.get_atom_states">
+<span class="sig-name descname"><span class="pre">get_atom_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atom_indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_vectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSite.get_atom_states" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSite.random_position">
+<span class="sig-name descname"><span class="pre">random_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box_vectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_active_site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSite.random_position" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSite.rap_box">
+<span class="sig-name descname"><span class="pre">rap_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box_vectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSite.rap_box" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSiteCube">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">ActiveSiteCube</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">center_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_abc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSiteCube" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grandfep.utils.ActiveSite" title="grandfep.utils.ActiveSite"><code class="xref py py-class docutils literal notranslate"><span class="pre">ActiveSite</span></code></a></p>
+<p>Class to define a spherical active site in the system. only works for cubic box now.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSiteCube.get_atom_states">
+<span class="sig-name descname"><span class="pre">get_atom_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atom_indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_vectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSiteCube.get_atom_states" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSiteSphere">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">ActiveSiteSphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">center_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSiteSphere" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grandfep.utils.ActiveSite" title="grandfep.utils.ActiveSite"><code class="xref py py-class docutils literal notranslate"><span class="pre">ActiveSite</span></code></a></p>
+<p>Class to define a spherical active site in the system.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSiteSphere.get_atom_states">
+<span class="sig-name descname"><span class="pre">get_atom_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atom_indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_vectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSiteSphere.get_atom_states" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSiteSphere.get_volume">
+<span class="sig-name descname"><span class="pre">get_volume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSiteSphere.get_volume" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSiteSphere.random_position">
+<span class="sig-name descname"><span class="pre">random_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box_vectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_active_site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSiteSphere.random_position" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSiteSphereRelative">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">ActiveSiteSphereRelative</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">center_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_vectors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSiteSphereRelative" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grandfep.utils.ActiveSite" title="grandfep.utils.ActiveSite"><code class="xref py py-class docutils literal notranslate"><span class="pre">ActiveSite</span></code></a></p>
+<p>Class to define a spherical active site in the system.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSiteSphereRelative.get_atom_states">
+<span class="sig-name descname"><span class="pre">get_atom_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atom_indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_vectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSiteSphereRelative.get_atom_states" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSiteSphereRelative.get_volume">
+<span class="sig-name descname"><span class="pre">get_volume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSiteSphereRelative.get_volume" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.utils.ActiveSiteSphereRelative.random_position">
+<span class="sig-name descname"><span class="pre">random_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box_vectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_active_site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.ActiveSiteSphereRelative.random_position" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="grandfep.utils.FreeEAnalysis">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">FreeEAnalysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keyword</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">separator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_equil</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">begin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.FreeEAnalysis" title="Link to this definition">¶</a></dt>
@@ -226,7 +304,7 @@ it does not guarantee the correct usage of the parameters anywhere else. The bui
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandfep.utils.md_params_yml.integrator">
 <span class="sig-name descname"><span class="pre">integrator</span></span><a class="headerlink" href="#grandfep.utils.md_params_yml.integrator" title="Link to this definition">¶</a></dt>
-<dd><p>Name of the integrator.</p>
+<dd><p>Name of the integrator. Can be “BAOABIntegrator”, “LangevinMiddleIntegrator”, etc.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -691,6 +769,150 @@ It should either be <code class="docutils literal notranslate"><span class="pre"
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.check_system_type">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">check_system_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_barostat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.check_system_type" title="Link to this definition">¶</a></dt>
+<dd><p>Check if system can be converted to a GCMC system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>system</strong> – (openmm.System)
+The system to be checked.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><p>(str)
+The type of the system. Can be Amber, Charmm or Hybrid
+Amber should have NonbondedForce without CustomNonbondedForce
+Charmm should have NonbondedForce and CustomNonbondedForce. The EnergyFunction that is allowed in
+CustomNonbondedForce is <cite>(a/r6)^2-b/r6; r6=r^6;a=acoef(type1, type2);b=bcoef(type1, type2)</cite> or
+<cite>acoef(type1, type2)/r^12 - bcoef(type1, type2)/r^6;</cite></p>
+<dl class="simple">
+<dt>Hybrid should have</dt><dd><p>CustomBondForce            For perturbed bonds
+HarmonicBondForce
+CustomAngleForce           For perturbed angles
+HarmonicAngleForce
+CustomTorsionForce         For perturbed dihedrals
+PeriodicTorsionForce
+NonbondedForce             For perturbed Coulomb
+CustomNonbondedForce       For perturbed Lennard-Jones
+CustomBondForce_exceptions For perturbed exceptions, mostly 1-4 nonbonded</p>
+</dd>
+<dt>Hybrid_REST2 should have</dt><dd><p>CustomBondForce               For perturbed bonds
+HarmonicBondForce
+CustomAngleForce              For perturbed angles
+HarmonicAngleForce
+CustomTorsionForce            For perturbed dihedrals
+PeriodicTorsionForce
+NonbondedForce                For perturbed Coulomb
+CustomNonbondedForce          For perturbed Lennard-Jones
+CustomBondForce_exceptions_1D For perturbed exceptions, mostly 1-4 nonbonded</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.check_water_points">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">check_water_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.check_water_points" title="Link to this definition">¶</a></dt>
+<dd><p>Check if the water model is 3-point or 4-point in topology.
+:return: int</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.copy_exclusion_c2c">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">copy_exclusion_c2c</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.copy_exclusion_c2c" title="Link to this definition">¶</a></dt>
+<dd><p>Copy exclusion from one CustomNonbondedForce to another.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>c1</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.CustomNonbondedForce</span></code></span>) – Source CustomNonbondedForce from which to copy exclusion.</p></li>
+<li><p><strong>c2</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.CustomNonbondedForce</span></code></span>) – Destination CustomNonbondedForce to update in-place.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The function updates <code class="docutils literal notranslate"><span class="pre">c2</span></code> in-place.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.copy_nonbonded_setting_c2c">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">copy_nonbonded_setting_c2c</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.copy_nonbonded_setting_c2c" title="Link to this definition">¶</a></dt>
+<dd><p>Copy nonbonded settings from one CustomNonbondedForce to another.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>c1</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.CustomNonbondedForce</span></code></span>) – Source CustomNonbondedForce from which to copy settings. Copied settings include:
+nonbonded method, cutoff distance, switching function usage, switching distance,
+and long-range dispersion correction usage.</p></li>
+<li><p><strong>c2</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.CustomNonbondedForce</span></code></span>) – Destination CustomNonbondedForce to update in-place.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The function updates <code class="docutils literal notranslate"><span class="pre">c2</span></code> in-place.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.copy_nonbonded_setting_n2c">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">copy_nonbonded_setting_n2c</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nonbonded_force</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_nonbonded_force</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.copy_nonbonded_setting_n2c" title="Link to this definition">¶</a></dt>
+<dd><p>Copy nonbonded settings from a NonbondedForce to a CustomNonbondedForce.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nonbonded_force</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.NonbondedForce</span></code></span>) – Source NonbondedForce from which to copy settings (nonbonded method,
+cutoff distance, switching function and switching distance, dispersion correction).</p></li>
+<li><p><strong>custom_nonbonded_force</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.CustomNonbondedForce</span></code></span>) – Destination CustomNonbondedForce to update with the copied settings.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The function updates custom_nonbonded_force in-place.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.find_all_water">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">find_all_water</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_O_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.find_all_water" title="Link to this definition">¶</a></dt>
+<dd><p>Identify water residues and their oxygen atom indices in the topology.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>topology</strong> (<em>openmm.app.Topology</em>) – OpenMM topology to inspect.</p></li>
+<li><p><strong>resname</strong> (<em>str</em>) – Residue name used to identify water molecules in the topology.</p></li>
+<li><p><strong>water_O_name</strong> (<em>str</em>) – Atom name used to identify the oxygen atom within a water residue.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>water_res_2_atom</strong> (<em>dict</em>) – Mapping from water residue index (int) to a list of atom indices (list of int)
+that belong to that water residue.</p></li>
+<li><p><strong>water_res_2_O</strong> (<em>dict</em>) – Mapping from water residue index (int) to the atom index (int) of the oxygen
+atom within that residue.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If a water residue matching <cite>resname</cite> does not contain an atom named <cite>water_O_name</cite>,
+    or if no residues matching <cite>resname</cite> are present in the topology.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="grandfep.utils.find_mapping">
 <span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">find_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">map_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resB</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.find_mapping" title="Link to this definition">¶</a></dt>
 <dd><p>Check if residues A and B match with a mapping in the mapping list.</p>
@@ -778,6 +1000,65 @@ Each dictionary can contain any combination of the following keys:</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ref_atoms_list</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;res_id&quot;</span><span class="p">:</span><span class="s2">&quot;71&quot;</span><span class="p">,</span> <span class="s2">&quot;res_name&quot;</span><span class="p">:</span><span class="s2">&quot;GLU&quot;</span><span class="p">,</span> <span class="s2">&quot;atom_name&quot;</span><span class="p">:</span><span class="s2">&quot;O&quot;</span><span class="p">}]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">utils</span><span class="o">.</span><span class="n">find_reference_atom_indices</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">ref_atoms_list</span><span class="p">)</span>
 <span class="go">[21, 164, 307, 450]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.get_water_parameters">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">get_water_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_resname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'HOH'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.get_water_parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Get charge, vdw of water parameters from the system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>topology</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.app.topology.Topology</span></code></span>) – The OpenMM topology object. Water residues will be identified by <code class="docutils literal notranslate"><span class="pre">water_resname</span></code>.</p></li>
+<li><p><strong>system</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.System</span></code></span>) – The OpenMM system object containing force field parameters. The water parameters will be extracted from
+the NonbondedForce in this system.</p></li>
+<li><p><strong>water_resname</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The residue name used to identify water molecules in the topology. Default is “HOH”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>water_params</strong> – A dictionary containing the water parameters with keys:
+- ‘charge’: charge of all the atoms in a water molecule.
+- ‘sigma’: sigma of all the atoms in a water molecule.
+- ‘epsilon’: epsilon of all the atoms in a water molecule.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.load_rst">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">load_rst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.load_rst" title="Link to this definition">¶</a></dt>
+<dd><p>Load coordinates and box vectors from an AMBER restart file (.rst7) into an OpenMM context.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>context</strong> (<em>openmm.Context</em>) – The OpenMM context to load the coordinates and box vectors into.</p></li>
+<li><p><strong>rst_input</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the AMBER restart file (.rst7).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">from</span><span class="w"> </span><span class="nn">grandfep</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">openmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">app</span><span class="p">,</span> <span class="n">openmm</span><span class="p">,</span> <span class="n">unit</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="c1"># Load system and create context</span>
+<span class="linenos"> 5</span><span class="n">pdb</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">PDBFile</span><span class="p">(</span><span class="s2">&quot;input.pdb&quot;</span><span class="p">)</span>
+<span class="linenos"> 6</span><span class="n">forcefield</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">ForceField</span><span class="p">(</span><span class="s1">&#39;amber14-all.xml&#39;</span><span class="p">,</span> <span class="s1">&#39;amber14/tip3pfb.xml&#39;</span><span class="p">)</span>
+<span class="linenos"> 7</span><span class="n">system</span> <span class="o">=</span> <span class="n">forcefield</span><span class="o">.</span><span class="n">createSystem</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">topology</span><span class="p">,</span> <span class="n">nonbondedMethod</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">PME</span><span class="p">,</span>
+<span class="linenos"> 8</span>                                 <span class="n">nonbondedCutoff</span><span class="o">=</span><span class="mi">1</span> <span class="o">*</span> <span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">HBonds</span><span class="p">)</span>
+<span class="linenos"> 9</span><span class="n">integrator</span> <span class="o">=</span> <span class="n">openmm</span><span class="o">.</span><span class="n">LangevinMiddleIntegrator</span><span class="p">(</span><span class="mi">300</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">kelvin</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="n">unit</span><span class="o">.</span><span class="n">picosecond</span><span class="p">,</span> <span class="mf">0.004</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">picoseconds</span><span class="p">)</span>
+<span class="linenos">10</span><span class="n">simulation</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">Simulation</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">topology</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">integrator</span><span class="p">)</span>
+<span class="linenos">11</span><span class="n">simulation</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setPositions</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="c1"># Load restart file into context</span>
+<span class="linenos">14</span><span class="n">utils</span><span class="o">.</span><span class="n">load_rst</span><span class="p">(</span><span class="n">simulation</span><span class="o">.</span><span class="n">context</span><span class="p">,</span> <span class="s2">&quot;restart.rst7&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>

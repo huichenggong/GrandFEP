@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>NoneqNPTWaterMCSamplerMPI &#8212; GrandFEP  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=3f530b75" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=fd3c8104" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="utils" href="../utils.html" />
+    <link rel="prev" title="NoneqNPTWaterMCSampler" href="NoneqNPTWaterMCSampler.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">GrandFEP</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=huichenggong&repo=GrandFEP&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/tutorial.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../modules.html">GrandFEP API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../sampler.html">sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils.html">utils</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../commandline.html">GrandFEP CLI</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../modules.html">GrandFEP API</a><ul>
+  <li><a href="../sampler.html">sampler</a><ul>
+      <li>Previous: <a href="NoneqNPTWaterMCSampler.html" title="previous chapter">NoneqNPTWaterMCSampler</a></li>
+      <li>Next: <a href="../utils.html" title="next chapter">utils</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="noneqnptwatermcsamplermpi">
+<h1>NoneqNPTWaterMCSamplerMPI<a class="headerlink" href="#noneqnptwatermcsamplermpi" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.sampler.</span></span><span class="sig-name descname"><span class="pre">NoneqNPTWaterMCSamplerMPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrator_str='BAOABIntegrator'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_resname='HOH'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_O_name='O'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active_site=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_lambda_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_dict=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_ReplicaExchangeMixin</span></code>, <a class="reference internal" href="NoneqNPTWaterMCSampler.html#grandfep.sampler.NoneqNPTWaterMCSampler" title="grandfep.sampler.NPT.NoneqNPTWaterMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NoneqNPTWaterMCSampler</span></code></a></p>
+<p>NPT waterMC Sampler class with MPI (replica exchange) support. Only Hamiltonian is allowed to be different.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrator_str='BAOABIntegrator'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_resname='HOH'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_O_name='O'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active_site=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_lambda_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_dict=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialize the NPT waterMC sampler with MPI support</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system</strong> (<em>openmm.System</em>) – OpenMM system object, this system should include a barostat</p></li>
+<li><p><strong>topology</strong> (<em>app.Topology</em>) – OpenMM topology object</p></li>
+<li><p><strong>temperature</strong> (<em>unit.Quantity</em>) – Reference temperature of the system, with unit</p></li>
+<li><p><strong>collision_rate</strong> (<em>unit.Quantity</em>) – Collision rate of the system, with unit. e.g., 1 / (1.0 * unit.picoseconds)</p></li>
+<li><p><strong>timestep</strong> (<em>unit.Quantity</em>) – Timestep of the simulation, with unit. e.g., 4 * unit.femtoseconds with Hydrogen Mass Repartitioning</p></li>
+<li><p><strong>log</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Path</em><em>]</em>) – Log file path for the simulation</p></li>
+<li><p><strong>platform</strong> (<em>openmm.Platform</em>) – OpenMM platform to use for the simulation. Default is ‘CUDA’.</p></li>
+<li><p><strong>water_resname</strong> (<em>str</em>) – The residue name of water in the system. Default is “HOH”.</p></li>
+<li><p><strong>water_O_name</strong> (<em>str</em>) – The atom name of oxygen in the water residue. Default is “O”.</p></li>
+<li><p><strong>position</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code></span>) – Initial position of the system.</p></li>
+<li><p><strong>rst_file</strong> (<em>str</em>) – Restart file path for the simulation. Default is “md.rst7”.</p></li>
+<li><p><strong>dcd_file</strong> (<em>str</em>) – DCD file path for the simulation. Default is None, which means no dcd output.</p></li>
+<li><p><strong>append</strong> (<em>bool</em>) – If True, append to the existing dcd file. Default is False, which means overwrite the existing dcd file.</p></li>
+<li><p><strong>active_site</strong> (<em>dict</em>) – A dictionary defining the active site.</p></li>
+<li><p><strong>init_lambda_state</strong> (<em>int</em>) – Lambda state index for this replica, counting from 0</p></li>
+<li><p><strong>lambda_dict</strong> (<em>dict</em>) – A dictionary of mapping from global parameters to their values in all the sampling states.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.customise_force_hybridREST2">
+<span class="sig-name descname"><span class="pre">customise_force_hybridREST2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.customise_force_hybridREST2" title="Link to this definition">¶</a></dt>
+<dd><p>If the system is Hybrid, this function will add perParticleParameters <code class="docutils literal notranslate"><span class="pre">is_switching</span></code>
+to the custom_nonbonded_force (openmm.openmm.CustomNonbondedForce) for vdw.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Groups</p></th>
+<th class="head"><p>core</p></th>
+<th class="head"><p>new</p></th>
+<th class="head"><p>old</p></th>
+<th class="head"><p>envh</p></th>
+<th class="head"><p>envc</p></th>
+<th class="head"><p>swit6</p></th>
+<th class="head"><p>swit7</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0 core</p></td>
+<td><p>C_alc</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>1 new</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>2 old</p></td>
+<td><p>C_alc</p></td>
+<td><p>None</p></td>
+<td><p>C_alc</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>3 envh</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>NonB</p></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>4 envc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>NonB</p></td>
+<td><p>NonB</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>6 swit6</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>7 swit7</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><dl class="simple">
+<dt>C_alc</dt><dd><p>CustomNonbondedForce for Alchemical atoms</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>NonB</dt><dd><p>NonbondedForce for regular atoms</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>The energy expression for vdw is the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="n">energy</span> <span class="o">=</span> <span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="s2">&quot;U_rest2;&quot;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span>    <span class="c1"># REST2 scaling</span>
+<span class="linenos"> 5</span>    <span class="s2">&quot;U_rest2 = U_sterics * k_rest2_sqrt^is_hot;&quot;</span>
+<span class="linenos"> 6</span>    <span class="s2">&quot;is_hot = step(3-atom_group1) + step(3-atom_group2);&quot;</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span>    <span class="c1"># LJ with softcore + per-particle coupling factors for swit6/swit7</span>
+<span class="linenos"> 9</span>    <span class="s2">&quot;U_sterics = 4*epsilon*x*(x-1.0) * coupling1 * coupling2;&quot;</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">12</span>    <span class="c1"># 6. softcore activation</span>
+<span class="linenos">13</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">14</span>    <span class="c1"># lambda_alpha is turned on if at least one particle is &quot;possibly dummy&quot;</span>
+<span class="linenos">15</span>    <span class="c1">#</span>
+<span class="linenos">16</span>    <span class="s2">&quot;x = 1 / (softcore_alpha*lambda_alpha + (r/sigma)^6);&quot;</span>
+<span class="linenos">17</span>    <span class="s2">&quot;lambda_alpha = (soft_need1 + soft_need2) / soft_num;&quot;</span>
+<span class="linenos">18</span>    <span class="s2">&quot;soft_num = max(1, soft_num);&quot;</span> <span class="c1"># avoid division by zero</span>
+<span class="linenos">19</span>    <span class="s2">&quot;soft_num = is_new1 + is_old1 + is_swit6_1 + is_swit7_1 + is_new2 + is_old2 + is_swit6_2 + is_swit7_2;&quot;</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span>    <span class="s2">&quot;soft_need1 = is_new1*(1-lambda_sterics_insert) + is_old1*lambda_sterics_delete&quot;</span>
+<span class="linenos">22</span>                 <span class="s2">&quot; + is_swit6_1*(1-lambda_vdw_swit6) + is_swit7_1*(1-lambda_vdw_swit7);&quot;</span>
+<span class="linenos">23</span>    <span class="s2">&quot;soft_need2 = is_new2*(1-lambda_sterics_insert) + is_old2*lambda_sterics_delete&quot;</span>
+<span class="linenos">24</span>                 <span class="s2">&quot; + is_swit6_2*(1-lambda_vdw_swit6) + is_swit7_2*(1-lambda_vdw_swit7);&quot;</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">27</span>    <span class="c1"># 5. A/B interpolation</span>
+<span class="linenos">28</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">29</span>    <span class="s2">&quot;epsilon = (1-lambda_sterics)*epsilonA + lambda_sterics*epsilonB;&quot;</span>
+<span class="linenos">30</span>    <span class="s2">&quot;sigma   = (1-lambda_sterics)*sigmaA   + lambda_sterics*sigmaB;&quot;</span>
+<span class="linenos">31</span>    <span class="s2">&quot;lambda_sterics = (new_X*lambda_sterics_insert + old_X*lambda_sterics_delete + core_cew*lambda_sterics_core);&quot;</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">34</span>    <span class="c1"># 4 coupling for switchable water</span>
+<span class="linenos">35</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">36</span>    <span class="c1"># coupling = 1 for normal particles</span>
+<span class="linenos">37</span>    <span class="c1">#         = lambda_vdw_swit6 for atom_group==6</span>
+<span class="linenos">38</span>    <span class="c1">#         = lambda_vdw_swit7 for atom_group==7</span>
+<span class="linenos">39</span>    <span class="c1">#</span>
+<span class="linenos">40</span>    <span class="s2">&quot;coupling1 = 1 + is_swit6_1*(lambda_vdw_swit6-1) + is_swit7_1*(lambda_vdw_swit7-1);&quot;</span>
+<span class="linenos">41</span>    <span class="s2">&quot;coupling2 = 1 + is_swit6_2*(lambda_vdw_swit6-1) + is_swit7_2*(lambda_vdw_swit7-1);&quot;</span>
+<span class="linenos">42</span>
+<span class="linenos">43</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">44</span>    <span class="c1"># 3. determine interaction types</span>
+<span class="linenos">45</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">46</span>    <span class="s2">&quot;core_cew = delta(old_X + new_X);&quot;</span> <span class="c1"># core-core + core-envh + core-envc + core-swit6 + core-swit7</span>
+<span class="linenos">47</span>    <span class="s2">&quot;new_X    = max(is_new1, is_new2);&quot;</span>
+<span class="linenos">48</span>    <span class="s2">&quot;old_X    = max(is_old1, is_old2);&quot;</span>
+<span class="linenos">49</span>
+<span class="linenos">50</span>
+<span class="linenos">51</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">52</span>    <span class="c1"># 2. determine atom groups</span>
+<span class="linenos">53</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">54</span>    <span class="s2">&quot;is_core1 = delta(0-atom_group1);&quot;</span>
+<span class="linenos">55</span>    <span class="s2">&quot;is_new1  = delta(1-atom_group1);&quot;</span>
+<span class="linenos">56</span>    <span class="s2">&quot;is_old1  = delta(2-atom_group1);&quot;</span>
+<span class="linenos">57</span>    <span class="s2">&quot;is_envh1 = delta(3-atom_group1);&quot;</span>
+<span class="linenos">58</span>    <span class="s2">&quot;is_envc1 = delta(4-atom_group1);&quot;</span>
+<span class="linenos">59</span>    <span class="s2">&quot;is_swit6_1 = delta(6-atom_group1);&quot;</span>
+<span class="linenos">60</span>    <span class="s2">&quot;is_swit7_1 = delta(7-atom_group1);&quot;</span>
+<span class="linenos">61</span>
+<span class="linenos">62</span>    <span class="s2">&quot;is_core2 = delta(0-atom_group2);&quot;</span>
+<span class="linenos">63</span>    <span class="s2">&quot;is_new2  = delta(1-atom_group2);&quot;</span>
+<span class="linenos">64</span>    <span class="s2">&quot;is_old2  = delta(2-atom_group2);&quot;</span>
+<span class="linenos">65</span>    <span class="s2">&quot;is_envh2 = delta(3-atom_group2);&quot;</span>
+<span class="linenos">66</span>    <span class="s2">&quot;is_envc2 = delta(4-atom_group2);&quot;</span>
+<span class="linenos">67</span>    <span class="s2">&quot;is_swit6_2 = delta(6-atom_group2);&quot;</span>
+<span class="linenos">68</span>    <span class="s2">&quot;is_swit7_2 = delta(7-atom_group2);&quot;</span>
+<span class="linenos">69</span>
+<span class="linenos">70</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">71</span>    <span class="c1"># 1. LJ mixing rules</span>
+<span class="linenos">72</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">73</span>    <span class="s2">&quot;epsilonA = sqrt(epsilonA1*epsilonA2);&quot;</span>
+<span class="linenos">74</span>    <span class="s2">&quot;epsilonB = sqrt(epsilonB1*epsilonB2);&quot;</span>
+<span class="linenos">75</span>    <span class="s2">&quot;sigmaA   = 0.5*(sigmaA1 + sigmaA2);&quot;</span>
+<span class="linenos">76</span>    <span class="s2">&quot;sigmaB   = 0.5*(sigmaB1 + sigmaB2);&quot;</span>
+<span class="linenos">77</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>system</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.System</span></code></span>) – The system to be converted.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.load_rst">
+<span class="sig-name descname"><span class="pre">load_rst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rst_input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.load_rst" title="Link to this definition">¶</a></dt>
+<dd><p>Load positions/boxVector/velocities from a restart file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rst_input</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Path</em><em>]</em>) – Amber inpcrd file</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.move_in">
+<span class="sig-name descname"><span class="pre">move_in</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_vdw_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_chg_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_pdb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.move_in" title="Link to this definition">¶</a></dt>
+<dd><p>Perform a MC move to insert a switching7 water into the active site, and delete a switching6 water from the bulk.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l_vdw_list</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span>) – A list of value for <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code>, 0 to 1.</p></li>
+<li><p><strong>l_chg_list</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span>) – A list of value for <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code>, 0 to 1.</p></li>
+<li><p><strong>n_prop</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Number of propagation steps (equilibrium MD) between each lambda switching.</p></li>
+<li><p><strong>write_pdb</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Folder to write pdb for debugging. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>accept</strong> (<em>bool</em>) – Whether the MC move is accepted.</p></li>
+<li><p><strong>acc_prob</strong> (<em>float</em>) – The acceptance probability of the MC move.</p></li>
+<li><p><strong>protocol_work</strong> (<em>unit.Quantity</em>) – The work done during the insertion process.</p></li>
+<li><p><strong>protocol_work_list</strong> (<em>list</em>) – A list of work done during each perturbation step, in kcal/mol. no unit in each element</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.move_out">
+<span class="sig-name descname"><span class="pre">move_out</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_vdw_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_chg_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_pdb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.move_out" title="Link to this definition">¶</a></dt>
+<dd><p>Perform a MC move to insert a switching7 water into the bulk, and delete a switching6 water from the active site.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l_vdw_list</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span>) – A list of value for <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code>, 0 to 1.</p></li>
+<li><p><strong>l_chg_list</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span>) – A list of value for <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code>, 0 to 1.</p></li>
+<li><p><strong>n_prop</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Number of propagation steps (equilibrium MD) between each lambda switching.</p></li>
+<li><p><strong>write_pdb</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Folder to write pdb for debugging. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>accept</strong> (<em>bool</em>) – Whether the MC move is accepted.</p></li>
+<li><p><strong>acc_prob</strong> (<em>float</em>) – The acceptance probability of the MC move.</p></li>
+<li><p><strong>protocol_work</strong> (<em>unit.Quantity</em>) – The work done during the insertion process.</p></li>
+<li><p><strong>protocol_work_list</strong> (<em>list</em>) – A list of work done during each perturbation step, in kcal/mol. no unit in each element</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.random_pos_vel_water">
+<span class="sig-name descname"><span class="pre">random_pos_vel_water</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.random_pos_vel_water" title="Link to this definition">¶</a></dt>
+<dd><p>Generate random position and velocity for a water molecule from the cached water molecules.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.rank_0_print_log">
+<span class="sig-name descname"><span class="pre">rank_0_print_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.rank_0_print_log" title="Link to this definition">¶</a></dt>
+<dd><p>Print log message only on rank 0, and log on all ranks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg</strong> – The message to be printed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.replica_exchange">
+<span class="sig-name descname"><span class="pre">replica_exchange</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calc_neighbor_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.replica_exchange" title="Link to this definition">¶</a></dt>
+<dd><p>Perform one neighbor swap replica exchange. In odd RE steps, attempt exchange between 0-1, 2-3, …
+In even RE steps, attempt exchange between 1-2, 3-4, … If RE is accepted, update the
+position/boxVector/velocity</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>calc_neighbor_only</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – If True, only the nearest neighbor will be calculated.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>reduced_energy_matrix</strong> (<em>np.array</em>) – A numpy array with the size of (n_lambda_states, n_simulated_states)</p></li>
+<li><p><strong>re_decision</strong> (<em>dict</em>) – The exchange decision between all the pairs. e.g., <code class="docutils literal notranslate"><span class="pre">{(0,1):(True,</span> <span class="pre">ratio_0_1),</span> <span class="pre">(2,3):(True,</span> <span class="pre">ratio_2_3)}</span></code>.
+The key is the MPI rank pairs, and the value is the decision and the acceptance ratio.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.replica_exchange_global_param">
+<span class="sig-name descname"><span class="pre">replica_exchange_global_param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calc_neighbor_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.replica_exchange_global_param" title="Link to this definition">¶</a></dt>
+<dd><p>Perform one neighbor swap replica exchange. In odd RE steps, attempt exchange between 0-1, 2-3, …
+In even RE steps, attempt exchange between 1-2, 3-4, … If RE is accepted, update the
+position/boxVector/velocity</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>calc_neighbor_only</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – If True, only the nearest neighbor will be calculated.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>reduced_energy_matrix</strong> (<em>np.array</em>) – A numpy array with the size of (n_lambda_states, n_simulated_states)</p></li>
+<li><p><strong>re_decision</strong> (<em>dict</em>) – The exchange decision between all the pairs. e.g., <code class="docutils literal notranslate"><span class="pre">{(0,1):(True,</span> <span class="pre">ratio_0_1),</span> <span class="pre">(2,3):(True,</span> <span class="pre">ratio_2_3)}</span></code>.
+The key is the MPI rank pairs, and the value is the decision and the acceptance ratio.</p></li>
+<li><p><strong>exchange</strong> (<em>bool</em>) – Whether this replica has exchanged its state with another replica.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.report_dcd">
+<span class="sig-name descname"><span class="pre">report_dcd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.report_dcd" title="Link to this definition">¶</a></dt>
+<dd><p>gather the coordinates from all MPI rank, only rank 0 writes the file. Report both dcd and rst7 files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.State</span></code></span>) – State of the simulation. If None, it will get the current state from the simulation context.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.report_dcd_rank0">
+<span class="sig-name descname"><span class="pre">report_dcd_rank0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.report_dcd_rank0" title="Link to this definition">¶</a></dt>
+<dd><p>gather the coordinates from all MPI rank, only rank 0 writes the file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.State</span></code></span>) – State of the simulation. If None, it will get the current state from the simulation context.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.report_rst">
+<span class="sig-name descname"><span class="pre">report_rst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.report_rst" title="Link to this definition">¶</a></dt>
+<dd><p>gather the coordinates from all MPI rank, only rank 0 write the file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.State</span></code></span>) – XXX</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.report_rst_rank0">
+<span class="sig-name descname"><span class="pre">report_rst_rank0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.report_rst_rank0" title="Link to this definition">¶</a></dt>
+<dd><p>gather the coordinates from all MPI rank, only rank 0 write the file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.State</span></code></span>) – XXX</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.set_lambda_dict">
+<span class="sig-name descname"><span class="pre">set_lambda_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_lambda_state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.set_lambda_dict" title="Link to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Set internal attributes :</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">init_lambda_state</span></code>: (int) Lambda state index for this replica, counting from 0</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lambda_dict</span></code>: (dict) Global parameter values for all the sampling states</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lambda_states_list</span></code>: (list) Index of the Lambda state which is simulated. All the init_lambda_state in this MPI run</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n_lambda_states</span></code>: (int) Number of Lambda state to be sampled</p></li>
+</ul>
+</dd>
+</dl>
+<p>You can have 10 states defined in the <code class="docutils literal notranslate"><span class="pre">lambda_dict</span></code>, and only simulate 4 replicas. In this case,
+each value in the <code class="docutils literal notranslate"><span class="pre">lambda_dict</span></code> will have a length of 10, and <code class="docutils literal notranslate"><span class="pre">n_lambda_states=10</span></code>,
+and the <code class="docutils literal notranslate"><span class="pre">lambda_states_list</span></code> will be a list of 4 integers, continuously increasing between 0 and 9,
+and init_lambda_state should be one of the values in <code class="docutils literal notranslate"><span class="pre">lambda_states_list</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>init_lambda_state</strong> (<em>int</em>) – The lambda state for this replica, counting from 0</p></li>
+<li><p><strong>lambda_dict</strong> (<em>dict</em>) – A dictionary of mapping from global parameters to their values in all the sampling states.
+For example, <code class="docutils literal notranslate"><span class="pre">{&quot;lambda_gc_vdw&quot;:</span> <span class="pre">[0.0,</span> <span class="pre">0.5,</span> <span class="pre">1.0,</span> <span class="pre">1.0,</span> <span class="pre">1.0],</span> <span class="pre">&quot;lambda_gc_coulomb&quot;:</span> <span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">1.0,</span> <span class="pre">0.5,</span> <span class="pre">1.0]}</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.set_lambda_state">
+<span class="sig-name descname"><span class="pre">set_lambda_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.set_lambda_state" title="Link to this definition">¶</a></dt>
+<dd><p>Set the lambda state index for this replica.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> (<em>int</em>) – The lambda state index for this replica, counting from 0</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.set_re_step">
+<span class="sig-name descname"><span class="pre">set_re_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">re_step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.set_re_step" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>re_step</strong> (<em>int</em>) – Number of replica exchanges to perform</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.set_re_step_from_log">
+<span class="sig-name descname"><span class="pre">set_re_step_from_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.set_re_step_from_log" title="Link to this definition">¶</a></dt>
+<dd><p>Read the previous log file and determine the RE step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>log_input</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Path</em><em>]</em>) – previous log file where the RE step counting should continue.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.update_mc_count">
+<span class="sig-name descname"><span class="pre">update_mc_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">work</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acc_prob</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.update_mc_count" title="Link to this definition">¶</a></dt>
+<dd><p>Update the MC move count</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_out</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – 0 for in_move, 1 for out_move</p></li>
+<li><p><strong>work</strong> (<em>unit.Quantity</em>) – The work done during the MC move, with unit</p></li>
+<li><p><strong>accept</strong> (<em>bool</em>) – Whether the MC move is accepted</p></li>
+<li><p><strong>acc_prob</strong> (<em>float</em>) – The acceptance probability of the MC move</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.work_process">
+<span class="sig-name descname"><span class="pre">work_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_vdw_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_chg_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.work_process" title="Link to this definition">¶</a></dt>
+<dd><p>Perform the work process for delete swtich6 and insert switch7.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_prop</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Number of propagation steps (equilibrium MD) between each lambda switching.</p></li>
+<li><p><strong>l_vdw_list</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span>) – A list of value for <code class="docutils literal notranslate"><span class="pre">lambda_gc_vdw</span></code>.</p></li>
+<li><p><strong>l_chg_list</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span>) – A list of value for <code class="docutils literal notranslate"><span class="pre">lambda_gc_coulomb</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>explosion</strong> (<em>bool</em>) – Whether the non-equilibrium process get nan.</p></li>
+<li><p><strong>protocol_work</strong> (<em>unit.Quantity</em>) – The work done during the insertion process.</p></li>
+<li><p><strong>protocol_work_list</strong> (<em>list</em>) – A list of work done during each perturbation step, in kcal/mol. no unit in this list.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.comm">
+<span class="sig-name descname"><span class="pre">comm</span></span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.comm" title="Link to this definition">¶</a></dt>
+<dd><p>MPI communicator</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.dcd_reporter_dict">
+<span class="sig-name descname"><span class="pre">dcd_reporter_dict</span></span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.dcd_reporter_dict" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of all the dcd reporter. Call the reporter inside to write the dcd trajectory file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.kBT">
+<span class="sig-name descname"><span class="pre">kBT</span></span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.kBT" title="Link to this definition">¶</a></dt>
+<dd><p>k<sub>B</sub>* T, with unit.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.lambda_dict">
+<span class="sig-name descname"><span class="pre">lambda_dict</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.lambda_dict" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of mapping from global parameters to their values in all the sampling states.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.lambda_state_index">
+<span class="sig-name descname"><span class="pre">lambda_state_index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.lambda_state_index" title="Link to this definition">¶</a></dt>
+<dd><p>Lambda state index for this replica, counting from 0</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.lambda_states_list">
+<span class="sig-name descname"><span class="pre">lambda_states_list</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.lambda_states_list" title="Link to this definition">¶</a></dt>
+<dd><p>Index of the Lambda state which is simulated. All the init_lambda_state in this MPI run can be fetched with <code class="docutils literal notranslate"><span class="pre">self.lambda_states_list[rank]</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.logger">
+<span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.logger" title="Link to this definition">¶</a></dt>
+<dd><p>Logger for the Sampler</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.n_lambda_states">
+<span class="sig-name descname"><span class="pre">n_lambda_states</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.n_lambda_states" title="Link to this definition">¶</a></dt>
+<dd><p>Number of Lambda state to be sampled. It should be equal to the length of the values in <code class="docutils literal notranslate"><span class="pre">lambda_dict</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.rank">
+<span class="sig-name descname"><span class="pre">rank</span></span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.rank" title="Link to this definition">¶</a></dt>
+<dd><p>Rank of this process</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.re_step">
+<span class="sig-name descname"><span class="pre">re_step</span></span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.re_step" title="Link to this definition">¶</a></dt>
+<dd><p>Number of replica exchanges performed</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.rst_reporter_dict">
+<span class="sig-name descname"><span class="pre">rst_reporter_dict</span></span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.rst_reporter_dict" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of all the rst7 reporter. Call the reporter inside to write the rst7 restart file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.size">
+<span class="sig-name descname"><span class="pre">size</span></span><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.size" title="Link to this definition">¶</a></dt>
+<dd><p>Size of the communicator (number of processes)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.NoneqNPTWaterMCSamplerMPI.temperature">
+<span class="sig-name descname"><span class="pre">temperature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code></em><a class="headerlink" href="#grandfep.sampler.NoneqNPTWaterMCSamplerMPI.temperature" title="Link to this definition">¶</a></dt>
+<dd><p>reference temperature of the system, with unit</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Chenggong Hui.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/sampler/NoneqNPTWaterMCSamplerMPI.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/huichenggong/GrandFEP" class="github">
+        <img src="../_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

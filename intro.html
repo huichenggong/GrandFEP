@@ -14,7 +14,7 @@
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Versions" href="devlog.html" />
+    <link rel="next" title="Version" href="devlog.html" />
     <link rel="prev" title="GrandFEP documentation" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -73,7 +73,7 @@
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="index.html" title="previous chapter">GrandFEP documentation</a></li>
-      <li>Next: <a href="devlog.html" title="next chapter">Versions</a></li>
+      <li>Next: <a href="devlog.html" title="next chapter">Version</a></li>
   </ul></li>
 </ul>
 </div>
@@ -139,7 +139,7 @@ pip<span class="w"> </span>install<span class="w"> </span>.
 </pre></div>
 </div>
 <p>Or:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mamba<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>grandfep_env<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.12<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>pandas<span class="w"> </span>openmm<span class="w"> </span>openmmtools<span class="w"> </span>pymbar-core<span class="w"> </span><span class="nv">openmpi</span><span class="o">=</span><span class="m">4</span>.1.5<span class="w"> </span>mpi4py<span class="w"> </span>parmed<span class="w"> </span><span class="nv">cudatoolkit</span><span class="o">=</span><span class="m">11</span>.8
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mamba<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>grandfep_env<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.12<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>pandas<span class="w"> </span>openmm<span class="w"> </span>openmmtools<span class="w"> </span>pymbar-core<span class="w"> </span><span class="nv">openmpi</span><span class="o">=</span><span class="m">4</span>.1.5<span class="w"> </span>mpi4py<span class="w"> </span>parmed<span class="w"> </span>cuda-version<span class="o">=</span><span class="m">12</span>
 </pre></div>
 </div>
 <p>Check cuda and MPI as what we previously mentioned.</p>
@@ -170,7 +170,8 @@ module<span class="w"> </span>load<span class="w"> </span>openmpi4/gcc/4.1.5
 <h2><a class="toc-backref" href="#id9" role="doc-backlink">5. Developmental Log</a><a class="headerlink" href="#developmental-log" title="Link to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="devlog.html">Versions</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="devlog.html">Version</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devlog.html#v1-0-1-water-mc-move-for-npt">v1.0.1 Water MC move for NPT</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devlog.html#v0-1-3-rest2">v0.1.3 REST2</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devlog.html#v0-1-2">v0.1.2</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devlog.html#v0-1-1-speed-up-updateparametersincontext">v0.1.1 Speed up <code class="docutils literal notranslate"><span class="pre">updateParametersInContext</span></code></a></li>

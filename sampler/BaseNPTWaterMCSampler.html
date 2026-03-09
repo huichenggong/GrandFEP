@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>BaseNPTWaterMCSampler &#8212; GrandFEP  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=3f530b75" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=fd3c8104" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="NoneqNPTWaterMCSampler" href="NoneqNPTWaterMCSampler.html" />
+    <link rel="prev" title="NPTSamplerMPI" href="NPTSamplerMPI.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">GrandFEP</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=huichenggong&repo=GrandFEP&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/tutorial.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../modules.html">GrandFEP API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../sampler.html">sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils.html">utils</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../commandline.html">GrandFEP CLI</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../modules.html">GrandFEP API</a><ul>
+  <li><a href="../sampler.html">sampler</a><ul>
+      <li>Previous: <a href="NPTSamplerMPI.html" title="previous chapter">NPTSamplerMPI</a></li>
+      <li>Next: <a href="NoneqNPTWaterMCSampler.html" title="next chapter">NoneqNPTWaterMCSampler</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="basenptwatermcsampler">
+<h1>BaseNPTWaterMCSampler<a class="headerlink" href="#basenptwatermcsampler" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="grandfep.sampler.BaseNPTWaterMCSampler">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandfep.sampler.</span></span><span class="sig-name descname"><span class="pre">BaseNPTWaterMCSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrator_str='BAOABIntegrator'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_resname='HOH'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_O_name='O'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_reporter=True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.BaseNPTWaterMCSampler" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for water MC sampling.</p>
+<p>This class provides a flexible framework for customizing OpenMM forces so that water molecules
+can be alchemically inserted (ghost → real) and deleted (real → ghost) at the same time. The last two water
+molecules in the system will be set as the switching water, which will be used to smoothly turn on/off. 4
+global parameters will be added to control the alchemical transformation.</p>
+<ul class="simple">
+<li><p><cite>lambda_vdw_swit6</cite>: vdw lambda for the 2nd water molecule (switching water 1)</p></li>
+<li><p><cite>lambda_coulomb_swit6</cite>: Coulomb lambda for the 2nd water molecule (switching water 1)</p></li>
+<li><p><cite>lambda_vdw_swit7</cite>: vdw lambda for the last water molecule (switching water 2)</p></li>
+<li><p><cite>lambda_coulomb_swit7</cite>: Coulomb lambda for the last water molecule (switching water 2)</p></li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.BaseNPTWaterMCSampler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collision_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrator_str='BAOABIntegrator'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform=&lt;openmm.openmm.Platform;</span> <span class="pre">proxy</span> <span class="pre">of</span> <span class="pre">&lt;Swig</span> <span class="pre">Object</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">'OpenMM::Platform</span> <span class="pre">*'&gt;</span> <span class="pre">&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_resname='HOH'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_O_name='O'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rst_file='md.rst7'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcd_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_reporter=True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.BaseNPTWaterMCSampler.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialize the NPT sampler</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system</strong> (<em>openmm.System</em>) – OpenMM system object, this system should include a barostat</p></li>
+<li><p><strong>topology</strong> (<em>app.Topology</em>) – OpenMM topology object</p></li>
+<li><p><strong>temperature</strong> (<em>unit.Quantity</em>) – Reference temperature of the system, with unit</p></li>
+<li><p><strong>collision_rate</strong> (<em>unit.Quantity</em>) – Collision rate of the system, with unit. e.g., 1 / (1.0 * unit.picoseconds)</p></li>
+<li><p><strong>timestep</strong> (<em>unit.Quantity</em>) – Timestep of the simulation, with unit. e.g., 4 * unit.femtoseconds with Hydrogen Mass Repartitioning</p></li>
+<li><p><strong>log</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Path</em><em>]</em>) – Log file path for the simulation</p></li>
+<li><p><strong>integrator_str</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – “BAOABIntegrator” or “LangevinMiddleIntegrator”</p></li>
+<li><p><strong>platform</strong> (<em>openmm.Platform</em>) – OpenMM platform to use for the simulation. Default is ‘CUDA’.</p></li>
+<li><p><strong>water_resname</strong> (<em>str</em>) – The residue name of water in the system. Default is “HOH”.</p></li>
+<li><p><strong>water_O_name</strong> (<em>str</em>) – The atom name of oxygen in the water residue. Default is “O”.</p></li>
+<li><p><strong>rst_file</strong> (<em>str</em>) – Restart file path for the simulation. Default is “md.rst7”.</p></li>
+<li><p><strong>dcd_file</strong> (<em>str</em>) – DCD file path for the simulation. Default is None, which means no dcd output.</p></li>
+<li><p><strong>append</strong> (<em>bool</em>) – If True, append to the existing dcd file. Default is False, which means overwrite the existing dcd file.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.BaseNPTWaterMCSampler.customise_force_hybridREST2">
+<span class="sig-name descname"><span class="pre">customise_force_hybridREST2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.BaseNPTWaterMCSampler.customise_force_hybridREST2" title="Link to this definition">¶</a></dt>
+<dd><p>If the system is Hybrid, this function will add perParticleParameters <code class="docutils literal notranslate"><span class="pre">is_switching</span></code>
+to the custom_nonbonded_force (openmm.openmm.CustomNonbondedForce) for vdw.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Groups</p></th>
+<th class="head"><p>core</p></th>
+<th class="head"><p>new</p></th>
+<th class="head"><p>old</p></th>
+<th class="head"><p>envh</p></th>
+<th class="head"><p>envc</p></th>
+<th class="head"><p>swit6</p></th>
+<th class="head"><p>swit7</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0 core</p></td>
+<td><p>C_alc</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>1 new</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>2 old</p></td>
+<td><p>C_alc</p></td>
+<td><p>None</p></td>
+<td><p>C_alc</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>3 envh</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>NonB</p></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>4 envc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>NonB</p></td>
+<td><p>NonB</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>6 swit6</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>7 swit7</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+<td><p>C_alc</p></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><dl class="simple">
+<dt>C_alc</dt><dd><p>CustomNonbondedForce for Alchemical atoms</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>NonB</dt><dd><p>NonbondedForce for regular atoms</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>The energy expression for vdw is the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="n">energy</span> <span class="o">=</span> <span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="s2">&quot;U_rest2;&quot;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span>    <span class="c1"># REST2 scaling</span>
+<span class="linenos"> 5</span>    <span class="s2">&quot;U_rest2 = U_sterics * k_rest2_sqrt^is_hot;&quot;</span>
+<span class="linenos"> 6</span>    <span class="s2">&quot;is_hot = step(3-atom_group1) + step(3-atom_group2);&quot;</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span>    <span class="c1"># LJ with softcore + per-particle coupling factors for swit6/swit7</span>
+<span class="linenos"> 9</span>    <span class="s2">&quot;U_sterics = 4*epsilon*x*(x-1.0) * coupling1 * coupling2;&quot;</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">12</span>    <span class="c1"># 6. softcore activation</span>
+<span class="linenos">13</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">14</span>    <span class="c1"># lambda_alpha is turned on if at least one particle is &quot;possibly dummy&quot;</span>
+<span class="linenos">15</span>    <span class="c1">#</span>
+<span class="linenos">16</span>    <span class="s2">&quot;x = 1 / (softcore_alpha*lambda_alpha + (r/sigma)^6);&quot;</span>
+<span class="linenos">17</span>    <span class="s2">&quot;lambda_alpha = (soft_need1 + soft_need2) / soft_num;&quot;</span>
+<span class="linenos">18</span>    <span class="s2">&quot;soft_num = max(1, soft_num);&quot;</span> <span class="c1"># avoid division by zero</span>
+<span class="linenos">19</span>    <span class="s2">&quot;soft_num = is_new1 + is_old1 + is_swit6_1 + is_swit7_1 + is_new2 + is_old2 + is_swit6_2 + is_swit7_2;&quot;</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span>    <span class="s2">&quot;soft_need1 = is_new1*(1-lambda_sterics_insert) + is_old1*lambda_sterics_delete&quot;</span>
+<span class="linenos">22</span>                 <span class="s2">&quot; + is_swit6_1*(1-lambda_vdw_swit6) + is_swit7_1*(1-lambda_vdw_swit7);&quot;</span>
+<span class="linenos">23</span>    <span class="s2">&quot;soft_need2 = is_new2*(1-lambda_sterics_insert) + is_old2*lambda_sterics_delete&quot;</span>
+<span class="linenos">24</span>                 <span class="s2">&quot; + is_swit6_2*(1-lambda_vdw_swit6) + is_swit7_2*(1-lambda_vdw_swit7);&quot;</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">27</span>    <span class="c1"># 5. A/B interpolation</span>
+<span class="linenos">28</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">29</span>    <span class="s2">&quot;epsilon = (1-lambda_sterics)*epsilonA + lambda_sterics*epsilonB;&quot;</span>
+<span class="linenos">30</span>    <span class="s2">&quot;sigma   = (1-lambda_sterics)*sigmaA   + lambda_sterics*sigmaB;&quot;</span>
+<span class="linenos">31</span>    <span class="s2">&quot;lambda_sterics = (new_X*lambda_sterics_insert + old_X*lambda_sterics_delete + core_cew*lambda_sterics_core);&quot;</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">34</span>    <span class="c1"># 4 coupling for switchable water</span>
+<span class="linenos">35</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">36</span>    <span class="c1"># coupling = 1 for normal particles</span>
+<span class="linenos">37</span>    <span class="c1">#         = lambda_vdw_swit6 for atom_group==6</span>
+<span class="linenos">38</span>    <span class="c1">#         = lambda_vdw_swit7 for atom_group==7</span>
+<span class="linenos">39</span>    <span class="c1">#</span>
+<span class="linenos">40</span>    <span class="s2">&quot;coupling1 = 1 + is_swit6_1*(lambda_vdw_swit6-1) + is_swit7_1*(lambda_vdw_swit7-1);&quot;</span>
+<span class="linenos">41</span>    <span class="s2">&quot;coupling2 = 1 + is_swit6_2*(lambda_vdw_swit6-1) + is_swit7_2*(lambda_vdw_swit7-1);&quot;</span>
+<span class="linenos">42</span>
+<span class="linenos">43</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">44</span>    <span class="c1"># 3. determine interaction types</span>
+<span class="linenos">45</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">46</span>    <span class="s2">&quot;core_cew = delta(old_X + new_X);&quot;</span> <span class="c1"># core-core + core-envh + core-envc + core-swit6 + core-swit7</span>
+<span class="linenos">47</span>    <span class="s2">&quot;new_X    = max(is_new1, is_new2);&quot;</span>
+<span class="linenos">48</span>    <span class="s2">&quot;old_X    = max(is_old1, is_old2);&quot;</span>
+<span class="linenos">49</span>
+<span class="linenos">50</span>
+<span class="linenos">51</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">52</span>    <span class="c1"># 2. determine atom groups</span>
+<span class="linenos">53</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">54</span>    <span class="s2">&quot;is_core1 = delta(0-atom_group1);&quot;</span>
+<span class="linenos">55</span>    <span class="s2">&quot;is_new1  = delta(1-atom_group1);&quot;</span>
+<span class="linenos">56</span>    <span class="s2">&quot;is_old1  = delta(2-atom_group1);&quot;</span>
+<span class="linenos">57</span>    <span class="s2">&quot;is_envh1 = delta(3-atom_group1);&quot;</span>
+<span class="linenos">58</span>    <span class="s2">&quot;is_envc1 = delta(4-atom_group1);&quot;</span>
+<span class="linenos">59</span>    <span class="s2">&quot;is_swit6_1 = delta(6-atom_group1);&quot;</span>
+<span class="linenos">60</span>    <span class="s2">&quot;is_swit7_1 = delta(7-atom_group1);&quot;</span>
+<span class="linenos">61</span>
+<span class="linenos">62</span>    <span class="s2">&quot;is_core2 = delta(0-atom_group2);&quot;</span>
+<span class="linenos">63</span>    <span class="s2">&quot;is_new2  = delta(1-atom_group2);&quot;</span>
+<span class="linenos">64</span>    <span class="s2">&quot;is_old2  = delta(2-atom_group2);&quot;</span>
+<span class="linenos">65</span>    <span class="s2">&quot;is_envh2 = delta(3-atom_group2);&quot;</span>
+<span class="linenos">66</span>    <span class="s2">&quot;is_envc2 = delta(4-atom_group2);&quot;</span>
+<span class="linenos">67</span>    <span class="s2">&quot;is_swit6_2 = delta(6-atom_group2);&quot;</span>
+<span class="linenos">68</span>    <span class="s2">&quot;is_swit7_2 = delta(7-atom_group2);&quot;</span>
+<span class="linenos">69</span>
+<span class="linenos">70</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">71</span>    <span class="c1"># 1. LJ mixing rules</span>
+<span class="linenos">72</span>    <span class="c1"># ---------------------------</span>
+<span class="linenos">73</span>    <span class="s2">&quot;epsilonA = sqrt(epsilonA1*epsilonA2);&quot;</span>
+<span class="linenos">74</span>    <span class="s2">&quot;epsilonB = sqrt(epsilonB1*epsilonB2);&quot;</span>
+<span class="linenos">75</span>    <span class="s2">&quot;sigmaA   = 0.5*(sigmaA1 + sigmaA2);&quot;</span>
+<span class="linenos">76</span>    <span class="s2">&quot;sigmaB   = 0.5*(sigmaB1 + sigmaB2);&quot;</span>
+<span class="linenos">77</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>system</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.openmm.System</span></code></span>) – The system to be converted.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.BaseNPTWaterMCSampler.load_rst">
+<span class="sig-name descname"><span class="pre">load_rst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rst_input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.BaseNPTWaterMCSampler.load_rst" title="Link to this definition">¶</a></dt>
+<dd><p>Load positions/boxVector/velocities from a restart file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rst_input</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Path</em><em>]</em>) – Amber inpcrd file</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.BaseNPTWaterMCSampler.report_dcd">
+<span class="sig-name descname"><span class="pre">report_dcd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.BaseNPTWaterMCSampler.report_dcd" title="Link to this definition">¶</a></dt>
+<dd><p>Append a frame to the DCD trajectory file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandfep.sampler.BaseNPTWaterMCSampler.report_rst">
+<span class="sig-name descname"><span class="pre">report_rst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.sampler.BaseNPTWaterMCSampler.report_rst" title="Link to this definition">¶</a></dt>
+<dd><p>Write an Amber rst7 restart file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.BaseNPTWaterMCSampler.dcd_reporter_dict">
+<span class="sig-name descname"><span class="pre">dcd_reporter_dict</span></span><a class="headerlink" href="#grandfep.sampler.BaseNPTWaterMCSampler.dcd_reporter_dict" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of all the dcd reporter. Call the reporter inside to write the dcd trajectory file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.BaseNPTWaterMCSampler.kBT">
+<span class="sig-name descname"><span class="pre">kBT</span></span><a class="headerlink" href="#grandfep.sampler.BaseNPTWaterMCSampler.kBT" title="Link to this definition">¶</a></dt>
+<dd><p>k<sub>B</sub>* T, with unit.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.BaseNPTWaterMCSampler.logger">
+<span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#grandfep.sampler.BaseNPTWaterMCSampler.logger" title="Link to this definition">¶</a></dt>
+<dd><p>Logger for the Sampler</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.BaseNPTWaterMCSampler.rst_reporter_dict">
+<span class="sig-name descname"><span class="pre">rst_reporter_dict</span></span><a class="headerlink" href="#grandfep.sampler.BaseNPTWaterMCSampler.rst_reporter_dict" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of all the rst7 reporter. Call the reporter inside to write the rst7 restart file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.sampler.BaseNPTWaterMCSampler.temperature">
+<span class="sig-name descname"><span class="pre">temperature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.unit.quantity.Quantity</span></code></em><a class="headerlink" href="#grandfep.sampler.BaseNPTWaterMCSampler.temperature" title="Link to this definition">¶</a></dt>
+<dd><p>reference temperature of the system, with unit</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Chenggong Hui.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/sampler/BaseNPTWaterMCSampler.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/huichenggong/GrandFEP" class="github">
+        <img src="../_static/github-banner.svg" alt="Fork me on GitHub" class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>
