@@ -1,3 +1,5 @@
+## v1.1.0 Terminal Flip MC
+
 ## v1.0.1 Water MC move for NPT
 2 reasons why we should use water MC under NPT instead of a full GC ensemble
 1. It's too expansive to generate density fluctuation using GC Monte Carlo insertion/deletion.  
