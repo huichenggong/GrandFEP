@@ -586,7 +586,7 @@ class md_params_yml:
         lambda_sterics_insert (list): Lambda
         lambda_electrostatics_insert (list): Lambda
         lambda_torsions (list): Lambda
-        terminal_list (list): list of list of atom indices for terminal flip. Each sublist should be in the format of [axis_idx, pivot_idx, mobile_idx_0, mobile_idx_1, ...]
+        terminal_list (list): Atom indices for terminal flip. Each element should be in the format of (angle, [axis_idx, pivot_idx, mobile_idx_0, mobile_idx_1, ...])
 
     """
 

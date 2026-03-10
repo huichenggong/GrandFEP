@@ -2180,8 +2180,8 @@ class TerminalFlipMC:
         logger :
             The logger for logging messages.
         terminal_list :
-            A list of atom indices for the terminal residues to be flipped. The terminal will be rotated 180 degree
-            around the axis defined by the two atoms (atom 0 and 1) in the terminal residue.
+            Atom indices for the terminal residues to be flipped. Each element should be in the format of
+            (angle, [axis_idx, pivot_idx, mobile_idx_0, mobile_idx_1, ...])
         """
         self.simulation = simulation
         self.topology = topology
@@ -2190,7 +2190,7 @@ class TerminalFlipMC:
         self.terminal_list = terminal_list
         self.temperature = kBT / unit.MOLAR_GAS_CONSTANT_R
     
-    def rotate_terminal(self, angle, terminal_res_index):
+    def rotate_terminal(self, terminal_res_index):
         """
         Rotate the terminal residue by a given angle.
 
@@ -2201,12 +2201,11 @@ class TerminalFlipMC:
 
         Parameters
         ----------
-        angle :
-            Rotation angle in degrees.
         terminal_res_index :
             Index into ``self.terminal_list`` identifying which terminal group to rotate.
         """
-        atom_indices = self.terminal_list[terminal_res_index]
+        angle, atom_indices = self.terminal_list[terminal_res_index]
+        angle = float(np.random.choice([-1, 1])) * angle # random sign
 
         # Get positions as a plain numpy array in nm
         state = self.simulation.context.getState(getPositions=True)
@@ -2233,7 +2232,7 @@ class TerminalFlipMC:
 
         self.simulation.context.setPositions(positions * unit.nanometer)
 
-    def move_dihe(self, angle):
+    def move_dihe(self):
         """
         Perform a Monte Carlo move by rotating a terminal residue by ±``angle``.
 
@@ -2241,16 +2240,9 @@ class TerminalFlipMC:
         is symmetric (satisfying detailed balance).  If there is more than one terminal
         residue, one is chosen at random.
 
-        Parameters
-        ----------
-        angle :
-            Magnitude of the rotation in degrees.
         """
         # randomly select one terminal residue
         terminal_res_index = np.random.randint(len(self.terminal_list))
-
-        # For non-180° moves choose ±angle with equal probability
-        signed_angle = angle if angle == 180.0 else float(np.random.choice([-1, 1])) * angle
 
         # Store old positions and energy
         state_old = self.simulation.context.getState(getPositions=True, getEnergy=True)
@@ -2258,7 +2250,7 @@ class TerminalFlipMC:
         e_old = state_old.getPotentialEnergy() / self.kBT
 
         # Rotate
-        self.rotate_terminal(signed_angle, terminal_res_index)
+        self.rotate_terminal(terminal_res_index)
 
         # New energy
         e_new = self.simulation.context.getState(getEnergy=True).getPotentialEnergy() / self.kBT
@@ -2266,11 +2258,11 @@ class TerminalFlipMC:
         # Accept or reject (Metropolis criterion)
         delta_e = e_new - e_old
         if delta_e <= 0.0 or np.random.random() < np.exp(-delta_e):
-            self.logger.info(f"TerminalFlipMC: {np.exp(-delta_e):.2f}, Accepted.")
+            self.logger.info(f"TerminalFlipMC: dihe_{terminal_res_index}, {np.exp(-delta_e):.2f}, Accepted.")
             # random velocity
             self.simulation.context.setVelocitiesToTemperature(self.temperature)
         else:
             self.simulation.context.setPositions(old_positions)
-            self.logger.info(f"TerminalFlipMC: {np.exp(-delta_e):.2f}, Rejected.")
+            self.logger.info(f"TerminalFlipMC: dihe_{terminal_res_index}, {np.exp(-delta_e):.2f}, Rejected.")
 
 

@@ -53,7 +53,9 @@ class TestRotateTerminal(unittest.TestCase):
 
         # terminal_list: atoms 19,20 define the C15-C16 rotation axis;
         # atoms 21-30 are the phenyl ring that rotates.
-        terminal_list = [[19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]]
+        terminal_list = [
+            [180, [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]]
+        ]
 
         logger = logging.getLogger("test_TerminalFlipMC")
         logger.setLevel(logging.INFO)
@@ -83,7 +85,7 @@ class TestRotateTerminal(unittest.TestCase):
     def test_rotate_terminal(self):
         print()
         print("# Test rotate_terminal: 180° rotation around C15-C16 bond")
-        terminal = self.flipmc.terminal_list[0]
+        angle, terminal = self.flipmc.terminal_list[0]
         pivot_idx = terminal[1]   # C16 – rotation centre
         axis_idx  = terminal[0]   # C15 – axis start
         mobile    = terminal[2:]  # phenyl ring atoms
@@ -91,7 +93,7 @@ class TestRotateTerminal(unittest.TestCase):
         pos_before = self._get_positions()
         self._save_pdb("rotate_terminal_before.pdb")
 
-        self.flipmc.rotate_terminal(180.0, 0)
+        self.flipmc.rotate_terminal(0)
 
         pos_after = self._get_positions()
         self._save_pdb("rotate_terminal_after.pdb")
@@ -114,7 +116,7 @@ class TestRotateTerminal(unittest.TestCase):
             )
 
         # A second 180° must restore the mobile atoms
-        self.flipmc.rotate_terminal(180.0, 0)
+        self.flipmc.rotate_terminal(0)
         pos_restored = self._get_positions()
         np.testing.assert_allclose(
             pos_restored[mobile], pos_before[mobile], atol=1e-5,
@@ -122,8 +124,8 @@ class TestRotateTerminal(unittest.TestCase):
         )
         print("  PASSED: axis/pivot unmoved, mobile atoms rotated, double-180° restores positions")
 
-        self.flipmc.move_dihe(180)
-        self.flipmc.move_dihe(180)
+        self.flipmc.move_dihe()
+        self.flipmc.move_dihe()
 
 
 if __name__ == "__main__":
