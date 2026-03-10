@@ -20,6 +20,22 @@ def _read_pairs(path, zero_based=False):
             pairs.append((i, j))
     return pairs
 
+def pair_check(pairs):
+    """
+    There should be no duplicate indices in each side.
+    :param pairs:
+    :return:
+    """
+    idxA = set()
+    idxB = set()
+    for i, j in pairs:
+        if i in idxA:
+            raise ValueError(f"Duplicate index {i} in side A")
+        if j in idxB:
+            raise ValueError(f"Duplicate index {j} in side B")
+        idxA.add(i)
+        idxB.add(j)
+
 def check_color_mapping(lig1_pdb, lig2_pdb, pairs_dat):
     """
     Load two ligands, enable grid view, and color mapped atom pairs randomly.
@@ -51,6 +67,7 @@ def check_color_mapping(lig1_pdb, lig2_pdb, pairs_dat):
 
     # Read mapping (0-based -> shift to PyMOL index which is 1-based)
     pairs = _read_pairs(pairs_dat, zero_based=False)
+    pair_check(pairs)
 
     # Color each mapped pair with the same random color
     for k, (idxA, idxB) in enumerate(pairs):
@@ -68,6 +85,16 @@ def check_color_mapping(lig1_pdb, lig2_pdb, pairs_dat):
 
     cmd.set('sphere_scale', 0.3)
     cmd.set('label_size',   40)
+
+    # Select unmapped atoms and center on them
+    mapped_A = ' or '.join(f'index {i}' for i, _ in pairs)
+    mapped_B = ' or '.join(f'index {j}' for _, j in pairs)
+
+    cmd.select('unmapped_A', f'ligA and not ({mapped_A})' if mapped_A else 'ligA')
+    cmd.select('unmapped_B', f'ligB and not ({mapped_B})' if mapped_B else 'ligB')
+    cmd.select('unmapped',   'unmapped_A or unmapped_B')
+
+    cmd.center('unmapped')
 
 # expose as a PyMOL command: check_color_mapping lig1, lig2, pairs
 cmd.extend('check_color_mapping', check_color_mapping)
