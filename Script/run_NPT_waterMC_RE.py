@@ -139,7 +139,7 @@ def main():
             logger=samp.logger,
             terminal_list=terminal_list,
         )
-        samp.rank_0_print_log(f"TerminalFlipMC initialised with {len(mdp.terminal_list)} terminal group(s). {mdp.terminal_list}")
+        samp.rank_0_print_log(f"TerminalFlipMC initialised with {len(terminal_list)} terminal group(s). {terminal_list}")
 
     if rank == 0:
         samp.logger.info("Checking bonded force parameters for oscillational period...")
@@ -239,7 +239,7 @@ def main():
                 if tmc is None:
                     raise ValueError("TMC operation requested but terminal_list is not set in mdp")
                 try:
-                    tmc.move_dihe(180)
+                    tmc.move_dihe()
                 except Exception as e:
                     samp.logger.error(f"TMC failed: {e}")
                     fail_flag = True
