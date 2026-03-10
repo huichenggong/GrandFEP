@@ -2159,3 +2159,118 @@ class _ReplicaExchangeMixin:
             print(msg)
         self.logger.info(msg)
 
+class TerminalFlipMC:
+    """
+
+    """
+    def __init__(self,
+                 simulation: app.Simulation,
+                 topology: app.Topology,
+                 kBT: unit.Quantity, logger: logging.Logger,
+                 terminal_list=None):
+        """
+        Parameters
+        ----------
+        simulation :
+            The OpenMM Simulation object.
+        topology :
+            The OpenMM Topology object.
+        kBT :
+            The thermal energy in unit of energy, e.g., ``2.5 * unit.kilojoule_per_mole``.
+        logger :
+            The logger for logging messages.
+        terminal_list :
+            A list of atom indices for the terminal residues to be flipped. The terminal will be rotated 180 degree
+            around the axis defined by the two atoms (atom 0 and 1) in the terminal residue.
+        """
+        self.simulation = simulation
+        self.topology = topology
+        self.kBT = kBT
+        self.logger = logger
+        self.terminal_list = terminal_list
+        self.temperature = kBT / unit.MOLAR_GAS_CONSTANT_R
+    
+    def rotate_terminal(self, angle, terminal_res_index):
+        """
+        Rotate the terminal residue by a given angle.
+
+        The rotation axis is the bond vector from ``terminal_list[terminal_res_index][0]`` to
+        ``terminal_list[terminal_res_index][1]``.  All atoms at index 2 and beyond in that
+        sub-list are rigidly rotated around that axis (anchored at atom 1) using Rodrigues'
+        rotation formula.
+
+        Parameters
+        ----------
+        angle :
+            Rotation angle in degrees.
+        terminal_res_index :
+            Index into ``self.terminal_list`` identifying which terminal group to rotate.
+        """
+        atom_indices = self.terminal_list[terminal_res_index]
+
+        # Get positions as a plain numpy array in nm
+        state = self.simulation.context.getState(getPositions=True)
+        positions = state.getPositions(asNumpy=True).value_in_unit(unit.nanometer)
+
+        p0 = positions[atom_indices[0]]  # anchor atom (defines axis start)
+        p1 = positions[atom_indices[1]]  # pivot atom (rotation centre)
+
+        # Unit vector along the rotation axis (p0 -> p1)
+        axis = p1 - p0
+        axis = axis / np.linalg.norm(axis)
+
+        theta = np.deg2rad(angle)
+        cos_t = np.cos(theta)
+        sin_t = np.sin(theta)
+
+        # Rodrigues' rotation: v_rot = v*cos + (k x v)*sin + k*(k·v)*(1-cos)
+        for idx in atom_indices[2:]:
+            v = positions[idx] - p1
+            v_rot = (v * cos_t
+                     + np.cross(axis, v) * sin_t
+                     + axis * np.dot(axis, v) * (1.0 - cos_t))
+            positions[idx] = p1 + v_rot
+
+        self.simulation.context.setPositions(positions * unit.nanometer)
+
+    def move_dihe(self, angle):
+        """
+        Perform a Monte Carlo move by rotating a terminal residue by ±``angle``.
+
+        For angles other than 180° the sign is chosen randomly so that the proposal
+        is symmetric (satisfying detailed balance).  If there is more than one terminal
+        residue, one is chosen at random.
+
+        Parameters
+        ----------
+        angle :
+            Magnitude of the rotation in degrees.
+        """
+        # randomly select one terminal residue
+        terminal_res_index = np.random.randint(len(self.terminal_list))
+
+        # For non-180° moves choose ±angle with equal probability
+        signed_angle = angle if angle == 180.0 else float(np.random.choice([-1, 1])) * angle
+
+        # Store old positions and energy
+        state_old = self.simulation.context.getState(getPositions=True, getEnergy=True)
+        old_positions = state_old.getPositions(asNumpy=True)
+        e_old = state_old.getPotentialEnergy() / self.kBT
+
+        # Rotate
+        self.rotate_terminal(signed_angle, terminal_res_index)
+
+        # New energy
+        e_new = self.simulation.context.getState(getEnergy=True).getPotentialEnergy() / self.kBT
+
+        # Accept or reject (Metropolis criterion)
+        delta_e = e_new - e_old
+        if delta_e <= 0.0 or np.random.random() < np.exp(-delta_e):
+            self.logger.info(f"TerminalFlipMC: {np.exp(-delta_e):.2f}, Accepted.")
+            # random velocity
+            self.simulation.context.setVelocitiesToTemperature(self.temperature)
+        else:
+            self.simulation.context.setPositions(old_positions)
+            self.logger.info(f"TerminalFlipMC: {np.exp(-delta_e):.2f}, Rejected.")
+
+

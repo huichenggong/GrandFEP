@@ -185,6 +185,67 @@ def find_reference_atom_indices(topology : app.Topology, ref_atoms_list: list) -
         raise ValueError("No reference atom found.")
     return atom_indices
 
+
+def find_terminal_ring(topology: app.Topology,
+                       axis_atom: dict,
+                       pivot_atom: dict) -> list:
+    """
+    Find all atom indices that form a rotatable terminal group, using a bond-graph
+    traversal starting from the pivot atom away from the axis atom.
+
+    The returned list is ordered as ``[axis_idx, pivot_idx, *mobile_indices]``,
+    which is the format expected by :class:`~grandfep.sampler.TerminalFlipMC`.
+
+    Parameters
+    ----------
+    topology :
+        OpenMM topology.
+    axis_atom :
+        A dict understood by :func:`find_reference_atom_indices` that uniquely
+        identifies the axis-start atom (e.g. C15).
+    pivot_atom :
+        A dict that uniquely identifies the pivot atom (e.g. C16).
+
+    Returns
+    -------
+    list
+        ``[axis_idx, pivot_idx, mobile_idx_0, mobile_idx_1, ...]``
+
+    Examples
+    --------
+    >>> terminal_list = [find_terminal_ring(
+    ...     topology,
+    ...     axis_atom={"res_name": "MOL", "atom_name": "C15"},
+    ...     pivot_atom={"res_name": "MOL", "atom_name": "C16"},
+    ... )]
+    """
+    axis_idx  = find_reference_atom_indices(topology, [axis_atom])[0]
+    pivot_idx = find_reference_atom_indices(topology, [pivot_atom])[0]
+
+    # Build adjacency list from topology bonds
+    neighbors = {}
+    for atom in topology.atoms():
+        neighbors[atom.index] = []
+    for bond in topology.bonds():
+        a, b = bond.atom1.index, bond.atom2.index
+        neighbors[a].append(b)
+        neighbors[b].append(a)
+
+    # BFS from pivot, not crossing back to axis
+    visited = {axis_idx, pivot_idx}
+    queue = [n for n in neighbors[pivot_idx] if n != axis_idx]
+    mobile = []
+    while queue:
+        idx = queue.pop(0)
+        if idx in visited:
+            continue
+        visited.add(idx)
+        mobile.append(idx)
+        queue.extend(neighbors[idx])
+
+    return [axis_idx, pivot_idx] + sorted(mobile)
+
+
 def random_rotation_matrix() -> np.ndarray:
     """
     Generate a random rotation matrix using Shoemake method.
@@ -525,6 +586,7 @@ class md_params_yml:
         lambda_sterics_insert (list): Lambda
         lambda_electrostatics_insert (list): Lambda
         lambda_torsions (list): Lambda
+        terminal_list (list): list of list of atom indices for terminal flip. Each sublist should be in the format of [axis_idx, pivot_idx, mobile_idx_0, mobile_idx_1, ...]
 
     """
 
@@ -590,6 +652,7 @@ class md_params_yml:
         self.lambda_sterics_delete        = [1.0]
         self.lambda_sterics_insert        = [1.0]
         self.lambda_torsions              = [1.0]
+        self.terminal_list = None
 
 
         # Override with YAML file if provided
