@@ -119,8 +119,10 @@ def main():
     samp.report_rst()
     
     # save pdb
+    state = samp.simulation.context.getState(getPositions=True, enforcePeriodicBox=True)
+    topology.setPeriodicBoxVectors(state.getPeriodicBoxVectors())
     app.PDBFile.writeFile(
-        topology, samp.simulation.context.getState(getPositions=True, enforcePeriodicBox=True).getPositions(), open(args.deffnm+".pdb", "w"))
+        topology, state.getPositions(), open(args.deffnm+".pdb", "w"))
 
 
 if __name__ == "__main__":
