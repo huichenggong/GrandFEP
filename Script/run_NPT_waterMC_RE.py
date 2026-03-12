@@ -127,19 +127,15 @@ def main():
     # Initiate TerminalFlipMC if terminal_list is provided in mdp
     tmc = None
     if mdp.terminal_list is not None:
-        if isinstance(mdp.terminal_list[0][1], list):
-            terminal_list = mdp.terminal_list
-        else:
-            terminal_list = [(180, atoms) for atoms in mdp.terminal_list]
         kBT = mdp.ref_t * unit.MOLAR_GAS_CONSTANT_R
         tmc = sampler.TerminalFlipMC(
             simulation=samp.simulation,
             topology=topology,
             kBT=kBT,
             logger=samp.logger,
-            terminal_list=terminal_list,
+            terminal_list=mdp.terminal_list,
         )
-        samp.rank_0_print_log(f"TerminalFlipMC initialised with {len(terminal_list)} terminal group(s). {terminal_list}")
+        samp.rank_0_print_log(f"TerminalFlipMC initialised with {len(mdp.terminal_list)} terminal group(s). {mdp.terminal_list}")
 
     if rank == 0:
         samp.logger.info("Checking bonded force parameters for oscillational period...")

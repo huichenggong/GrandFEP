@@ -241,6 +241,20 @@ def main():
 
     for msg in msg_list:
         samp.logger.info(msg)
+    
+    # Initiate TerminalFlipMC if terminal_list is provided in mdp
+    tmc = None
+    if mdp.terminal_list is not None:
+        kBT = mdp.ref_t * unit.MOLAR_GAS_CONSTANT_R
+        tmc = sampler.TerminalFlipMC(
+            simulation=samp.simulation,
+            topology=topology,
+            kBT=kBT,
+            logger=samp.logger,
+            terminal_list=mdp.terminal_list,
+        )
+        samp.rank_0_print_log(f"TerminalFlipMC initialised with {len(mdp.terminal_list)} terminal group(s). {mdp.terminal_list}")
+
 
     # print all the forces
     if rank == 0:
@@ -329,6 +343,18 @@ def main():
                 # perform MD + GC + MD
                 md_gc_md(samp, steps, mdp)
 
+            elif operation == "TMC":
+                if tmc is None:
+                    raise ValueError("TMC operation requested but terminal_list is not set in mdp")
+                try:
+                    tmc.move_dihe()
+                except Exception as e:
+                    samp.logger.error(f"TMC failed: {e}")
+                    fail_flag = True
+                stop_signal = MPI.COMM_WORLD.allreduce(fail_flag, op=MPI.LOR)
+                if stop_signal:
+                    samp.comm.Barrier()
+                    samp.comm.Abort(1)
             elif operation == "RE":
                 try:
                     # samp.logger.info(f"lambda state index: {samp.lambda_state_index}")
