@@ -228,17 +228,8 @@ def add_gray_1kcal(axes, alpha=0.3, center_line=True):
     axes : Iterable[matplotlib.axes.Axes] or Axes
         One Axes or any iterable (list/array) of Axes.
     """
-    # normalize to a flat list of Axes
-    if isinstance(axes, Axes):
-        ax_list = [axes]
-    else:
-        # flatten e.g. numpy array of axes
-        ax_list = axes.reshape(-1).tolist()
 
-    if not ax_list:
-        return
-
-    for ax in ax_list:
+    for ax in axes.ravel():
         x = np.array(ax.get_xlim())
         ax.fill_between(
             x=x,
