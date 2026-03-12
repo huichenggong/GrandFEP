@@ -101,7 +101,7 @@ def update_1step(path_in, path_out, learning_rate_max = 0.5, max_step=0.02, max_
     err = np.array(err)
     nan_mask = np.isnan(err)
     if np.any(nan_mask):
-        err[nan_mask] = np.nanmax(err)*1.0
+        err[nan_mask] = np.nanmax(err)*1.3
     print(f"Err Max/Mean : {max(err):.3f} / {np.mean(err):.3f} = {max(err)/np.mean(err):.2f}")
     update_flag = max(err)/np.mean(err) > 1.4
 
