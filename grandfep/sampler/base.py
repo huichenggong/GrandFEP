@@ -814,7 +814,7 @@ class BaseGrandCanonicalMonteCarloSampler:
         for i, force in enumerate(system.getForces()):
             if force.getName() in force_name:
                 npt_force_dict[force.getName()] = force
-            elif force.getName() in ["CMAPTorsionForce", "CMMotionRemover"]:
+            elif force.getName() in ["CMAPTorsionForce", "CMMotionRemover", "CustomExternalForce"]:
                 npt_force_dict[force.getName()] = force
             else:
                 raise ValueError(f"{force.getName()} should not be in a REST2 NPT system.")
