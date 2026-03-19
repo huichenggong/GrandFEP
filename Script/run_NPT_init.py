@@ -55,7 +55,7 @@ def main():
     
     # Add restraints
     if mdp.restraint:
-        posres, res_atom_count, res_name_list = utils.prepare_restraints_force(topology, positions, mdp.restraint_fc)
+        posres, res_atom_count, res_name_list = utils.prepare_restraints_force(topology, positions, mdp.restraint_fc, solvent_resname=mdp.solvent_resname)
         system.addForce(posres)
         msg = f"Adding restraints to None water heavy atoms (n={res_atom_count}) with {mdp.restraint_fc}."
         print(msg)

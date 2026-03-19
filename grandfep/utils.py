@@ -459,7 +459,7 @@ def prepare_restraints_force(topology: app.Topology, positions: unit.Quantity, f
         The force constant for the position restraints. Unit in kJ/mol/nm^2.
 
     solvent_resname : list
-        The residue name of water molecules to be excluded from the restraints. Default is "HOH", "Na+", "K+", "Cl-".
+        The residue name of water molecules to be excluded from the restraints. Default is "HOH", "Na+", "NA", "K+", "K", "Cl-", "CL".
 
     Returns
     -------
@@ -473,7 +473,7 @@ def prepare_restraints_force(topology: app.Topology, positions: unit.Quantity, f
         A list of residue names that are restrained.
     """
     if solvent_resname is None:
-        solvent_resname = ["HOH", "Na+", "K+", "Cl-"]
+        solvent_resname = ["HOH", "Na+", "NA", "K+", "K", "Cl-", "CL"]
     posres = openmm.CustomExternalForce('0.5*k*periodicdistance(x, y, z, x0, y0, z0)^2;')
     posres.addPerParticleParameter('k')
     posres.addPerParticleParameter('x0')
@@ -653,6 +653,7 @@ class md_params_yml:
         self.lambda_sterics_insert        = [1.0]
         self.lambda_torsions              = [1.0]
         self.terminal_list = None
+        self.solvent_resname = None
 
 
         # Override with YAML file if provided
