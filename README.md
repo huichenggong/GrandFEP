@@ -48,7 +48,7 @@ which mpirun                  # check if the correct mpirun is used
 **What this shows:** target-by-target breakdown of error (RMSE) and correlation (R²), including bootstrapped 95% CI.
 
 ## 3. Full Documentation
-[huichenggong.github.io/GrandFEP](https://huichenggong.github.io/GrandFEP/)
+[https://degrootlab.github.io/GrandFEP/](https://huichenggong.github.io/GrandFEP/)
 
 ## 4. Contact
 Chenggong Hui  
