@@ -5,7 +5,7 @@ Buried water molecules can exchange with bulk on timescales that are much slower
 their slow rearrangement can lead to hysteresis, poor overlap between alchemical states.  
 
 To address this, this tutorial demonstrates **hybrid MD/MC water sampling**, using either 
-(i) **Grand Canonical Monte Carlo (GCMC)** water insertion/deletion or (ii) a **Water Swap Monte Carlo (Water MC)** scheme 
+(i) **Grand Canonical Monte Carlo (GCMC)** water insertion/deletion or (ii) **Water Swap Monte Carlo (Water MC)** scheme 
 that shift water molecules between the active site and the bulk.  
 
 In this tutorial we use the **HSP90 Woodhead dataset** from Schrödinger. The protein–ligand input structures are adapted from 
@@ -451,7 +451,7 @@ mpirun -np 16 $script_dir/run_GC_RE.py \
 ### 5.4. Production
 ![Protocol](../../test/hspw_tutorial/analysis/sampling_protocol.png "Protocol")
 In the production run, we will perform 1 GC step and 15 RE step in each sampling cycle. 
-Between every GCor RE, 200 steps of MD will be performed. So in total, each cycle contains 
+Between every GC or RE, 200 steps of MD will be performed. So in total, each cycle contains 
 (1 + 15) * 200 * 0.004 = 12.8 (ps) of MD. Each 20% of the GC step is tested in the active site sphere, 
 and the other 80% is tested in the whole box. The GC insertion/deletion Monte Carlo moves are performed 
 in non-equilibrium fashion, with 80 perturbation steps and 40 propagation steps. In total, each GC step
@@ -774,13 +774,12 @@ mpirun --hostfile $HOSTFILE --app $APPFILE
 ```
 
 ## 10. Reference
-1. Ross, G. A.; Russell, E.; Deng, Y.; Lu, C.; Harder, E. D.; Abel, R.; Wang, L. Enhancing Water Sampling in Free Energy Calculations with Grand Canonical Monte Carlo. J. Chem. Theory Comput. 2020, 16 (10), 6061–6076. https://doi.org/10.1021/acs.jctc.0c00660. 
-2. XXX
+1. Ross, G. A.; Russell, E.; Deng, Y.; Lu, C.; Harder, E. D.; Abel, R.; Wang, L. Enhancing Water Sampling in Free Energy Calculations with Grand Canonical Monte Carlo. [J. Chem. Theory Comput. 2020, 16 (10), 6061–6076](https://doi.org/10.1021/acs.jctc.0c00660). 
+2. Hui, C.; De Groot, B. L. Enhancing Relative Binding Free Energy Calculation with Grand Canonical Monte Carlo, Water Swap Monte Carlo, Terminal-Flip Monte Carlo and Replica Exchange Solute Tempering. [ChemRxiv. 2026](https://doi.org/10.26434/chemrxiv.15001198/v1)
 
 ## 11. Contact
 Chenggong Hui (惠成功)
 - **Email:** [chenggong.hui@mpinat.mpg.de](mailto:chenggong.hui@mpinat.mpg.de)
 - **ORCID:** [0000-0003-2875-4739](https://orcid.org/0000-0003-2875-4739)
-- **GitHub:** [GrandFEP](https://github.com/huichenggong/GrandFEP)
+- **GitHub:** [GrandFEP](https://github.com/deGrootLab/GrandFEP)
 
-Here is the youtube video demonstrating this tutorial (Coming soon).  
