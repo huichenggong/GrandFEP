@@ -706,6 +706,17 @@ can give a list of lambda values for the path of GC insertion.</p>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grandfep.utils.md_params_yml.terminal_list">
+<span class="sig-name descname"><span class="pre">terminal_list</span></span><a class="headerlink" href="#grandfep.utils.md_params_yml.terminal_list" title="Link to this definition">¶</a></dt>
+<dd><p>Atom indices for terminal flip. Each element should be in the format of (angle, [axis_idx, pivot_idx, mobile_idx_0, mobile_idx_1, …])</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="grandfep.utils.md_params_yml.get_lambda_dict">
 <span class="sig-name descname"><span class="pre">get_lambda_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.md_params_yml.get_lambda_dict" title="Link to this definition">¶</a></dt>
@@ -1005,6 +1016,39 @@ Each dictionary can contain any combination of the following keys:</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="grandfep.utils.find_terminal_ring">
+<span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">find_terminal_ring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_atom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pivot_atom</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.find_terminal_ring" title="Link to this definition">¶</a></dt>
+<dd><p>Find all atom indices that form a rotatable terminal group, using a bond-graph
+traversal starting from the pivot atom away from the axis atom.</p>
+<p>The returned list is ordered as <code class="docutils literal notranslate"><span class="pre">[axis_idx,</span> <span class="pre">pivot_idx,</span> <span class="pre">*mobile_indices]</span></code>,
+which is the format expected by <code class="xref py py-class docutils literal notranslate"><span class="pre">TerminalFlipMC</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>topology</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">openmm.app.topology.Topology</span></code></span>) – OpenMM topology.</p></li>
+<li><p><strong>axis_atom</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span>) – A dict understood by <a class="reference internal" href="#grandfep.utils.find_reference_atom_indices" title="grandfep.utils.find_reference_atom_indices"><code class="xref py py-func docutils literal notranslate"><span class="pre">find_reference_atom_indices()</span></code></a> that uniquely
+identifies the axis-start atom (e.g. C15).</p></li>
+<li><p><strong>pivot_atom</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span>) – A dict that uniquely identifies the pivot atom (e.g. C16).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">[axis_idx,</span> <span class="pre">pivot_idx,</span> <span class="pre">mobile_idx_0,</span> <span class="pre">mobile_idx_1,</span> <span class="pre">...]</span></code></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">terminal_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">find_terminal_ring</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">topology</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">axis_atom</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;res_name&quot;</span><span class="p">:</span> <span class="s2">&quot;MOL&quot;</span><span class="p">,</span> <span class="s2">&quot;atom_name&quot;</span><span class="p">:</span> <span class="s2">&quot;C15&quot;</span><span class="p">},</span>
+<span class="gp">... </span>    <span class="n">pivot_atom</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;res_name&quot;</span><span class="p">:</span> <span class="s2">&quot;MOL&quot;</span><span class="p">,</span> <span class="s2">&quot;atom_name&quot;</span><span class="p">:</span> <span class="s2">&quot;C16&quot;</span><span class="p">},</span>
+<span class="gp">... </span><span class="p">)]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="grandfep.utils.get_water_parameters">
 <span class="sig-prename descclassname"><span class="pre">grandfep.utils.</span></span><span class="sig-name descname"><span class="pre">get_water_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_resname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'HOH'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandfep.utils.get_water_parameters" title="Link to this definition">¶</a></dt>
 <dd><p>Get charge, vdw of water parameters from the system.</p>
@@ -1168,7 +1212,7 @@ to define the box. Without setting the box, trajectory files may lack box inform
 <li><p><strong>topology</strong> (<em>openmm.app.Topology</em>) – The OpenMM topology object.</p></li>
 <li><p><strong>positions</strong> (<em>openmm.unit.Quantity</em>) – The reference positions of the atoms in the system.</p></li>
 <li><p><strong>fc</strong> (<em>openmm.unit.Quantity</em>) – The force constant for the position restraints. Unit in kJ/mol/nm^2.</p></li>
-<li><p><strong>solvent_resname</strong> (<em>list</em>) – The residue name of water molecules to be excluded from the restraints. Default is “HOH”, “Na+”, “K+”, “Cl-“.</p></li>
+<li><p><strong>solvent_resname</strong> (<em>list</em>) – The residue name of water molecules to be excluded from the restraints. Default is “HOH”, “Na+”, “NA”, “K+”, “K”, “Cl-”, “CL”.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

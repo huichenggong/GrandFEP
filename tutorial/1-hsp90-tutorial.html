@@ -102,7 +102,7 @@
 Buried water molecules can exchange with bulk on timescales that are much slower than typical RBFE, and
 their slow rearrangement can lead to hysteresis, poor overlap between alchemical states.</p>
 <p>To address this, this tutorial demonstrates <strong>hybrid MD/MC water sampling</strong>, using either
-(i) <strong>Grand Canonical Monte Carlo (GCMC)</strong> water insertion/deletion or (ii) a <strong>Water Swap Monte Carlo (Water MC)</strong> scheme
+(i) <strong>Grand Canonical Monte Carlo (GCMC)</strong> water insertion/deletion or (ii) <strong>Water Swap Monte Carlo (Water MC)</strong> scheme
 that shift water molecules between the active site and the bulk.</p>
 <p>In this tutorial we use the <strong>HSP90 Woodhead dataset</strong> from Schrödinger. The protein–ligand input structures are adapted from
 Ross et al. [1], which highlighted that explicit water sampling using GCMC can substantially improve sampling efficiency for
@@ -557,7 +557,7 @@ mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">16</spa
 <h3>5.4. Production<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
 <p><img alt="Protocol" src="../_images/sampling_protocol.png" />
 In the production run, we will perform 1 GC step and 15 RE step in each sampling cycle.
-Between every GCor RE, 200 steps of MD will be performed. So in total, each cycle contains
+Between every GC or RE, 200 steps of MD will be performed. So in total, each cycle contains
 (1 + 15) * 200 * 0.004 = 12.8 (ps) of MD. Each 20% of the GC step is tested in the active site sphere,
 and the other 80% is tested in the whole box. The GC insertion/deletion Monte Carlo moves are performed
 in non-equilibrium fashion, with 80 perturbation steps and 40 propagation steps. In total, each GC step
@@ -890,8 +890,8 @@ mpirun<span class="w"> </span>--hostfile<span class="w"> </span><span class="nv"
 <section id="reference">
 <h2>10. Reference<a class="headerlink" href="#reference" title="Link to this heading">¶</a></h2>
 <ol class="arabic simple">
-<li><p>Ross, G. A.; Russell, E.; Deng, Y.; Lu, C.; Harder, E. D.; Abel, R.; Wang, L. Enhancing Water Sampling in Free Energy Calculations with Grand Canonical Monte Carlo. J. Chem. Theory Comput. 2020, 16 (10), 6061–6076. https://doi.org/10.1021/acs.jctc.0c00660.</p></li>
-<li><p>XXX</p></li>
+<li><p>Ross, G. A.; Russell, E.; Deng, Y.; Lu, C.; Harder, E. D.; Abel, R.; Wang, L. Enhancing Water Sampling in Free Energy Calculations with Grand Canonical Monte Carlo. <a class="reference external" href="https://doi.org/10.1021/acs.jctc.0c00660">J. Chem. Theory Comput. 2020, 16 (10), 6061–6076</a>.</p></li>
+<li><p>Hui, C.; De Groot, B. L. Enhancing Relative Binding Free Energy Calculation with Grand Canonical Monte Carlo, Water Swap Monte Carlo, Terminal-Flip Monte Carlo and Replica Exchange Solute Tempering. <a class="reference external" href="https://doi.org/10.26434/chemrxiv.15001198/v1">ChemRxiv. 2026</a></p></li>
 </ol>
 </section>
 <section id="contact">
@@ -900,9 +900,8 @@ mpirun<span class="w"> </span>--hostfile<span class="w"> </span><span class="nv"
 <ul class="simple">
 <li><p><strong>Email:</strong> <a class="reference external" href="mailto:chenggong&#46;hui&#37;&#52;&#48;mpinat&#46;mpg&#46;de">chenggong<span>&#46;</span>hui<span>&#64;</span>mpinat<span>&#46;</span>mpg<span>&#46;</span>de</a></p></li>
 <li><p><strong>ORCID:</strong> <a class="reference external" href="https://orcid.org/0000-0003-2875-4739">0000-0003-2875-4739</a></p></li>
-<li><p><strong>GitHub:</strong> <a class="reference external" href="https://github.com/huichenggong/GrandFEP">GrandFEP</a></p></li>
+<li><p><strong>GitHub:</strong> <a class="reference external" href="https://github.com/deGrootLab/GrandFEP">GrandFEP</a></p></li>
 </ul>
-<p>Here is the youtube video demonstrating this tutorial (Coming soon).</p>
 </section>
 </section>
 

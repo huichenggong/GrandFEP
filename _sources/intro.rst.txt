@@ -11,8 +11,8 @@ GrandFEP : GCMC/FEP - Alchemical free energy calculations in Grand Canonical ens
 1. Background
 ---------------------
 
-This Python module is designed to perform grand canonical Monte Carlo (GCMC) and free energy
-calculations using OpenMM
+This Python module is designed to perform free energy calculations with
+explicit water sampling using OpenMM.
 
 2. Installation
 --------------------
@@ -60,7 +60,9 @@ Check cuda and MPI as what we previously mentioned.
 3. Citation
 -----------------------------
 
-The GrandFEP module is released under the MIT licence. I hope my publication will come soon.
+The GrandFEP module is released under the MIT licence.
+The preprint is available on ChemRxiv:
+`Enhancing Relative Binding Free Energy Calculation with Grand Canonical Monte Carlo, Water Swap Monte Carlo, Terminal-Flip Monte Carlo and Replica Exchange Solute Tempering <https://chemrxiv.org/doi/full/10.26434/chemrxiv.15001198/v1>`_.
 
 4. Author(s) and Contact
 -----------------------------
@@ -69,7 +71,7 @@ The GrandFEP module is released under the MIT licence. I hope my publication wil
 
 - **Email:** `chenggong.hui@mpinat.mpg.de <mailto:chenggong.hui@mpinat.mpg.de>`_
 - **ORCID:** `0000-0003-2875-4739 <https://orcid.org/0000-0003-2875-4739>`_
-- **GitHub** `GrandFEP <https://github.com/huichenggong/GrandFEP>`_
+- **GitHub** `GrandFEP <https://github.com/deGrootLab/GrandFEP>`_
 
 For any questions or issues regarding this module, please contact Chenggong Hui (惠成功).
 
