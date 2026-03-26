@@ -4,7 +4,7 @@ GrandFEP is a Python library for **relative binding free energy (RBFE)** calcula
 
 **Key features:**
 - Alchemical water swap moves (WaterMC) for moving water between the active site and bulk using nonequilibrium candidate Monte Carlo (NCMC)
-- Alchemical water insertion/deletion (GCMC ensemble)
+- Alchemical water insertion/deletion (GC ensemble)
 - REST2 enhanced sampling for ligand and protein degrees of freedom
 - Terminal-Flip MC for enhanced sampling of terminal groups dihedrals
 
