@@ -129,7 +129,7 @@ class NPTSampler:
         -------
         None
         """
-        self.rst_reporter_dict = {0:parmed.openmm.reporters.RestartReporter(rst_file, 0, netcdf=True)}
+        self.rst_reporter_dict = {0:utils.rst7_reporter(rst_file, 0, netcdf=True)}
         if dcd_file is not None:
             if append and Path(dcd_file).is_file():
                 self.dcd_reporter_dict = {0:app.DCDReporter(dcd_file, 0, True, enforcePeriodicBox=True)}
@@ -584,7 +584,7 @@ class BaseNPTWaterMCSampler:
         -------
         None
         """
-        self.rst_reporter_dict = {0:parmed.openmm.reporters.RestartReporter(rst_file, 0, netcdf=True)}
+        self.rst_reporter_dict = {0:utils.rst7_reporter(rst_file, 0, netcdf=True)}
         if dcd_file is not None:
             if append and Path(dcd_file).is_file():
                 self.dcd_reporter_dict = {0:app.DCDReporter(dcd_file, 0, True, enforcePeriodicBox=True)}

@@ -945,6 +945,21 @@ class dcd_reporter(app.DCDReporter):
                 simulation.currentStep, 1, self._append
             )
 
+        # Standardize triclinic box to alpha >= 90° and beta >= 90° before writing.
+        # DCD stores cos(beta) and cos(alpha) in the crystal block; inconsistent signs
+        # across frames cause VMD and MDAnalysis to misinterpret the cell shape.
+        # For a lower-triangular box: v3[0] = c*cos(beta), v3[1] = c*cos(alpha).
+        v3 = periodicBoxVectors[2]
+        if unit.is_quantity(v3):
+            v3_nm = np.array(v3.value_in_unit(unit.nanometers))
+        else:
+            v3_nm = np.array(v3)
+        if v3_nm[0] > 0:
+            v3_nm[0] = -v3_nm[0]
+        if v3_nm[1] > 0:
+            v3_nm[1] = -v3_nm[1]
+        periodicBoxVectors = (periodicBoxVectors[0], periodicBoxVectors[1], v3_nm * unit.nanometers)
+
         self._dcd.writeModel(positions_nm, periodicBoxVectors=periodicBoxVectors)
 
 class rst7_reporter(parmed.openmm.reporters.RestartReporter):
@@ -967,6 +982,21 @@ class rst7_reporter(parmed.openmm.reporters.RestartReporter):
         Write velocities to the restart file. You can turn this off for passing
         in, for instance, a minimized structure.
     """
+    def report(self, sim: app.Simulation, state: openmm.State):
+        """Generate a report from an OpenMM State object.
+
+        Parameters
+        ----------
+        sim :
+            The Simulation to generate a report for
+        state :
+            The current state of the simulation.
+        """
+        positions = state.getPositions(asNumpy=True)
+        velocities = state.getVelocities(asNumpy=True)
+        box_vec = state.getPeriodicBoxVectors(asNumpy=True)
+        self.report_positions_velocities(sim, state, box_vec, positions, velocities)
+
     def report_positions_velocities(self, sim: app.Simulation, state: openmm.State,
                                     periodicBoxVectors: Union[openmm.Vec3, np.array],
                                     positions_A: Union[unit.Quantity, np.ndarray],
@@ -1016,7 +1046,23 @@ class rst7_reporter(parmed.openmm.reporters.RestartReporter):
             self.rst7.vels = flatvel
 
         if self.uses_pbc:
-            boxvecs = periodicBoxVectors
+            # Standardize triclinic box to alpha >= 90° and beta >= 90°.
+            # For a lower-triangular box: v3[0] = c*cos(beta), v3[1] = c*cos(alpha).
+            # Negating a positive component flips the angle from acute to obtuse,
+            # giving a consistent representation across all MPI ranks for rhombic
+            # dodecahedra (which otherwise produce mixed 60°/120° conventions).
+            v1 = periodicBoxVectors[0]
+            v2 = periodicBoxVectors[1]
+            v3 = periodicBoxVectors[2]
+            if parmed.unit.is_quantity(v3):
+                v3_nm = np.array(v3.value_in_unit(parmed.unit.nanometer))
+            else:
+                v3_nm = np.array(v3)
+            if v3_nm[0] > 0:
+                v3_nm[0] = -v3_nm[0]
+            if v3_nm[1] > 0:
+                v3_nm[1] = -v3_nm[1]
+            boxvecs = [v1, v2, v3_nm * parmed.unit.nanometer]
             lengths, angles = parmed.geometry.box_vectors_to_lengths_and_angles(*boxvecs)
             lengths = lengths.value_in_unit(parmed.unit.angstrom)
             angles = angles.value_in_unit(parmed.unit.degree)
