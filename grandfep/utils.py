@@ -949,16 +949,20 @@ class dcd_reporter(app.DCDReporter):
         # DCD stores cos(beta) and cos(alpha) in the crystal block; inconsistent signs
         # across frames cause VMD and MDAnalysis to misinterpret the cell shape.
         # For a lower-triangular box: v3[0] = c*cos(beta), v3[1] = c*cos(alpha).
-        v3 = periodicBoxVectors[2]
-        if unit.is_quantity(v3):
-            v3_nm = np.array(v3.value_in_unit(unit.nanometers))
+        # Extract all three rows as plain nm arrays so computeLengthsAndAngles
+        # receives a single Quantity matrix (not a tuple of separate Quantities).
+        if unit.is_quantity(periodicBoxVectors):
+            vecs = periodicBoxVectors.value_in_unit(unit.nanometers)
         else:
-            v3_nm = np.array(v3)
+            vecs = periodicBoxVectors
+        v1_nm = np.array(vecs[0])
+        v2_nm = np.array(vecs[1])
+        v3_nm = np.array(vecs[2])
         if v3_nm[0] > 0:
             v3_nm[0] = -v3_nm[0]
         if v3_nm[1] > 0:
             v3_nm[1] = -v3_nm[1]
-        periodicBoxVectors = (periodicBoxVectors[0], periodicBoxVectors[1], v3_nm * unit.nanometers)
+        periodicBoxVectors = np.array([v1_nm, v2_nm, v3_nm]) * unit.nanometers
 
         self._dcd.writeModel(positions_nm, periodicBoxVectors=periodicBoxVectors)
 
