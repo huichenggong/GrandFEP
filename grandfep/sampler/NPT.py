@@ -863,6 +863,18 @@ class BaseNPTWaterMCSampler:
             self.system.addForce(
                 openmm.XmlSerializer.deserialize(openmm.XmlSerializer.serialize((npt_force_dict["CMMotionRemover"])))
             )
+        if "MonteCarloBarostat" in npt_force_dict:
+            self.system.addForce(
+                openmm.XmlSerializer.deserialize(openmm.XmlSerializer.serialize((npt_force_dict["MonteCarloBarostat"])))
+            )
+        if "MonteCarloMembraneBarostat" in npt_force_dict:
+            self.system.addForce(
+                openmm.XmlSerializer.deserialize(openmm.XmlSerializer.serialize((npt_force_dict["MonteCarloMembraneBarostat"])))
+            )
+        if "CustomExternalForce" in npt_force_dict:
+            self.system.addForce(
+                openmm.XmlSerializer.deserialize(openmm.XmlSerializer.serialize((npt_force_dict["CustomExternalForce"])))
+            )
 
         # 3.4. set up NonbondedForce and CustomNonbondedForce
         # 3.4.1. NonbondedForce
