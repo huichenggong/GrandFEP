@@ -111,7 +111,7 @@ def write_yml(yml_output, x_new, rest2_scale=1.0, rest_method="linear", comment=
         "lambda_sterics_core         : [" + ",".join([f"{i:14.6f}" for i in x_new]) + "]\n",
         "lambda_electrostatics_core  : [" + ",".join([f"{i:14.6f}" for i in x_new]) + "]\n",
         "lambda_torsions             : [" + ",".join([f"{i:14.6f}" for i in x_new]) + "]\n",
-        "k_rest2                     : [" + ",".join([f"{i:14.6f}" for i in k_rest2]) + "]\n",
+        "k_rest2                     : [" + ",".join([f"{i:14.6f}" for i in k_rest2]) + f"] # {rest_method}\n",
         f"{comment}\n",
         "# lambda_total                 " + ",".join([f"{i:14.11f}" for i in x_new]) + "\n",
         "lambda_electrostatics_delete: [" + ",".join([f"{i:14.11f}" for i in l_chg_delete]) + "]\n",
