@@ -23,7 +23,7 @@ def check_period(samp, p1, p2, masses, k, dt, comment=""):
     mass2 = masses[p2]
     mu = utils.reduced_mass(mass1, mass2)
     o_period = utils.period_from_k_mu(k, mu)
-    if o_period < dt * 10:
+    if o_period < dt * 5:
         samp.logger.info(f"{comment}Bond between atom {p1} and {p2} period={o_period/dt}")
     return 1
 
