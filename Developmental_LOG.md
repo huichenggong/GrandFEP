@@ -1,3 +1,12 @@
+## v1.1.1 Bug Fix
+
+### Bug: `customise_force_hybridREST2` drops barostat and `CustomExternalForce`
+
+`MonteCarloBarostat`, `MonteCarloMembraneBarostat`, and `CustomExternalForce` were
+collected from the input system but never re-added to `self.system` during force
+reconstruction. 
+
+
 ## v1.1.0 Terminal Flip MC
 
 ## v1.0.1 Water MC move for NPT
