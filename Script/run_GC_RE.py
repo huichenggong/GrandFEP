@@ -263,7 +263,7 @@ def main():
     
     if rank == 0:
         samp.logger.info("Checking bonded force parameters for oscillational period...")
-        # extract bonded force, check oscillational period. Should not be smaller than mdp.dt * 10
+        # extract bonded force, check oscillational period.
         masses = [samp.system.getParticleMass(i) for i in range(samp.system.getNumParticles())]
         harmonic_force = None
         custom_bonded_force = None
