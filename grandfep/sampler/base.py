@@ -1895,7 +1895,7 @@ class _ReplicaExchangeMixin:
         state :
             State of the simulation. If None, it will get the current state from the simulation context.
         """
-        if not state:
+        if state is None:
             state = self.simulation.context.getState(getPositions=True, enforcePeriodicBox=True)
         positions = state.getPositions(asNumpy=True)
         # Nan Check
